@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Pocket Transit v7 - まちの道づくりパズル</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Pocket Transit v7.5 - まちの道づくりパズル</title>
 <style>
   :root {
     --bg-main: #f3efe6; --bg-panel: #ffffff; --text-main: #2c3540;
@@ -31,6 +34,7 @@
   .clock-area { display: flex; flex-direction: column; width: 92px; gap: 3px; }
   .clock-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; }
   .week-bar { width: 100%; height: 6px; background: rgba(128,128,128,0.2); border-radius: 3px; overflow: hidden; }
+  .hdr-ver { font-size: 9px; color: var(--text-sub); font-weight: 700; text-align: right; line-height: 1; }
   .week-fill { height: 100%; background: var(--accent); width: 0%; }
   .week-fill.rush { background: #f59e0b; }
   .top-btns { display: flex; align-items: center; gap: 4px; }
@@ -58,18 +62,24 @@
   }
   .toast.info { background: rgba(43,125,233,0.94); }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  /* 一時停止中のバナー（盤面の下のほう） */
-  .pause-banner {
-    position: absolute; left: 50%; transform: translateX(-50%); bottom: 8px; z-index: 7;
-    display: none; align-items: center; gap: 8px; max-width: 94%;
-    background: rgba(20,26,35,0.86); color: #fff; border-radius: 14px; padding: 6px 8px 6px 12px;
-    font-size: 12px; font-weight: 800; line-height: 1.4; backdrop-filter: blur(4px);
+  .pause-pill {
+    position: absolute; z-index: 7; display: none; align-items: center; gap: 2px;
+    background: rgba(20,26,35,0.82); border-radius: 22px; padding: 3px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25); touch-action: none;
   }
-  .pause-banner.show { display: flex; }
-  .pause-banner.danger { background: rgba(185,28,28,0.92); }
-  .pause-banner button {
-    border: none; border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 900;
-    background: #10b981; color: #fff; cursor: pointer; white-space: nowrap; animation: pop 0.9s ease-in-out infinite;
+  .pause-pill.show { display: flex; }
+  .pause-pill.danger { background: rgba(185,28,28,0.9); }
+  .pause-pill .grip {
+    color: rgba(255,255,255,0.75); font-size: 15px; font-weight: 900; padding: 6px 4px 6px 7px;
+    cursor: grab; line-height: 1; letter-spacing: -2px;
+  }
+  .pause-pill .go {
+    border: none; border-radius: 18px; padding: 7px 12px; font-size: 13px; font-weight: 900;
+    background: #10b981; color: #fff; cursor: pointer; white-space: nowrap;
+  }
+  .pause-pill .x {
+    border: none; background: transparent; color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 900;
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
   }
   .result-bar {
     position: absolute; top: 6px; left: 6px; right: 6px;
@@ -85,47 +95,49 @@
     background: #2b7de9; color: #fff; cursor: pointer; white-space: nowrap;
   }
   .result-bar button.sub { background: rgba(255,255,255,0.18); }
-  /* 説明パネル：盤面の上の4行ぶん（建物を置かない帯）に重ねる。盤面の大きさは変えない */
   .tut-panel, .puz-bar {
-    position: absolute; z-index: 6; overflow-y: auto;
+    position: absolute; z-index: 6; overflow: hidden; font-size: 13.5px;
     background: var(--bg-panel); color: var(--text-main);
-    border: 3px solid #facc15; border-radius: 12px; padding: 5px 9px;
+    border: 3px solid #facc15; border-radius: 12px; padding: 4px 8px 5px;
     box-shadow: 0 3px 10px rgba(0,0,0,0.15); display: none;
   }
   .puz-bar { border-color: #a855f7; }
   .tut-panel.show, .puz-bar.show { display: block; }
-  .tut-step { font-size: 11.5px; font-weight: 900; color: #ca8a04; }
-  .tut-text { font-size: 13px; font-weight: 700; line-height: 1.45; }
+  .tut-head { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+  .tut-step { font-size: 0.82em; font-weight: 900; color: #ca8a04; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tut-head button, .puz-btns button {
+    border: 1px solid var(--border-col); background: var(--bg-main); color: var(--text-sub);
+    border-radius: 8px; padding: 3px 7px; font-size: 0.8em; font-weight: 800; cursor: pointer; white-space: nowrap;
+  }
+  .tut-head button.hint, .puz-btns button.hint { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+  .tut-head button.hint.on, .puz-btns button.hint.on { background: #facc15; color: #422006; }
+  .tut-head button.next {
+    background: #10b981; color: #fff; border-color: #10b981; font-size: 0.9em; padding: 4px 10px;
+    animation: pop 0.9s ease-in-out infinite;
+  }
+  .tut-head button.hidden, .puz-btns button.hidden { display: none; }
+  .tut-text { font-size: 1em; font-weight: 700; line-height: 1.42; }
   .tut-text b { color: var(--accent); }
   .tut-text.done { color: #059669; }
   .tut-text.think { color: #b45309; }
-  .tut-btns { display: flex; gap: 6px; justify-content: flex-end; margin-top: 3px; }
-  .tut-btns button {
-    border: none; border-radius: 9px; padding: 5px 11px; font-size: 12.5px; font-weight: 900;
-    cursor: pointer; background: var(--accent); color: #fff;
-  }
-  .tut-btns button.sub { background: var(--bg-main); color: var(--text-sub); border: 1px solid var(--border-col); font-weight: 800; }
-  .tut-btns button.next { background: #10b981; animation: pop 0.9s ease-in-out infinite; }
-  .tut-btns button.hidden { display: none; }
+  .tut-hint { font-size: 0.85em; color: #92400e; font-weight: 700; margin-top: 2px; line-height: 1.35; }
+  .tut-hint:empty { display: none; }
   @keyframes pop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
   .puz-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-  .puz-title { font-size: 11.5px; font-weight: 900; color: #9333ea; }
-  .puz-goal { font-size: 14px; font-weight: 900; margin-top: 1px; display: flex; gap: 10px; align-items: center; }
+  .puz-title { font-size: 0.82em; font-weight: 900; color: #9333ea; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .puz-goal { font-size: 1.02em; font-weight: 900; margin-top: 2px; display: flex; gap: 10px; align-items: center; }
   .puz-goal .time { font-variant-numeric: tabular-nums; }
   .puz-goal .time.hurry { color: #ef4444; }
-  .puz-goal .time.wait { color: var(--text-sub); font-size: 12px; }
+  .puz-goal .time.wait { color: var(--text-sub); font-size: 0.85em; }
   .puz-start {
-    margin-left: auto; border: none; border-radius: 10px; padding: 5px 12px; font-size: 13px; font-weight: 900;
+    margin-left: auto; border: none; border-radius: 10px; padding: 5px 12px; font-size: 0.95em; font-weight: 900;
     background: #10b981; color: #fff; cursor: pointer; animation: pop 0.9s ease-in-out infinite;
   }
   .puz-start.hidden { display: none; }
-  .puz-tip { font-size: 11.5px; color: var(--text-sub); font-weight: 700; margin-top: 1px; line-height: 1.4; }
+  .puz-tip { font-size: 0.85em; color: var(--text-sub); font-weight: 700; margin-top: 2px; line-height: 1.4; }
+  .puz-tip:empty { display: none; }
   .puz-tip b { color: var(--text-main); }
   .puz-btns { display: flex; gap: 4px; }
-  .puz-btns button {
-    border: 1px solid var(--border-col); background: var(--bg-main); color: var(--text-sub);
-    border-radius: 8px; padding: 3px 7px; font-size: 11px; font-weight: 800; cursor: pointer;
-  }
   footer {
     background: var(--bg-panel); border-top: 1px solid var(--border-col);
     padding: 6px 6px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; z-index: 10;
@@ -136,6 +148,7 @@
   .inv-item.low span { color: #ef4444; }
   .inv-item.minor { font-size: 11px; color: var(--text-sub); }
   .inv-item.minor span { font-size: 12px; color: var(--text-sub); }
+  .inv-item.hot span { color: #ef4444; }
   .clear-btn {
     background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3);
     border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 800; cursor: pointer;
@@ -182,7 +195,9 @@
   .choice-desc { font-size: 11px; color: var(--text-sub); line-height: 1.4; }
   .primary-btn { width: 100%; padding: 12px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; }
   .primary-btn.puz { background: #9333ea; }
+  .primary-btn.pulse { animation: pop 0.9s ease-in-out infinite; }
   .secondary-btn { width: 100%; padding: 10px; border-radius: 12px; border: 2px solid var(--border-col); background: var(--bg-main); color: var(--text-main); font-size: 14px; font-weight: 800; cursor: pointer; margin-top: 8px; }
+  .ver { font-size: 10px; color: var(--text-sub); margin-top: 10px; }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; text-align: left; }
   .stat { background: var(--bg-main); border-radius: 10px; padding: 6px 8px; }
   .stat .k { font-size: 10.5px; color: var(--text-sub); font-weight: 700; }
@@ -223,6 +238,7 @@
   </div>
   <div class="clock-area">
     <div class="clock-top"><span id="uiWeek">1しゅう目</span><span id="uiDay">月</span></div>
+    <div class="hdr-ver" id="hdrVer"></div>
     <div class="week-bar"><div class="week-fill" id="uiWeekBar"></div></div>
   </div>
   <div class="top-btns">
@@ -238,9 +254,10 @@
   <canvas id="cv"></canvas>
   <div class="hint-banner" id="uiHint"></div>
   <div class="toast" id="uiToast"></div>
-  <div class="pause-banner" id="pauseBanner">
-    <span id="pauseText"></span>
-    <button onclick="setSpeed(1)">▶ つづける</button>
+  <div class="pause-pill" id="pausePill">
+    <span class="grip" id="pauseGrip" title="ドラッグで うごかせるよ">⋮⋮</span>
+    <button class="go" onclick="setSpeed(1)">▶ つづける</button>
+    <button class="x" onclick="hidePausePill()" title="かくす（上の 1x でも つづけられるよ）">✕</button>
   </div>
   <div class="result-bar" id="resultBar">
     <div class="rb-main" id="rbText"></div>
@@ -248,18 +265,21 @@
     <button onclick="initGame(true)">もういちど</button>
   </div>
   <div class="tut-panel" id="tutPanel">
-    <div class="tut-step" id="tutStep"></div>
-    <div class="tut-text" id="tutText"></div>
-    <div class="tut-btns">
-      <button class="sub" onclick="endTutorial()">とばす</button>
-      <button class="sub" onclick="setupLesson(tut.lesson)">やりなおす</button>
+    <div class="tut-head">
+      <div class="tut-step" id="tutStep"></div>
+      <button class="hint" id="tutHintBtn" onclick="toggleTutHint()">💡ヒント</button>
+      <button id="tutRetry" onclick="setupLesson(tut.lesson)">やりなおす</button>
+      <button id="tutSkip" onclick="endTutorial()">とばす</button>
       <button class="next hidden" id="tutNext" onclick="nextLesson()">つぎへ ▶</button>
     </div>
+    <div class="tut-text" id="tutText"></div>
+    <div class="tut-hint" id="tutHint"></div>
   </div>
   <div class="puz-bar" id="puzBar">
     <div class="puz-top">
       <div class="puz-title" id="puzTitle"></div>
       <div class="puz-btns">
+        <button class="hint" id="puzHintBtn" onclick="togglePuzHint()">💡ヒント</button>
         <button onclick="openPuzzleIntro(puz.idx)">📖</button>
         <button onclick="setupPuzzle(puz.idx)">やりなおす</button>
         <button onclick="openPuzzleList()">やめる</button>
@@ -279,7 +299,7 @@
       <div class="inv-item" id="invRoads">🛣️<span id="uiRoads">0</span></div>
       <div class="inv-item">🌉<span id="uiBridges">0</span></div>
       <div class="inv-item minor" title="ぜんぶの家と🏢をつなぐのに、だいたい これくらいの道がいるよ">📐めやす<span id="uiSteiner">0</span></div>
-      <div class="inv-item minor" title="お客さんの多さ。100%に近いほど こみやすいよ">🔥いそがしさ<span id="uiRho">0</span></div>
+      <div class="inv-item minor" id="invRho" title="お客さんの多さ。ぜんぶの家を うまく つないだときの 力に くらべて 何％ か">🔥いそがしさ<span id="uiRho">0</span></div>
     </div>
     <button class="clear-btn" onclick="clearAllRoads()">ぜんぶ消す</button>
   </div>
@@ -308,6 +328,7 @@
     <ul class="rules">
       <li>🏠 <b>おなじ色</b>の 家と🏢を、道でつなごう！</li>
       <li>🚗 車が🏢に つくと、🏢の<b>白い点</b>（まっているお客さん）が へるよ。白い点が いっぱいのまま ほうっておくと まけ。</li>
+      <li>🏠 お客さんは <b>家が ふえるほど ふえる</b>よ。<b>新しい家も どんどん つなごう</b>。つながっていない家は 💢<b>だんだん おこって</b>、ずっと ほうっておくと まけ。</li>
       <li>✏️ 道は<b>指をはなさずに なぞった</b>ところだけ つながるよ。</li>
       <li>🎨 <b>色ごとに 道を わける</b>と、まじわらないので こみにくいよ。</li>
       <li>✂️ となりの道と くっついちゃったら、<b>あいだを なぞって 切りはなせる</b>よ。</li>
@@ -316,9 +337,10 @@
       <li>🟠 道がまじわる<b>オレンジの点</b>では、車が いちど止まるよ。こんだら🔄や🚀でたすけよう！</li>
       <li>⏸ 🏢の<b>赤いわっか（ピンチゲージ）</b>が 半分を こえると、<b>自動で 時間が とまる</b>よ。止まっているあいだに 道を なおそう。</li>
     </ul>
-    <button class="primary-btn" onclick="startTutorial()">🎓 れんしゅうする（はじめての人）</button>
-    <button class="primary-btn puz" style="margin-top:8px" onclick="openPuzzleList()">🧩 つめ道路（ミニゲーム）</button>
-    <button class="secondary-btn" onclick="startGame()">▶ すぐにあそぶ</button>
+    <button class="primary-btn" id="btnStartTut" onclick="startTutorial()">🎓 れんしゅうする（はじめての人）</button>
+    <button class="primary-btn puz" id="btnStartPuz" style="margin-top:8px" onclick="openPuzzleList()">🧩 つめ道路（ミニゲーム）</button>
+    <button class="secondary-btn" onclick="startGame()">▶ ほんばんで あそぶ</button>
+    <div class="ver" id="verText"></div>
   </div>
 </div>
 
@@ -373,43 +395,62 @@
     <div class="stats" id="overStats"></div>
     <button class="primary-btn" onclick="initGame(true)">もういちど あそぶ</button>
     <button class="secondary-btn" onclick="viewBoard()">📷 さいごの まちを見る</button>
+    <button class="secondary-btn" onclick="backToMenu()">🏠 さいしょの 画面へ</button>
   </div>
 </div>
 
 <script>
 'use strict';
 
+/* ===================== バージョンと キャッシュ対策 ===================== */
+const APP_VERSION = '7.5.0';
+(function checkLatest() {
+  try {
+    if (!/^https?:$/.test(location.protocol) || typeof fetch !== 'function') return;
+    fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' })
+      .then(r => (r.ok ? r.text() : null))
+      .then(t => {
+        if (!t) return;
+        const m = t.match(/APP_VERSION = '([^']+)'/);
+        if (!m || m[1] === APP_VERSION) return;
+        const key = 'ptReload_' + m[1];
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, '1');
+        location.replace(location.pathname + '?v=' + encodeURIComponent(m[1]));
+      })
+      .catch(() => {});
+  } catch (e) { /* noop */ }
+})();
+
 /* =====================================================================
    難易度の理論的な設計
    (1) 道路網＝障害物つき直交シュタイナー木問題（NP困難）
-       最小道路数 S を最短路ヒューリスティックで推定し、所有道路 ≒ α(週)×S に調整。
-   (2) 輸送＝待ち行列。需要 λ = ρ(週) × 理想輸送能力 μ。待ち行列長は ρ/(1-ρ) で増加。
+   (2) 輸送＝待ち行列。需要 λ = ρ(週) × 理想輸送能力 μ。
    (3) 交差点＝単一サーバ。網の目にすると一時停止で容量が落ちる（Braess 的状況）。
-   v5: 道路は「接続（辺）」で管理。なぞった順だけがつながり、✂️ で辺を切れる。
-   v6: ドアを回すときは「ほかの建物のドア前マス」を共有できる。つめ道路を追加。
-   v6.2: れんしゅう「🎨 色を分ける」を追加。
-   v7: 説明パネルは盤面上部4行の「説明帯」に重ねる（盤面サイズは本番と同じ）。
-       つめ道路は時間停止で準備→▶スタート。つめ道路「🚌 バスせんようの道（色を分ける）」追加。
-       ピンチゲージ（あふれタイマー）が半分を超えたら自動で一時停止。れんしゅう「⏸ ピンチ」追加。
    ===================================================================== */
 const COLS = 11;
 const ROWS = 15;
-const PANEL_ROWS = 4;             // れんしゅう・つめ道路で 説明パネルが重なる 上の行数（ここに建物は置かない）
+const PANEL_ROWS = 4;
 const ALPHA_START = 1.7, ALPHA_STEP = 0.1, ALPHA_MIN = 1.2;
 const MIN_WEEKLY_ROADS = 4;
-const RHO_START = 0.35, RHO_STEP = 0.06, RHO_MAX = 0.85;
+const RHO_START = 0.7, RHO_STEP = 0.1;
+const RHO_LATE_FROM = 9, RHO_LATE_STEP = 0.05;
+// 需要の間隔の下限（低くして 需要が 頭打ちに ならないように）
+const minPinInterval = w => 0.3;
 const RUSH_FACTOR = 1.5;
 const ROCK_COUNT = 9;
 const SEC_PER_DAY = 9;
 const CAR_SPEED = 2.8;
 const JUNCTION_STOP = 0.45;
 const OVERLOAD_LIMIT = 15;
-const DANGER_RATIO = 0.5;         // ピンチゲージが この割合を こえたら 自動で 一時停止
+const DANGER_RATIO = 0.5;
+// つながっていない家の まんぞくゲージ。この秒数 つながらないと まけ（ほったらかし対策）
+const HOUSE_GRACE = 10;     // 出てきてから この秒数は 待ってくれる
+const HOUSE_LIMIT = 40;     // そのあと この秒数で まけ（半分で 自動ストップ）
 const WAIT_BREAK = 12;
 const DEADLOCK_WAIT = 2.5;
 const HOUSE_LAUNCH_CD = 0.6;
 const DWELL = 0.35;
-const MAX_HOUSES_PER_COLOR = 5;
 const COST = { road: 1, junction: 3, roundabout: 1.2, highway: 2 };
 
 const COLORS = [
@@ -451,15 +492,17 @@ let currentTool = 'draw';
 let inv = { roads: 0, bridges: 1, roundabouts: 1, highways: 0 };
 let houseCarBonus = 0, destCapBonus = 0;
 let isDragging = false, lastCell = null, downCell = null, dragMoved = false, hwyStart = null, pointerPos = null;
-let spawnTimer = 0, slowTick = 0, alarmTimer = 0, comboCount = 0, comboTimer = 0;
+let spawnTimer = 0, slowTick = 0, alarmTimer = 0, comboCount = 0, comboTimer = 0, comboDay = -1;
 let nextId = 1;
 let netVersion = 0, cacheVer = -1;
 const pathCache = new Map();
 let bldVersion = 0, theoryVer = -1;
 let theory = { S: 0, bridges: 0, cells: new Set() };
-let stats = { peakCars: 0, roadsGranted: 0, rotations: 0, cuts: 0, pinches: 0 };
+let stats = { peakCars: 0, roadsGranted: 0, rotations: 0, cuts: 0, pinches: 0, firstPinchScore: null };
 let tut = null;
 let puz = null;
+let pillHidden = false;
+let pillPos = null;
 
 /* ===================== 効果音 ===================== */
 let audioCtx = null;
@@ -501,7 +544,7 @@ function warn(msg) {
 function addPopup(c, r, text, color) { popups.push({ x: c + 0.5, y: r + 0.5, text, color, t: 0 }); }
 const showModal = (id, on) => document.getElementById(id).classList.toggle('show', on);
 
-// 盤面は いつも同じ大きさ。説明パネルは 盤面の上4行（説明帯）に ぴったり重ねる
+let boardBox = { left: 0, top: 0, w: 0, h: 0 };
 function resizeCanvas() {
   const stage = document.getElementById('stage');
   const sw = stage.clientWidth, sh = stage.clientHeight;
@@ -514,16 +557,86 @@ function resizeCanvas() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const top = Math.max(0, (sh - cellSize * ROWS) / 2);
   const left = Math.max(0, (sw - cellSize * COLS) / 2);
+  boardBox = { left, top, w: cellSize * COLS, h: cellSize * ROWS };
   for (const id of ['tutPanel', 'puzBar']) {
     const el = document.getElementById(id);
     el.style.top = (top + 3) + 'px';
     el.style.left = (left + 3) + 'px';
     el.style.width = (cellSize * COLS - 6) + 'px';
     el.style.maxHeight = (cellSize * PANEL_ROWS - 4) + 'px';
+    fitPanel(id);
   }
+  placePausePill();
 }
 window.addEventListener('resize', resizeCanvas);
-function setPanel(id, on) { document.getElementById(id).classList.toggle('show', on); }
+function setPanel(id, on) { document.getElementById(id).classList.toggle('show', on); fitPanel(id); }
+function fitPanel(id) {
+  const el = document.getElementById(id);
+  if (!el.classList.contains('show')) return;
+  let fs = 13.5;
+  el.style.fontSize = fs + 'px';
+  for (let i = 0; i < 12 && el.scrollHeight > el.clientHeight + 1 && fs > 9.5; i++) {
+    fs -= 0.5;
+    el.style.fontSize = fs + 'px';
+  }
+}
+
+/* ===================== 一時停止ボタン ===================== */
+function placePausePill() {
+  const el = document.getElementById('pausePill');
+  const pw = el.offsetWidth || 170, ph = el.offsetHeight || 40;
+  const stage = document.getElementById('stage');
+  const sw = stage.clientWidth, sh = stage.clientHeight;
+  let x, y;
+  if (pillPos) { x = pillPos.x * sw; y = pillPos.y * sh; }
+  else { x = boardBox.left + boardBox.w - pw - 4; y = boardBox.top + boardBox.h - ph - 4; }
+  x = Math.max(2, Math.min(sw - pw - 2, x));
+  y = Math.max(2, Math.min(sh - ph - 2, y));
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+}
+function hidePausePill() {
+  pillHidden = true;
+  updatePausePill();
+  toast('上の 1x を おすと つづけられるよ', true);
+}
+(function setupPillDrag() {
+  const el = document.getElementById('pausePill');
+  const grip = document.getElementById('pauseGrip');
+  let drag = null;
+  const pt = e => (e && e.touches ? e.touches[0] : e);
+  const down = e => {
+    const p = pt(e);
+    drag = { sx: p.clientX, sy: p.clientY, ox: parseFloat(el.style.left) || 0, oy: parseFloat(el.style.top) || 0 };
+    e.preventDefault(); e.stopPropagation();
+  };
+  const move = e => {
+    if (!drag) return;
+    const p = pt(e);
+    if (!p) return;
+    const stage = document.getElementById('stage');
+    pillPos = { x: (drag.ox + p.clientX - drag.sx) / stage.clientWidth, y: (drag.oy + p.clientY - drag.sy) / stage.clientHeight };
+    placePausePill();
+    e.preventDefault(); e.stopPropagation();
+  };
+  const up = () => { drag = null; };
+  grip.addEventListener('mousedown', down);
+  grip.addEventListener('touchstart', down, { passive: false });
+  window.addEventListener('mousemove', move);
+  window.addEventListener('touchmove', move, { passive: false });
+  window.addEventListener('mouseup', up);
+  window.addEventListener('touchend', up);
+  el.addEventListener('mousedown', e => e.stopPropagation());
+  el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+})();
+function updatePausePill() {
+  const el = document.getElementById('pausePill');
+  const show = gameSpeed === 0 && !modalOpen && !isGameOver && !puz && !pillHidden;
+  const was = el.classList.contains('show');
+  el.classList.toggle('show', show);
+  el.classList.toggle('danger', show && !!dangerDest);
+  if (show && !was) placePausePill();
+}
 
 /* ===================== 盤面ヘルパー ===================== */
 const inBounds = (c, r) => c >= 0 && c < COLS && r >= 0 && r < ROWS;
@@ -650,7 +763,11 @@ function refreshTheory() {
   theoryVer = bldVersion;
 }
 const alphaFor = w => Math.max(ALPHA_MIN, ALPHA_START - ALPHA_STEP * (w - 1));
-const rhoFor = w => Math.min(RHO_MAX, RHO_START + RHO_STEP * (w - 1));
+const rhoFor = w => (w <= RHO_LATE_FROM
+  ? RHO_START + RHO_STEP * (w - 1)
+  : RHO_START + RHO_STEP * (RHO_LATE_FROM - 1) + RHO_LATE_STEP * (w - RHO_LATE_FROM));
+const maxDestsFor = w => Math.min(12, 8 + Math.max(0, w - RHO_LATE_FROM));
+const maxHousesFor = w => (w > RHO_LATE_FROM ? 6 : 5);
 function ownedRoads() {
   let n = inv.roads;
   for (const row of grid) for (const g of row) if (g.road) n++;
@@ -687,15 +804,17 @@ function updateDemandRates() {
     const hs = buildings.filter(b => b.type === 'house' && b.color === col);
     const ds = buildings.filter(b => b.type === 'dest' && b.color === col);
     if (!hs.length || !ds.length) continue;
-    let tSum = 0, n = 0;
-    for (const h of hs) for (const d of ds) { tSum += 2 * idealDist(h, d) / CAR_SPEED + DWELL + HOUSE_LAUNCH_CD; n++; }
-    const T = tSum / n;
-    const carsN = hs.reduce((a, h) => a + h.maxCars, 0);
-    const lambda = rho * carsN / T;
+    let mu = 0;
+    for (const h of hs) {
+      const best = Math.min(...ds.map(d => idealDist(h, d)));
+      const T = 2 * best / CAR_SPEED + DWELL + HOUSE_LAUNCH_CD;
+      mu += Math.min(h.maxCars / T, 1 / HOUSE_LAUNCH_CD);
+    }
+    const lambda = rho * mu;
     const wSum = ds.reduce((a, d) => a + (d.mega ? 1.5 : 1), 0);
     for (const d of ds) {
       const ld = lambda * (d.mega ? 1.5 : 1) / wSum;
-      d.interval = Math.min(10, Math.max(1.6, 1 / ld));
+      d.interval = Math.min(10, Math.max(minPinInterval(week), 1 / ld));
     }
   }
 }
@@ -715,9 +834,9 @@ function resetCommon() {
   score = 0; week = 1; dayTime = 0; isGameOver = false; failedDest = null; dangerDest = null;
   houseCarBonus = 0; destCapBonus = 0;
   buildings = []; highways = []; cars = []; popups = [];
-  hwyStart = null; spawnTimer = 0; slowTick = 0; comboCount = 0;
+  hwyStart = null; spawnTimer = 0; slowTick = 0; comboCount = 0; comboDay = -1;
   colorInfo = [];
-  stats = { peakCars: 0, roadsGranted: 0, rotations: 0, cuts: 0, pinches: 0 };
+  stats = { peakCars: 0, roadsGranted: 0, rotations: 0, cuts: 0, pinches: 0, firstPinchScore: null };
   netVersion++; pathCache.clear(); bldVersion++;
   ['overModal', 'upgradeModal', 'puzListModal', 'puzIntroModal', 'puzResultModal'].forEach(id => showModal(id, false));
   document.getElementById('resultBar').classList.remove('show');
@@ -751,6 +870,12 @@ function initGame(skipIntro) {
   setSpeed(1);
   modalOpen = !skipIntro;
   updateToolLocks();
+  updateUI();
+}
+function backToMenu() {
+  initGame(false);
+  showModal('startModal', true);
+  modalOpen = true;
   updateUI();
 }
 
@@ -793,11 +918,11 @@ function buildablePath(a, b, allowRiver = false) {
 
 function startGame() {
   showModal('startModal', false);
-  if (tut) { endTutorial(); return; }
-  if (puz) { initGame(true); return; }
+  if (tut || puz) initGame(true);
   modalOpen = false;
   playTone(660, 0.1, 'triangle');
   selectTool('draw', true);
+  updateUI();
 }
 function openHelp() {
   if (isGameOver) return;
@@ -805,10 +930,27 @@ function openHelp() {
   modalOpen = true;
   isDragging = false;
   showModal('startModal', true);
+  updateUI();
 }
 
 /* ===================== ピンチ（自動 一時停止） ===================== */
 function checkDanger() {
+  for (const h of buildings) {
+    if (h.type !== 'house' || tut) continue;
+    if (h.angry < HOUSE_LIMIT * 0.2) h.alerted = false;
+    if (!h.alerted && h.angry >= HOUSE_LIMIT * DANGER_RATIO) {
+      h.alerted = true;
+      dangerDest = h;
+      stats.pinches++;
+      if (stats.firstPinchScore == null) stats.firstPinchScore = score;
+      setSpeed(0);
+      isDragging = false;
+      playTone(330, 0.12, 'square', 0.06);
+      setTimeout(() => playTone(250, 0.18, 'square', 0.06), 140);
+      toast(`⏸ ピンチ！ ${COLORS[h.color].jp}の 家が 道に つながってなくて おこってるよ。つないであげよう！`);
+      return true;
+    }
+  }
   for (const b of buildings) {
     if (b.type !== 'dest') continue;
     if (b.overloadTimer < OVERLOAD_LIMIT * 0.2) b.alerted = false;
@@ -816,11 +958,15 @@ function checkDanger() {
       b.alerted = true;
       dangerDest = b;
       stats.pinches++;
+      if (stats.firstPinchScore == null) stats.firstPinchScore = score;
       setSpeed(0);
       isDragging = false;
       playTone(330, 0.12, 'square', 0.06);
       setTimeout(() => playTone(250, 0.18, 'square', 0.06), 140);
-      toast(`⏸ ピンチ！ ${COLORS[b.color].jp}の🏢が あふれそう。時間を 止めたよ`);
+      const lonely = buildings.some(h => h.type === 'house' && h.color === b.color && h.unreached);
+      toast(lonely
+        ? `⏸ ピンチ！ ${COLORS[b.color].jp}の 家が まだ つながってないよ。つなげば 車が ふえる！`
+        : `⏸ ピンチ！ ${COLORS[b.color].jp}の🏢が あふれそう。時間を 止めたよ`);
       return true;
     }
   }
@@ -856,13 +1002,13 @@ function stopsIn(fromT, toT = Infinity) {
   return tut.stops.filter(t => t >= fromT && t < toT).length;
 }
 
-// どのれんしゅうも 建物は 上から5行目（r=4）より下に置く（上4行は 説明パネルの帯）
 const LESSONS = [
   {
     title: '✏️ 道を引く',
     tools: ['draw', 'erase'],
-    text: '赤い家🏠と 赤い🏢を つなごう！<br>家から<b>指をはなさずに</b>、<b>光っているマス</b>を 🏢まで なぞってね。',
-    doneText: 'できた！🎉 車が走って、🏢の<b>白い点</b>（まっているお客さん）が へったね。',
+    text: '赤い家🏠と 赤い🏢を 道で つなごう！ 家の<b>白いドア</b>から 🏢まで、<b>指を はなさずに なぞって</b>ね。',
+    hint: 'とちゅうで 指を はなすと つながらないよ。光る マスを いっきに なぞろう。',
+    doneText: 'できた！🎉 車が とどくと 🏢の<b>白い点</b>（まっている人）が へるよ。',
     setup() {
       spawnBuilding('house', 0, 2, 8, 1);
       spawnBuilding('dest', 0, 8, 8, 3);
@@ -875,8 +1021,9 @@ const LESSONS = [
   {
     title: '🧹 道を消す',
     tools: ['erase', 'draw'],
-    text: '上に のびている道は いらないね。<br>下の <b>🧹 道を消す</b> をおして、<b>光っている道</b>を なぞって消そう。',
-    doneText: 'すっきり！🎉 消した道は<b>手もとにもどる</b>よ（🛣️の数を見てね）。',
+    text: '<b>上に のびた道</b>は いらないね。<b>🧹道を消す</b>を えらんで、その道を なぞって 消そう。',
+    hint: '下の 🧹ボタンを おしてから、光っている 道を なぞってね。',
+    doneText: 'すっきり！🎉 消した道は <b>手もとに もどる</b>よ（🛣️の数を 見てね）。',
     setup() {
       spawnBuilding('house', 0, 2, 9, 1);
       spawnBuilding('dest', 0, 8, 9, 3);
@@ -888,20 +1035,19 @@ const LESSONS = [
     check() { return this.targets().length === 0 && pathOK(); }
   },
   {
-    // 見る → 気づく → 分ける → くらべる
     title: '🎨 色を分ける',
     tools: ['draw', 'erase'],
     observe: 7,
-    observeText: 'まずは <b>見てみよう</b> 👀<br>赤い車と 青い車が <b>おなじ道</b>を 通っているよ。光っている <b>オレンジの点</b>で なにが おきているかな？',
+    observeText: 'まず <b>見てね</b>👀 赤と青の車が <b>おなじ道</b>を 通っているよ。<b>オレンジの点</b>で 何が おきてる？',
     textFn() {
       const step1 = row(11, 4, 6).some(p => !grid[p.r][p.c].road);
       return step1
-        ? `オレンジの点で 車が <b>止まって じゅんばん待ち</b>してたね（${tut.stopsBefore}回）。<br>① <b>青だけの道</b>を つくろう！ 下の<b>光っているマス</b>を なぞってね。`
-        : `いいね！ でも <b>前の 青い道</b>が のこっていて、まだ <b>オレンジの点</b>が あるよ。<br>② <b>🧹 道を消す</b>で、<b>光っている 古い青い道</b>を 消そう。`;
+        ? `車が オレンジの点で <b>まっていた</b>ね（${tut.stopsBefore}回）。<b>青だけの道</b>を 下に つくって、青い家と 青い🏢を つなごう！`
+        : `まだ <b>古い青い道</b>が のこって オレンジの点が あるよ。<b>🧹で 消そう</b>。`;
     },
+    hint: '新しい 道を つくるだけでは だめ。古い 道を 消して、オレンジの点を 0こに しよう。',
     doneFn() {
-      return `分かれた！🎉 <b>色ごとに 道を わける</b>と、まじわる所が <b>なくなる</b>よ。<br>` +
-        `止まった回数：分ける前 <b>${tut.stopsBefore}回</b> → 分けたあと <b>${stopsIn(tut.sepAt)}回</b>`;
+      return `分かれた！🎉 色ごとに 道を 分けると <b>止まらない</b>！ 止まった回数 <b>${tut.stopsBefore}回 → ${stopsIn(tut.sepAt)}回</b>`;
     },
     setup() {
       spawnBuilding('house', 0, 1, 5, 1);
@@ -929,8 +1075,9 @@ const LESSONS = [
   {
     title: '✂️ 切りはなす',
     tools: ['cut'],
-    text: '赤と青の道が <b>となりで くっついて</b>、オレンジの点が できちゃった。<br><b>✂️ 切りはなす</b> をおして、<b>光っている 赤と青のあいだ</b>を 上から下へ なぞろう。',
-    doneText: '切れた！🎉 となりに ならんでいても、<b>つながっていない道は まじわらない</b>よ。せまい所で 色ごとの道を ならべるときに つかおう。',
+    text: '赤と青の道が <b>くっついて</b> オレンジの点が できた。<b>✂️</b>を えらんで、赤と青の <b>あいだ</b>を たてに なぞって 切ろう。',
+    hint: '光っている 2マスを 上から 下へ なぞると、そのあいだが 切れるよ。2か所 あるよ。',
+    doneText: '切れた！🎉 となりでも <b>つながっていない道は まじわらない</b>よ。',
     setup() {
       spawnBuilding('house', 0, 2, 7, 2);
       spawnBuilding('dest', 0, 8, 7, 2);
@@ -948,8 +1095,9 @@ const LESSONS = [
   {
     title: '🚪 ドアの向き',
     tools: ['rotate'],
-    text: '家の<b>白いドア</b>が 上を むいていて、道に つながっていないよ。<br><b>家を タップ</b>して、ドアを 道のほう（右）に むけよう。',
-    doneText: 'つながった！🎉 たてものを<b>タップするたびに ドアの向きが まわる</b>よ。道を みじかくしたいときに べんり！',
+    text: '家の <b>白いドア</b>が 上を むいて 道に つながっていないよ。<b>家を タップ</b>して、ドアを 道の ほうに むけよう。',
+    hint: 'タップするたびに ドアが 右まわりに まわるよ。右を むくまで タップ！',
+    doneText: 'つながった！🎉 タップするたびに ドアが まわるよ。道を みじかくしたい ときに べんり！',
     setup() {
       spawnBuilding('house', 0, 2, 9, 0);
       spawnBuilding('dest', 0, 8, 9, 3);
@@ -962,8 +1110,9 @@ const LESSONS = [
   {
     title: '🔄 ロータリー',
     tools: ['roundabout'],
-    text: 'こんどは 赤と青が <b>どうしても まじわる</b>よ。<br>色を分けられない ときは、<b>🔄 ロータリー</b>をおして <b>オレンジの点</b>を タップしよう。',
-    doneText: 'すいすい！🎉 ロータリーなら<b>止まらずに3台いっしょ</b>に通れるよ。「分けられない まじわり」に つかおう。',
+    text: '赤と青が <b>どうしても まじわる</b>よ。<b>🔄</b>を えらんで、<b>オレンジの点</b>を タップしよう。',
+    hint: '下の 🔄ボタンを おしてから、まん中の 光っている マスを タップ。',
+    doneText: 'すいすい！🎉 ロータリーは <b>止まらず 3台いっしょ</b>に 通れるよ。分けられない まじわりに つかおう。',
     setup() {
       spawnBuilding('house', 0, 1, 9, 1);
       spawnBuilding('dest', 0, 9, 9, 3);
@@ -980,8 +1129,9 @@ const LESSONS = [
   {
     title: '🚀 高速道路',
     tools: ['highway'],
-    text: '⛰山があって、道が つながらない！<br><b>🚀 高速道路</b>をおして、<b>こっちの道のはし → むこうの道のはし</b> の じゅんにタップしよう。',
-    doneText: 'とんだ！🎉 高速道路は<b>山も川も とびこえて</b>、はやく走れるよ。',
+    text: '⛰山で 道が つながらない！ <b>🚀</b>を えらんで、<b>こっちの 道のはし → むこうの 道のはし</b> の じゅんに タップ。',
+    hint: 'まず 左の 光る マス、つぎに 右の 光る マスを タップしてね。',
+    doneText: 'とんだ！🎉 高速道路は <b>山も 川も とびこえて</b> はやく 走れるよ。',
     setup() {
       spawnBuilding('house', 0, 1, 9, 1);
       spawnBuilding('dest', 0, 9, 9, 3);
@@ -994,17 +1144,17 @@ const LESSONS = [
     check() { return pathOK() && score >= 1; }
   },
   {
-    // ピンチゲージ → 自動で止まる → 止まっているあいだに なおす → ▶で再開
-    title: '⏸ ピンチのときは 止めて なおす',
+    title: '⏸ ピンチは 止めて なおす',
     tools: ['draw', 'erase'],
     pinch: true,
-    observeText: '🏢の 白い点が <b>いっぱい</b>！ でも 道が とちゅうで 切れていて 車が 来られない…<br>🏢のまわりの <b>赤い わっか（ピンチゲージ）</b>を 見ていてね。半分を こえると どうなる？ 👀',
+    observeText: '道が <b>とちゅうで 切れて</b>いて 車が 来られない…🏢の <b>赤い わっか</b>を 見ててね👀',
     textFn() {
-      if (!pathOK()) return '⏸ <b>時間が 止まった！</b> ゲージが 半分を こえると <b>自動で 止まる</b>よ。止まっているあいだは <b>ゆっくり なおせる</b>！<br><b>光っているマス</b>を なぞって 道を つなごう。';
-      if (gameSpeed === 0) return 'なおせたね！👍 下の <b>▶ つづける</b>（または 上の <b>1x</b>）を おして 時間を すすめよう。';
-      return '車が とどいて、ゲージが へっていくよ 🚗 見ていてね。';
+      if (!pathOK()) return '⏸ ゲージが 半分を こえて <b>自動で 止まった</b>！ 止まっている あいだに <b>道を つなごう</b>。';
+      if (gameSpeed === 0) return 'なおせたね👍 <b>▶つづける</b>（または 上の 1x）で 時間を すすめよう。';
+      return '車が とどいて ゲージが へっていくよ🚗';
     },
-    doneText: 'セーフ！🎉 <b>ピンチのときは ⏸で 止めて、ゆっくり なおして いい</b>んだよ。自分で 上の <b>⏸</b> を おしても OK。<br>これで れんしゅうは おしまい！ 🧩つめ道路も やってみてね。',
+    hint: '止まっている あいだは あわてなくて いいよ。光る マスを なぞって つないだら ▶。',
+    doneText: 'セーフ！🎉 ピンチは <b>⏸で 止めて なおせば OK</b>。自分で ⏸を おしても いいよ。',
     setup() {
       spawnBuilding('house', 0, 2, 9, 1);
       spawnBuilding('dest', 0, 8, 9, 3);
@@ -1030,7 +1180,7 @@ function startTutorial() {
 function setupLesson(i) {
   resetCommon();
   makeGrid(false);
-  tut = { lesson: i, done: false, saidConnected: false, t: 0, stops: [], phase: null, sepAt: null, stopsBefore: 0, pinched: false, lastText: null };
+  tut = { lesson: i, done: false, saidConnected: false, t: 0, stops: [], phase: null, sepAt: null, stopsBefore: 0, pinched: false, lastText: null, showHint: false };
   const L = LESSONS[i];
   L.setup();
   for (const b of buildings) {
@@ -1051,6 +1201,11 @@ function setupLesson(i) {
   updateToolLocks();
   updateUI();
 }
+function toggleTutHint() {
+  if (!tut) return;
+  tut.showHint = !tut.showHint;
+  renderTutPanel();
+}
 function tutHtml() {
   const L = LESSONS[tut.lesson];
   if (tut.done) return L.doneFn ? L.doneFn() : L.doneText;
@@ -1066,26 +1221,35 @@ function renderTutPanel() {
   t.innerHTML = html;
   t.classList.toggle('done', !!tut.done);
   t.classList.toggle('think', !tut.done && tut.phase === 'observe');
+  const canHint = !tut.done && tut.phase !== 'observe';
+  document.getElementById('tutHint').innerHTML = canHint && tut.showHint ? '💡 ' + L.hint : '';
   const nx = document.getElementById('tutNext');
   nx.classList.toggle('hidden', !tut.done);
-  nx.textContent = tut.lesson === LESSONS.length - 1 ? 'ほんばんへ ▶' : 'つぎへ ▶';
+  nx.textContent = tut.lesson === LESSONS.length - 1 ? 'おわり ▶' : 'つぎへ ▶';
+  const hb = document.getElementById('tutHintBtn');
+  hb.classList.toggle('hidden', !canHint);
+  hb.classList.toggle('on', !!tut.showHint);
+  hb.textContent = tut.showHint ? '💡かくす' : '💡ヒント';
+  document.getElementById('tutRetry').classList.toggle('hidden', !!tut.done);
+  document.getElementById('tutSkip').classList.toggle('hidden', !!tut.done);
+  fitPanel('tutPanel');
 }
-// 止まっているあいだも 文を 最新に（道を なおしたら すぐ 次の 指示に かわる）
 function refreshTutText() {
   if (!tut) return;
   if (tutHtml() !== tut.lastText) renderTutPanel();
 }
 function nextLesson() {
   if (!tut) return;
-  if (tut.lesson >= LESSONS.length - 1) { endTutorial(); return; }
+  if (tut.lesson >= LESSONS.length - 1) { endTutorial(true); return; }
   setupLesson(tut.lesson + 1);
 }
-function endTutorial() {
-  try { localStorage.setItem('pocketTransitTutDone', '1'); } catch (e) { /* noop */ }
+function endTutorial(finished = false) {
+  if (finished) { try { localStorage.setItem('pocketTransitTutDone', '1'); } catch (e) { /* noop */ } }
   tut = null;
   setPanel('tutPanel', false);
-  initGame(true);
-  toast('ほんばん スタート！がんばってね！', true);
+  backToMenu();
+  document.getElementById('btnStartPuz').classList.toggle('pulse', finished);
+  if (finished) toast('れんしゅう クリア！ 🧩つめ道路にも ちょうせんしてみよう', true);
 }
 function miniSim(step) {
   for (const p of popups) p.t += step;
@@ -1106,7 +1270,6 @@ function tutorialTick(step) {
   const L = LESSONS[tut.lesson];
   miniSim(step);
   if (L.pinch) {
-    // れんしゅう用：ピンチゲージを 速めに のばす（まけには ならない）
     for (const b of buildings) {
       if (b.type !== 'dest') continue;
       if (b.pins >= b.maxPins) b.overloadTimer = Math.min(OVERLOAD_LIMIT * 0.95, b.overloadTimer + step * 2.5);
@@ -1134,6 +1297,7 @@ function tutorialTick(step) {
   }
   if (!tut.done && tut.phase === 'act' && L.check()) {
     tut.done = true;
+    tut.showHint = false;
     fanfare();
     renderTutPanel();
     updateToolLocks();
@@ -1162,8 +1326,6 @@ function lockedMsg() {
 
 /* =====================================================================
    🧩 つめ道路（ミニゲーム）
-   時間が止まった「じゅんび」で道をつくり、▶スタートで時間が動き出す。
-   どの問題も 建物は r=4 より下（上4行は 説明パネルの帯）。
    ===================================================================== */
 const PUZZLE_STORE = 'pocketTransitPuzzleV7';
 function house(c, r, ent, colr, carsN = 2) {
@@ -1288,6 +1450,7 @@ const starStr = n => '★'.repeat(n) + '☆'.repeat(3 - n);
 
 function openPuzzleList() {
   ['startModal', 'puzIntroModal', 'puzResultModal', 'overModal'].forEach(id => showModal(id, false));
+  document.getElementById('btnStartPuz').classList.remove('pulse');
   modalOpen = true; isDragging = false;
   if (tut) { tut = null; setPanel('tutPanel', false); }
   const st = loadPuzzleStars();
@@ -1301,12 +1464,11 @@ function openPuzzleList() {
     box.appendChild(b);
   });
   showModal('puzListModal', true);
+  updateUI();
 }
 function closePuzzleList() {
   showModal('puzListModal', false);
-  if (puz) { initGame(false); }
-  modalOpen = true;
-  showModal('startModal', true);
+  backToMenu();
 }
 function openPuzzleIntro(i) {
   setupPuzzle(i, true);
@@ -1324,7 +1486,10 @@ function openPuzzleIntro(i) {
 }
 function beginPuzzle() {
   showModal('puzIntroModal', false);
+  const keepHint = puz && puz.showHint;
   setupPuzzle(puz.idx);
+  puz.showHint = !!keepHint;
+  renderPuzzleBar();
   playTone(660, 0.1, 'triangle');
 }
 function setupPuzzle(i, preview = false) {
@@ -1333,7 +1498,7 @@ function setupPuzzle(i, preview = false) {
   resetCommon();
   const P = PUZZLES[i];
   makeGrid(P.river);
-  puz = { idx: i, t: 0, done: false, started: false };
+  puz = { idx: i, t: 0, done: false, started: false, showHint: false };
   P.setup();
   for (const b of buildings) {
     b.age = 10;
@@ -1343,13 +1508,19 @@ function setupPuzzle(i, preview = false) {
   setSpeed(1);
   selectTool(P.tools.includes('draw') ? 'draw' : P.tools.find(t => TOOL_IDS[t]), true);
   document.getElementById('uiHint').classList.add('fade');
-  document.getElementById('puzTitle').textContent = `🧩 ${i + 1}/${PUZZLES.length}　${P.name}`;
+  document.getElementById('puzTitle').textContent = `🧩 ${i + 1}/${PUZZLES.length} ${P.name}`;
   setPanel('puzBar', true);
   resizeCanvas();
   modalOpen = preview;
   updateToolLocks();
+  lastPuzTip = null;
   renderPuzzleBar();
   updateUI();
+}
+function togglePuzHint() {
+  if (!puz) return;
+  puz.showHint = !puz.showHint;
+  renderPuzzleBar();
 }
 function startPuzzleRun() {
   if (!puz || puz.started || puz.done) return;
@@ -1358,6 +1529,7 @@ function startPuzzleRun() {
   playTone(660, 0.08, 'triangle'); playTone(880, 0.12, 'triangle');
   renderPuzzleBar();
 }
+let lastPuzTip = null;
 function renderPuzzleBar() {
   if (!puz) return;
   const P = PUZZLES[puz.idx];
@@ -1368,11 +1540,20 @@ function renderPuzzleBar() {
   if (!puz.started) {
     tEl.textContent = `⏱ ${P.time}びょう（とまってるよ）`;
     tEl.className = 'time wait';
-    document.getElementById('puzTip').innerHTML = `🛠 <b>じゅんび中</b>：道が できたら ▶スタート！　💡 ${P.hint}`;
   } else {
     tEl.textContent = `⏱ のこり ${rem.toFixed(1)}びょう`;
     tEl.className = 'time' + (rem < 10 ? ' hurry' : '');
-    document.getElementById('puzTip').innerHTML = `💡 ${P.hint}`;
+  }
+  const hb = document.getElementById('puzHintBtn');
+  hb.classList.toggle('on', !!puz.showHint);
+  hb.textContent = puz.showHint ? '💡かくす' : '💡ヒント';
+  let tip = '';
+  if (!puz.started) tip = '🛠 <b>じゅんび中</b>：道が できたら ▶スタート！';
+  if (puz.showHint) tip += (tip ? '<br>' : '') + '💡 ' + P.hint;
+  if (tip !== lastPuzTip) {
+    lastPuzTip = tip;
+    document.getElementById('puzTip').innerHTML = tip;
+    fitPanel('puzBar');
   }
 }
 function puzzleTick(step) {
@@ -1388,7 +1569,6 @@ function finishPuzzle(ok) {
   const P = PUZZLES[puz.idx];
   puz.done = true;
   modalOpen = true; isDragging = false;
-  // ⭐3: お手本タイム(par)いない ／ ⭐2: par と せいげん時間の まん中まで ／ ⭐1: クリア
   const stars = ok ? (puz.t <= P.par ? 3 : puz.t <= (P.par + P.time) / 2 ? 2 : 1) : 0;
   if (ok) { savePuzzleStars(puz.idx, stars); fanfare(); } else playTone(180, 0.35, 'sawtooth', 0.1);
   document.getElementById('prTitle').textContent = ok ? '🎉 クリア！' : '⏰ 時間ぎれ…';
@@ -1435,7 +1615,7 @@ function spawnBuilding(type, colorIdx, c, r, ent) {
     maxCars: 2 + houseCarBonus,
     pins: type === 'dest' ? 1 : 0,
     maxPins: 6 + destCapBonus,
-    interval: 6, pinTimer: 0, overloadTimer: 0, alerted: false, mega: false, delivered: 0,
+    interval: 6, pinTimer: 0, overloadTimer: 0, alerted: false, angry: 0, mega: false, delivered: 0,
     cooldown: 0, bump: 0, age: 0, unreached: false
   };
   buildings.push(b);
@@ -1547,8 +1727,8 @@ function spawnTick() {
     const destN = buildings.filter(b => b.type === 'dest' && b.color === ci).length;
     const houseN = buildings.filter(b => b.type === 'house' && b.color === ci).length;
     const totalDest = buildings.filter(b => b.type === 'dest').length;
-    if (Math.random() < 0.3 && destN < 3 && totalDest < 8 && spawnDestFor(ci)) playTone(360, 0.1, 'triangle', 0.07);
-    else if (houseN < MAX_HOUSES_PER_COLOR && spawnHouseFor(ci)) playTone(520, 0.1, 'triangle', 0.07);
+    if (Math.random() < 0.3 && destN < 3 && totalDest < maxDestsFor(week) && spawnDestFor(ci)) playTone(360, 0.1, 'triangle', 0.07);
+    else if (houseN < maxHousesFor(week) && spawnHouseFor(ci)) playTone(520, 0.1, 'triangle', 0.07);
   }
   guaranteeFeasible();
   updateDemandRates();
@@ -1559,10 +1739,11 @@ function setSpeed(s) {
   if (s === 0 && puz && puz.started && !puz.done) { warn('つめ道路は スタートしたら 止められないよ。いそげ〜！'); return; }
   gameSpeed = s;
   if (s > 0) dangerDest = null;
+  else { pillHidden = false; comboCount = 0; }
   document.getElementById('btnPause').classList.toggle('active', s === 0);
   document.getElementById('btn1x').classList.toggle('active', s === 1);
   document.getElementById('btn2x').classList.toggle('active', s === 2);
-  updatePauseBanner();
+  updatePausePill();
 }
 function toggleTheme() {
   document.body.classList.toggle('dark');
@@ -1879,7 +2060,8 @@ function arrive(car) {
       d.pins--; d.delivered++; d.bump = 0.25; score++;
       comboCount = comboTimer > 0 ? comboCount + 1 : 0;
       comboTimer = 1.2;
-      addPopup(d.c, d.r, comboCount >= 2 ? `+1 ×${comboCount + 1}` : '+1', COLORS[d.color].main);
+      const cmb = comboCount + 1;
+      addPopup(d.c, d.r, cmb >= 3 ? (cmb >= 10 ? '+1 ×10!' : `+1 ×${cmb}`) : '+1', COLORS[d.color].main);
       playTone(620 + Math.min(comboCount, 8) * 45, 0.07, 'sine', 0.06);
     }
     car.state = 'atDest'; car.dwell = DWELL; car.stuck = 0;
@@ -1948,10 +2130,11 @@ function updateGame(dt) {
   comboTimer = Math.max(0, comboTimer - step);
 
   dayTime += step / SEC_PER_DAY;
+  if (Math.floor(dayTime) !== comboDay) { comboDay = Math.floor(dayTime); comboCount = 0; }
   if (dayTime >= 7) { dayTime -= 7; week++; openWeeklyUpgrade(); updateUI(); return; }
 
   spawnTimer += step;
-  if (spawnTimer >= Math.max(7, 12 - week * 0.5)) { spawnTimer = 0; spawnTick(); }
+  if (spawnTimer >= Math.max(5, 9 - week * 0.5)) { spawnTimer = 0; spawnTick(); }
 
   slowTick -= step;
   if (slowTick <= 0) {
@@ -1960,6 +2143,15 @@ function updateGame(dt) {
       const others = buildings.filter(o => o.color === b.color && o.type !== b.type);
       b.unreached = !others.some(o => (b.type === 'house' ? cachedPath(b, o) : cachedPath(o, b)));
     }
+  }
+
+  // つながっていない家は だんだん おこる（いかりゲージ）
+  for (const h of buildings) {
+    if (h.type !== 'house') continue;
+    if (h.unreached && h.age > HOUSE_GRACE) {
+      h.angry += step;
+      if (h.angry >= HOUSE_LIMIT) { gameOver(h); return; }
+    } else h.angry = Math.max(0, h.angry - step * 3);
   }
 
   const rush = isRush();
@@ -1974,10 +2166,12 @@ function updateGame(dt) {
       anyOverload = true;
       b.overloadTimer += step;
       if (b.overloadTimer >= OVERLOAD_LIMIT) { gameOver(b); return; }
-    } else b.overloadTimer = Math.max(0, b.overloadTimer - step * 1.5);
+    } else if (b.pins >= b.maxPins - 1) {
+      // v7.5 バグ修正：満員と「1つ手前」を いったりきたり している あいだは ゲージを へらさない。
+      // （以前は 1つ手前で 1.5倍の はやさで へっていたため、需要の 4わり しか はこべなくても まけなかった）
+    } else b.overloadTimer = Math.max(0, b.overloadTimer - step * 0.75);
   }
 
-  // ピンチゲージが 半分を こえたら 自動で 止めて なおす時間を つくる
   if (checkDanger()) { updateUI(); return; }
 
   dispatchCars();
@@ -2021,8 +2215,8 @@ function gameOver(b) {
   playTone(180, 0.4, 'sawtooth', 0.12);
   let best = score;
   try {
-    best = Math.max(score, Number(localStorage.getItem('pocketTransitBestV5') || 0));
-    localStorage.setItem('pocketTransitBestV5', String(best));
+    best = Math.max(score, Number(localStorage.getItem('pocketTransitBestV73') || 0));
+    localStorage.setItem('pocketTransitBestV73', String(best));
   } catch (e) { /* noop */ }
   refreshTheory();
   let placed = 0, junctions = 0;
@@ -2030,21 +2224,25 @@ function gameOver(b) {
     if (grid[r][c].road) placed++;
     if (isJunction(c, r)) junctions++;
   }
+  const housesAll = buildings.filter(h => h.type === 'house');
+  const housesOn = housesAll.filter(h => !h.unreached).length;
   const eff = placed ? Math.round(theory.S / placed * 100) : 0;
   const busy = Math.round(rhoFor(week) * 100);
   const dayStr = `${week}しゅう目の ${DAYS[Math.min(6, Math.floor(dayTime))]}曜日`;
-  document.getElementById('overReason').textContent = `${COLORS[b.color].jp}の🏢で、お客さんが まちきれなくなったよ。`;
+  document.getElementById('overReason').textContent = b.type === 'house'
+    ? `${COLORS[b.color].jp}の 家が ずっと 道に つながらなくて、みんな おこっちゃった。`
+    : `${COLORS[b.color].jp}の🏢で、お客さんが まちきれなくなったよ。`;
   document.getElementById('finalScore').textContent = score + ' 台 とどいた！';
   const items = [
     ['がんばった日', dayStr], ['いちばんの記ろく', best + ' 台'],
-    ['📐 道のムダのなさ', `${eff}%`], ['🟠 まじわる所の数', junctions + ' か所'],
-    ['🔥 いそがしさ', busy + '%'], ['🚗 いちどに走った車', stats.peakCars + ' 台'],
-    ['⏸ ピンチで止まった回数', stats.pinches + ' 回'], ['✂️ 切りはなした回数', stats.cuts + ' 回']
+    ['🏠 つないだ家', `${housesOn} / ${housesAll.length} けん`], ['🟠 まじわる所の数', junctions + ' か所'],
+    ['📐 道のムダのなさ', `${eff}%`], ['🔥 いそがしさ', busy + '%'],
+    ['⏸ さいしょの ピンチ', stats.firstPinchScore == null ? 'なし' : stats.firstPinchScore + ' 台'], ['⏸ ピンチの回数', stats.pinches + ' 回']
   ];
   document.getElementById('overStats').innerHTML =
     items.map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
-  resultSummary = `<b>${score}台</b>　${dayStr}　${COLORS[b.color].jp}であふれた<br>道のムダのなさ ${eff}%（めやす${theory.S}／つかった${placed}）・まじわる所 ${junctions}・いそがしさ ${busy}%`;
-  updatePauseBanner();
+  resultSummary = `<b>${score}台</b>　${dayStr}　${COLORS[b.color].jp}の${b.type === 'house' ? '家が おこった' : '🏢が あふれた'}<br>つないだ家 ${housesOn}/${housesAll.length}・まじわる所 ${junctions}・道のムダのなさ ${eff}%・いそがしさ ${busy}%`;
+  updatePausePill();
   showOverModal();
 }
 function showOverModal() {
@@ -2071,9 +2269,12 @@ function openWeeklyUpgrade() {
   inv.roads += grant;
   stats.roadsGranted += grant;
   updateDemandRates();
+  const busy = Math.round(rhoFor(week) * 100);
   document.getElementById('upTitle').textContent = `${week - 1}しゅう目 クリア！🎉`;
+  const late = week > RHO_LATE_FROM
+    ? '<br><span style="color:#ef4444">ここからは お客さんが どんどん ふえるよ。どこまで まもれるかな？</span>' : '';
   document.getElementById('upBonus').innerHTML =
-    `🛣️ 道を ${grant}こ もらったよ<br><span style="font-weight:700;font-size:11px;color:var(--text-sub)">こんしゅうは お客さんが ふえるよ（🔥いそがしさ ${Math.round(rhoFor(week) * 100)}%）</span>`;
+    `🛣️ 道を ${grant}こ もらったよ<br><span style="font-weight:700;font-size:11px;color:var(--text-sub)">こんしゅうの 🔥いそがしさ ${busy}%</span>${late}`;
   const pool = [
     { icon: '🛣️', name: '道 +10', desc: '道が 10こ ふえる', act: () => { inv.roads += 10; } },
     { icon: '🌉', name: '橋 +1', desc: '川を わたれる。道3こつき', act: () => { inv.bridges += 1; inv.roads += 3; } },
@@ -2119,17 +2320,6 @@ function promoteMega() {
 }
 
 /* ===================== UI ===================== */
-function updatePauseBanner() {
-  const el = document.getElementById('pauseBanner');
-  const show = gameSpeed === 0 && !modalOpen && !isGameOver && !puz;
-  el.classList.toggle('show', show);
-  el.classList.toggle('danger', show && !!dangerDest);
-  if (show) {
-    document.getElementById('pauseText').textContent = dangerDest
-      ? `⏸ ピンチ！ ${COLORS[dangerDest.color].jp}の🏢を たすけよう。道を なおしたら ▶`
-      : '⏸ 時間を 止めているよ。道を なおしたら ▶';
-  }
-}
 function updateUI() {
   document.getElementById('uiScore').textContent = score;
   const mini = tut || puz;
@@ -2147,15 +2337,15 @@ function updateUI() {
   document.getElementById('uiSteiner').textContent = mini ? '-' : theory.S;
   const rho = rush ? rhoFor(week) * RUSH_FACTOR : rhoFor(week);
   document.getElementById('uiRho').textContent = mini ? '-' : Math.round(rho * 100) + '%';
+  document.getElementById('invRho').classList.toggle('hot', !mini && rho >= 1);
   document.getElementById('invRoads').classList.toggle('low', !mini && inv.roads <= 3);
   document.getElementById('uiRounds').textContent = 'のこり ' + inv.roundabouts;
   document.getElementById('uiHwys').textContent = 'のこり ' + inv.highways;
   document.getElementById('toolRound').classList.toggle('empty', inv.roundabouts <= 0);
   document.getElementById('toolHwy').classList.toggle('empty', inv.highways <= 0);
-  // ピンチのれんしゅう：なおしたら ▶（1x）を 光らせる
   const pulse1x = !!(tut && L.pinch && !tut.done && gameSpeed === 0 && pathOK());
   document.getElementById('btn1x').classList.toggle('pulse', pulse1x);
-  updatePauseBanner();
+  updatePausePill();
   refreshTutText();
 }
 
@@ -2327,7 +2517,30 @@ function drawGame(now) {
     const scale = grow * (1 + b.bump * 0.6);
     const [edx, edy] = DIRS4[b.ent];
 
-    if (b.unreached && b.age > 2 && !tut && !puz) {
+    if (b.type === 'house' && (b.angry > 0 || b === failedDest)) {
+      const ratio = b === failedDest ? 1 : Math.min(1, b.angry / HOUSE_LIMIT);
+      ctx.save();
+      ctx.fillStyle = 'rgba(239,68,68,0.18)';
+      ctx.beginPath(); ctx.arc(cx, cy, cs * 0.6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(239,68,68,0.3)'; ctx.lineWidth = Math.max(3, cs * 0.1);
+      ctx.beginPath(); ctx.arc(cx, cy, cs * 0.56, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = '#ef4444';
+      ctx.beginPath(); ctx.arc(cx, cy, cs * 0.56, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio); ctx.stroke();
+      ctx.restore();
+      if (ratio > 0.25) {
+        ctx.font = `${Math.round(cs * 0.36)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('💢', cx + cs * 0.38, cy - cs * 0.42);
+      }
+    }
+    if (b === dangerDest && b.type === 'house' && gameSpeed === 0) {
+      const pulse = 0.5 + 0.5 * Math.sin(now * 6);
+      ctx.save();
+      ctx.strokeStyle = `rgba(250, 204, 21, ${0.5 + 0.5 * pulse})`;
+      ctx.lineWidth = Math.max(3, cs * 0.12);
+      ctx.beginPath(); ctx.arc(cx, cy, cs * (0.72 + 0.08 * pulse), 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+    if (b.unreached && b.age > 2 && !tut && !puz && !(b.type === 'house' && b.angry > 0)) {
       const pulse = isGameOver ? 1 : 0.5 + 0.5 * Math.sin(now * 5);
       ctx.save();
       ctx.strokeStyle = colr.main; ctx.globalAlpha = 0.35 + 0.45 * pulse;
@@ -2352,7 +2565,6 @@ function drawGame(now) {
       }
     } else {
       const half = cs * (b.mega ? 0.48 : 0.42) * scale;
-      // ピンチで止めたとき：どの🏢か わかるように 黄色く 光らせる
       if (b === dangerDest && gameSpeed === 0) {
         const pulse = 0.5 + 0.5 * Math.sin(now * 6);
         ctx.save();
@@ -2363,10 +2575,9 @@ function drawGame(now) {
       }
       if (b.overloadTimer > 0 || b === failedDest) {
         const ratio = b === failedDest ? 1 : Math.min(1, b.overloadTimer / OVERLOAD_LIMIT);
-        const blink = !isGameOver && b.pins >= b.maxPins && Math.sin(now * 12) > 0;
+        const blink = !isGameOver && gameSpeed > 0 && b.pins >= b.maxPins && Math.sin(now * 12) > 0;
         ctx.fillStyle = blink || b === failedDest ? 'rgba(239,68,68,0.35)' : 'rgba(239,68,68,0.2)';
         ctx.beginPath(); ctx.arc(cx, cy, half + cs * 0.24, 0, Math.PI * 2); ctx.fill();
-        // ゲージの「半分」の目もり
         ctx.strokeStyle = 'rgba(239,68,68,0.35)'; ctx.lineWidth = Math.max(3, cs * 0.12);
         ctx.beginPath(); ctx.arc(cx, cy, half + cs * 0.18, 0, Math.PI * 2); ctx.stroke();
         ctx.strokeStyle = '#ef4444';
@@ -2499,6 +2710,8 @@ function loop(ts) {
   drawGame(ts / 1000);
   requestAnimationFrame(loop);
 }
+document.getElementById('verText').textContent = 'バージョン ' + APP_VERSION;
+document.getElementById('hdrVer').textContent = 'v' + APP_VERSION;
 initGame(false);
 requestAnimationFrame(loop);
 </script>
