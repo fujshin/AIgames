@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pocket Transit v4 - まちの道づくりパズル</title>
+<style>
+  :root {
+    --bg-main: #f3efe6; --bg-panel: #ffffff; --text-main: #2c3540;
+    --text-sub: #6c7a89; --border-col: #dcd6c8; --accent: #2b7de9;
+  }
+  body.dark {
+    --bg-main: #181c24; --bg-panel: #232936; --text-main: #eef2f7;
+    --text-sub: #8c9bae; --border-col: #343d4f; --accent: #38bdf8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  html, body {
+    width: 100%; height: 100dvh; overflow: hidden;
+    background: var(--bg-main); color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    display: flex; flex-direction: column;
+  }
+  header {
+    height: 50px; background: var(--bg-panel); border-bottom: 1px solid var(--border-col);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 8px; flex-shrink: 0; z-index: 10; gap: 4px;
+  }
+  .score-box { display: flex; align-items: baseline; gap: 4px; background: rgba(43,125,233,0.1); padding: 4px 9px; border-radius: 16px; }
+  .score-label { font-size: 11px; font-weight: 700; color: var(--text-sub); }
+  .score-val { font-size: 20px; font-weight: 900; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .clock-area { display: flex; flex-direction: column; width: 92px; gap: 3px; }
+  .clock-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; }
+  .week-bar { width: 100%; height: 6px; background: rgba(128,128,128,0.2); border-radius: 3px; overflow: hidden; }
+  .week-fill { height: 100%; background: var(--accent); width: 0%; }
+  .week-fill.rush { background: #f59e0b; }
+  .top-btns { display: flex; align-items: center; gap: 4px; }
+  .spd-btn, .icon-btn {
+    border: 1px solid var(--border-col); background: var(--bg-main); color: var(--text-main);
+    border-radius: 8px; height: 32px; padding: 0 7px; font-size: 12px; font-weight: 800;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .spd-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #stage { flex: 1; position: relative; width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; touch-action: none; }
+  .hint-banner {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    background: rgba(20,26,35,0.78); color: #fff; font-size: 12px; font-weight: 700;
+    padding: 5px 14px; border-radius: 20px; pointer-events: none; white-space: nowrap;
+    backdrop-filter: blur(4px); transition: opacity 0.6s;
+  }
+  .hint-banner.fade { opacity: 0; }
+  .toast {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%) translateY(8px);
+    background: rgba(239,68,68,0.94); color: #fff; font-size: 13px; font-weight: 800;
+    padding: 7px 14px; border-radius: 14px; opacity: 0; transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none; max-width: 94%; text-align: center; z-index: 7;
+  }
+  .toast.info { background: rgba(43,125,233,0.94); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* ゲームオーバー後の盤面表示用リザルトバー */
+  .result-bar {
+    position: absolute; top: 6px; left: 6px; right: 6px;
+    background: rgba(20,26,35,0.86); color: #fff; border-radius: 12px;
+    padding: 7px 10px; font-size: 11px; font-weight: 700; line-height: 1.5;
+    display: none; align-items: center; gap: 8px; backdrop-filter: blur(4px); z-index: 5;
+  }
+  .result-bar.show { display: flex; }
+  .result-bar .rb-main { flex: 1; }
+  .result-bar b { color: #fbbf24; font-size: 13px; }
+  .result-bar button {
+    border: none; border-radius: 8px; padding: 6px 8px; font-size: 11px; font-weight: 800;
+    background: #2b7de9; color: #fff; cursor: pointer; white-space: nowrap;
+  }
+  .result-bar button.sub { background: rgba(255,255,255,0.18); }
+  /* れんしゅうパネル */
+  .tut-panel {
+    position: absolute; top: 6px; left: 6px; right: 6px; z-index: 6;
+    background: var(--bg-panel); color: var(--text-main);
+    border: 3px solid #facc15; border-radius: 14px; padding: 8px 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18); display: none;
+  }
+  .tut-panel.show { display: block; }
+  .tut-step { font-size: 12px; font-weight: 900; color: #ca8a04; margin-bottom: 2px; }
+  .tut-text { font-size: 14px; font-weight: 700; line-height: 1.55; }
+  .tut-text b { color: var(--accent); }
+  .tut-text.done { color: #059669; }
+  .tut-btns { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; }
+  .tut-btns button {
+    border: none; border-radius: 9px; padding: 7px 12px; font-size: 13px; font-weight: 900;
+    cursor: pointer; background: var(--accent); color: #fff;
+  }
+  .tut-btns button.sub { background: var(--bg-main); color: var(--text-sub); border: 1px solid var(--border-col); font-weight: 800; }
+  .tut-btns button.next { background: #10b981; animation: pop 0.9s ease-in-out infinite; }
+  .tut-btns button.hidden { display: none; }
+  @keyframes pop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  footer {
+    background: var(--bg-panel); border-top: 1px solid var(--border-col);
+    padding: 6px 8px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; z-index: 10;
+  }
+  .inv-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 800; padding: 0 4px; }
+  .inv-badges { display: flex; gap: 9px; align-items: baseline; }
+  .inv-item span { color: var(--accent); font-size: 14px; margin-left: 2px; }
+  .inv-item.low span { color: #ef4444; }
+  .inv-item.minor { font-size: 11px; color: var(--text-sub); }
+  .inv-item.minor span { font-size: 12px; color: var(--text-sub); }
+  .clear-btn {
+    background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 800; cursor: pointer;
+  }
+  .tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .tool-btn {
+    background: var(--bg-main); border: 2px solid var(--border-col); border-radius: 10px;
+    padding: 6px 2px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    cursor: pointer; color: var(--text-main);
+  }
+  .tool-btn.active { border-color: var(--accent); background: rgba(43,125,233,0.12); }
+  .tool-btn.empty { opacity: 0.45; }
+  .tool-btn.locked { opacity: 0.3; }
+  .tool-btn.pulse { border-color: #facc15; animation: glow 1s ease-in-out infinite; opacity: 1; }
+  @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(250,204,21,0.8); } 50% { box-shadow: 0 0 0 6px rgba(250,204,21,0); } }
+  .tool-title { font-size: 12px; font-weight: 800; white-space: nowrap; }
+  .tool-sub { font-size: 10px; color: var(--text-sub); font-weight: 700; }
+  .modal-wrap {
+    position: fixed; inset: 0; background: rgba(10,15,25,0.72); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100;
+  }
+  .modal-wrap.show { display: flex; }
+  .modal-card {
+    background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border-col);
+    border-radius: 18px; padding: 20px; width: 100%; max-width: 380px; text-align: center;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35); max-height: 92dvh; overflow-y: auto;
+  }
+  .modal-card h2 { font-size: 20px; margin-bottom: 8px; }
+  .modal-card p { font-size: 13px; color: var(--text-sub); line-height: 1.5; margin-bottom: 14px; }
+  .rules { text-align: left; font-size: 14px; line-height: 1.6; margin: 0 0 16px; list-style: none; }
+  .rules li { margin-bottom: 7px; padding-left: 1.8em; text-indent: -1.8em; }
+  .bonus-line { font-size: 13px; font-weight: 800; color: var(--accent); background: rgba(43,125,233,0.1); border-radius: 10px; padding: 6px; margin-bottom: 12px; line-height: 1.5; }
+  .choice-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .choice-btn {
+    background: var(--bg-main); border: 2px solid var(--border-col); border-radius: 14px;
+    padding: 12px 6px; cursor: pointer; color: var(--text-main);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .choice-btn:hover, .choice-btn:active { border-color: var(--accent); }
+  .choice-icon { font-size: 26px; }
+  .choice-name { font-size: 13px; font-weight: 800; }
+  .choice-desc { font-size: 11px; color: var(--text-sub); line-height: 1.4; }
+  .primary-btn { width: 100%; padding: 12px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; }
+  .secondary-btn { width: 100%; padding: 10px; border-radius: 12px; border: 2px solid var(--border-col); background: var(--bg-main); color: var(--text-main); font-size: 14px; font-weight: 800; cursor: pointer; margin-top: 8px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; text-align: left; }
+  .stat { background: var(--bg-main); border-radius: 10px; padding: 6px 8px; }
+  .stat .k { font-size: 10.5px; color: var(--text-sub); font-weight: 700; }
+  .stat .v { font-size: 15px; font-weight: 900; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="score-box">
+    <span class="score-label">とどいた</span>
+    <span class="score-val" id="uiScore">0</span>
+  </div>
+  <div class="clock-area">
+    <div class="clock-top"><span id="uiWeek">1しゅう目</span><span id="uiDay">月</span></div>
+    <div class="week-bar"><div class="week-fill" id="uiWeekBar"></div></div>
+  </div>
+  <div class="top-btns">
+    <button class="spd-btn" id="btnPause" onclick="setSpeed(0)">⏸</button>
+    <button class="spd-btn active" id="btn1x" onclick="setSpeed(1)">1x</button>
+    <button class="spd-btn" id="btn2x" onclick="setSpeed(2)">2x</button>
+    <button class="icon-btn" onclick="openHelp()">？</button>
+    <button class="icon-btn" id="btnTheme" onclick="toggleTheme()">🌙</button>
+  </div>
+</header>
+
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div class="hint-banner" id="uiHint"></div>
+  <div class="toast" id="uiToast"></div>
+  <div class="result-bar" id="resultBar">
+    <div class="rb-main" id="rbText"></div>
+    <button class="sub" onclick="showOverModal()">けっか</button>
+    <button onclick="initGame(true)">もういちど</button>
+  </div>
+  <div class="tut-panel" id="tutPanel">
+    <div class="tut-step" id="tutStep"></div>
+    <div class="tut-text" id="tutText"></div>
+    <div class="tut-btns">
+      <button class="sub" onclick="endTutorial()">とばす</button>
+      <button class="sub" onclick="setupLesson(tut.lesson)">やりなおす</button>
+      <button class="next hidden" id="tutNext" onclick="nextLesson()">つぎへ ▶</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="inv-row">
+    <div class="inv-badges">
+      <div class="inv-item" id="invRoads">🛣️<span id="uiRoads">0</span></div>
+      <div class="inv-item">🌉<span id="uiBridges">0</span></div>
+      <div class="inv-item minor" title="ぜんぶの家と🏢をつなぐのに、だいたい これくらいの道がいるよ">📐めやす<span id="uiSteiner">0</span></div>
+      <div class="inv-item minor" title="お客さんの多さ。100%に近いほど こみやすいよ">🔥いそがしさ<span id="uiRho">0</span></div>
+    </div>
+    <button class="clear-btn" onclick="clearAllRoads()">ぜんぶ消す</button>
+  </div>
+  <div class="tool-grid">
+    <button class="tool-btn active" id="toolDraw" onclick="selectTool('draw')">
+      <span class="tool-title">✏️ 道を引く</span><span class="tool-sub">なぞってつくる</span>
+    </button>
+    <button class="tool-btn" id="toolErase" onclick="selectTool('erase')">
+      <span class="tool-title">🧹 道を消す</span><span class="tool-sub">なぞってもどす</span>
+    </button>
+    <button class="tool-btn" id="toolRound" onclick="selectTool('roundabout')">
+      <span class="tool-title">🔄 ロータリー</span><span class="tool-sub" id="uiRounds">のこり 1こ</span>
+    </button>
+    <button class="tool-btn" id="toolHwy" onclick="selectTool('highway')">
+      <span class="tool-title">🚀 高速道路</span><span class="tool-sub" id="uiHwys">のこり 0本</span>
+    </button>
+  </div>
+</footer>
+
+<div class="modal-wrap show" id="startModal">
+  <div class="modal-card">
+    <h2>🚗 まちの道づくり</h2>
+    <ul class="rules">
+      <li>🏠 <b>おなじ色</b>の 家と🏢を、道でつなごう！</li>
+      <li>🚗 車が🏢に つくと、🏢の<b>白い点</b>（まっているお客さん）が へるよ。</li>
+      <li>⏰ 白い点が<b>いっぱい</b>のまま ずっとほうっておくと、まけ。</li>
+      <li>🚪 道は、たてものの<b>白いドア</b>のところに つなげてね。</li>
+      <li>🛣️ 道の数には かぎりがあるよ。⛰山には道がつくれない。川をわたるには🌉橋がいるよ。</li>
+      <li>🟠 道がまじわる<b>オレンジの点</b>では、車が いちど止まるよ。こんだら🔄や🚀でたすけよう！</li>
+    </ul>
+    <button class="primary-btn" onclick="startTutorial()">🎓 れんしゅうする（はじめての人）</button>
+    <button class="secondary-btn" onclick="startGame()">▶ すぐにあそぶ</button>
+  </div>
+</div>
+
+<div class="modal-wrap" id="upgradeModal">
+  <div class="modal-card">
+    <h2 id="upTitle">1しゅう目 クリア！</h2>
+    <div class="bonus-line" id="upBonus"></div>
+    <p>ごほうびを 1つ えらんでね。</p>
+    <div class="choice-box" id="choiceContainer"></div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="overModal">
+  <div class="modal-card">
+    <h2 style="color:#ef4444;">⚠️ まちが こみすぎちゃった！</h2>
+    <p id="overReason"></p>
+    <div style="font-size:28px;font-weight:900;margin:4px 0 10px;color:var(--accent);" id="finalScore">0 台</div>
+    <div class="stats" id="overStats"></div>
+    <button class="primary-btn" onclick="initGame(true)">もういちど あそぶ</button>
+    <button class="secondary-btn" onclick="viewBoard()">📷 さいごの まちを見る</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* =====================================================================
+   難易度の理論的な設計（v3 から継続）
+   (1) 道路網＝障害物つき直交シュタイナー木問題（NP困難）
+       最小道路数 S を最短路ヒューリスティックで推定し、所有道路 ≒ α(週)×S に調整。
+   (2) 輸送＝待ち行列。需要 λ = ρ(週) × 理想輸送能力 μ。待ち行列長は ρ/(1-ρ) で増加。
+   (3) 交差点＝単一サーバ。網の目にすると一時停止で容量が落ちる（Braess 的状況）。
+   ===================================================================== */
+const COLS = 11;
+const ROWS = 15;
+const ALPHA_START = 1.7, ALPHA_STEP = 0.1, ALPHA_MIN = 1.2;
+const MIN_WEEKLY_ROADS = 4;
+const RHO_START = 0.35, RHO_STEP = 0.06, RHO_MAX = 0.85;
+const RUSH_FACTOR = 1.5;
+const ROCK_COUNT = 9;
+const SEC_PER_DAY = 9;
+const CAR_SPEED = 2.8;
+const JUNCTION_STOP = 0.45;
+const OVERLOAD_LIMIT = 15;
+const WAIT_BREAK = 12;
+const DEADLOCK_WAIT = 2.5;
+const HOUSE_LAUNCH_CD = 0.6;
+const DWELL = 0.35;
+const MAX_HOUSES_PER_COLOR = 5;
+const COST = { road: 1, junction: 3, roundabout: 1.2, highway: 2 };
+
+const COLORS = [
+  { jp: '赤', main: '#e84a5f', light: '#ff847c', dark: '#b83244' },
+  { jp: '青', main: '#2b7de9', light: '#6bb5ff', dark: '#1b56a8' },
+  { jp: '黄', main: '#f5a623', light: '#ffd166', dark: '#c47d0e' },
+  { jp: '緑', main: '#10b981', light: '#6ee7b7', dark: '#057a55' }
+];
+const DAYS = ['月', '火', '水', '木', '金', '土', '日'];
+const DIRS4 = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+const TOOL_NAMES = { draw: '✏️ 道を引く', erase: '🧹 道を消す', roundabout: '🔄 ロータリー', highway: '🚀 高速道路' };
+const riverRow = c => Math.round(7 + Math.sin(c * 0.55) * 1.5);
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    this.closePath();
+  };
+}
+
+/* ===================== 状態 ===================== */
+let cellSize = 28, dpr = 1;
+let grid = [], buildings = [], highways = [], cars = [], popups = [], colorInfo = [];
+let hasRiver = true;
+let score = 0, week = 1, dayTime = 0, gameSpeed = 1;
+let isGameOver = false, modalOpen = true, failedDest = null;
+let currentTool = 'draw';
+let inv = { roads: 0, bridges: 1, roundabouts: 1, highways: 0 };
+let houseCarBonus = 0, destCapBonus = 0;
+let isDragging = false, lastCell = null, hwyStart = null, pointerPos = null;
+let spawnTimer = 0, slowTick = 0, alarmTimer = 0, comboCount = 0, comboTimer = 0;
+let nextId = 1;
+let netVersion = 0, cacheVer = -1;
+const pathCache = new Map();
+let bldVersion = 0, theoryVer = -1;
+let theory = { S: 0, bridges: 0, cells: new Set() };
+let stats = { peakCars: 0, roadsGranted: 0 };
+let tut = null;   // れんしゅう中の状態
+
+/* ===================== 効果音 ===================== */
+let audioCtx = null;
+function playTone(freq, dur = 0.07, type = 'sine', vol = 0.08) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + dur);
+  } catch (e) { /* noop */ }
+}
+function fanfare() {
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.14, 'triangle', 0.08), i * 110));
+}
+
+/* ===================== UI 補助 ===================== */
+let toastTimer = null, lastWarnAt = 0;
+function toast(msg, info = false) {
+  const el = document.getElementById('uiToast');
+  el.textContent = msg;
+  el.classList.toggle('info', info);
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+function warn(msg) {
+  const now = performance.now();
+  if (now - lastWarnAt < 700) return;
+  lastWarnAt = now;
+  toast(msg);
+  playTone(150, 0.12, 'square', 0.05);
+}
+function addPopup(c, r, text, color) { popups.push({ x: c + 0.5, y: r + 0.5, text, color, t: 0 }); }
+
+function resizeCanvas() {
+  const stage = document.getElementById('stage');
+  const w = stage.clientWidth - 12, h = stage.clientHeight - 12;
+  cellSize = Math.max(16, Math.floor(Math.min(w / COLS, h / ROWS)));
+  dpr = window.devicePixelRatio || 1;
+  cv.style.width = cellSize * COLS + 'px';
+  cv.style.height = cellSize * ROWS + 'px';
+  cv.width = Math.round(cellSize * COLS * dpr);
+  cv.height = Math.round(cellSize * ROWS * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resizeCanvas);
+
+/* ===================== 盤面ヘルパー ===================== */
+const inBounds = (c, r) => c >= 0 && c < COLS && r >= 0 && r < ROWS;
+const manhattan = (a, b) => Math.abs(a.c - b.c) + Math.abs(a.r - b.r);
+const regionOf = (c, r) => (r < riverRow(c) ? 0 : 1);
+const entCell = b => ({ c: b.c + DIRS4[b.ent][0], r: b.r + DIRS4[b.ent][1] });
+const isEntranceOfAny = (c, r) => buildings.some(b => { const e = entCell(b); return e.c === c && e.r === r; });
+const cellUsable = (c, r) => !!(grid[r][c].bld || grid[r][c].road);
+
+function linked(c1, r1, c2, r2) {
+  if (!inBounds(c1, r1) || !inBounds(c2, r2)) return false;
+  const a = grid[r1][c1], b = grid[r2][c2];
+  if (!(a.road || a.bld) || !(b.road || b.bld)) return false;
+  if (a.bld && b.bld) return false;
+  if (a.bld) { const e = entCell(a.bld); if (e.c !== c2 || e.r !== r2) return false; }
+  if (b.bld) { const e = entCell(b.bld); if (e.c !== c1 || e.r !== r1) return false; }
+  return true;
+}
+function roadDegree(c, r) {
+  let n = 0;
+  for (const [dc, dr] of DIRS4) if (linked(c, r, c + dc, r + dr)) n++;
+  return n;
+}
+const isJunction = (c, r) => grid[r][c].road && !grid[r][c].roundabout && roadDegree(c, r) >= 3;
+
+function nearRiver(c, r) {
+  for (let dr = -1; dr <= 1; dr++)
+    for (let dc = -1; dc <= 1; dc++)
+      if (inBounds(c + dc, r + dr) && grid[r + dr][c + dc].river) return true;
+  return false;
+}
+
+/* ===================== 理論計算（シュタイナー森・距離） ===================== */
+function terrainBFS(sources, free) {
+  const N = COLS * ROWS;
+  const dist = new Int16Array(N).fill(-1);
+  const prev = new Int16Array(N).fill(-1);
+  const first = [];
+  for (const s of sources) { const k = s.r * COLS + s.c; if (dist[k] === -1) { dist[k] = 0; first.push(k); } }
+  const buckets = [first];
+  for (let d = 0; d < buckets.length; d++) {
+    const b = buckets[d];
+    if (!b) continue;
+    for (let i = 0; i < b.length; i++) {
+      const k = b[i];
+      if (dist[k] !== d) continue;
+      const c = k % COLS, r = (k / COLS) | 0;
+      for (const [dc, dr] of DIRS4) {
+        const nc = c + dc, nr = r + dr;
+        if (!inBounds(nc, nr)) continue;
+        const g = grid[nr][nc];
+        if (g.rock || g.bld) continue;
+        const n = nr * COLS + nc;
+        const nd = d + (free && free.has(n) ? 0 : 1);
+        if (dist[n] !== -1 && dist[n] <= nd) continue;
+        dist[n] = nd; prev[n] = k;
+        (buckets[nd] || (buckets[nd] = [])).push(n);
+      }
+    }
+  }
+  return { dist, prev };
+}
+function steinerEstimate() {
+  const cells = new Set();
+  const order = [...Array(COLORS.length).keys()].sort((a, b) =>
+    buildings.filter(x => x.color === b).length - buildings.filter(x => x.color === a).length);
+  for (const col of order) {
+    const terms = buildings.filter(b => b.color === col).map(entCell);
+    if (terms.length < 2) continue;
+    const tree = new Set([terms[0].r * COLS + terms[0].c]);
+    cells.add(terms[0].r * COLS + terms[0].c);
+    const rest = terms.slice(1).map(t => t.r * COLS + t.c);
+    while (rest.length) {
+      const { dist, prev } = terrainBFS([...tree].map(k => ({ c: k % COLS, r: (k / COLS) | 0 })), cells);
+      let bi = -1, bd = Infinity;
+      rest.forEach((k, i) => { if (dist[k] >= 0 && dist[k] < bd) { bd = dist[k]; bi = i; } });
+      if (bi === -1) break;
+      let k = rest[bi];
+      while (k !== -1 && !tree.has(k)) { tree.add(k); cells.add(k); k = prev[k]; }
+      rest.splice(bi, 1);
+    }
+  }
+  let bridges = 0;
+  cells.forEach(k => { if (grid[(k / COLS) | 0][k % COLS].river) bridges++; });
+  return { S: cells.size, bridges, cells };
+}
+function refreshTheory() {
+  if (theoryVer === bldVersion) return;
+  theory = steinerEstimate();
+  theoryVer = bldVersion;
+}
+const alphaFor = w => Math.max(ALPHA_MIN, ALPHA_START - ALPHA_STEP * (w - 1));
+const rhoFor = w => Math.min(RHO_MAX, RHO_START + RHO_STEP * (w - 1));
+function ownedRoads() {
+  let n = inv.roads;
+  for (const row of grid) for (const g of row) if (g.road) n++;
+  return n;
+}
+function ownedBridges() {
+  let n = inv.bridges;
+  for (const row of grid) for (const g of row) if (g.bridge) n++;
+  return n;
+}
+function guaranteeFeasible() {
+  refreshTheory();
+  const lack = theory.S + 2 - ownedRoads();
+  if (lack > 0) { inv.roads += lack; stats.roadsGranted += lack; toast(`📐 まちが大きくなったので 道を ${lack}こ もらったよ`, true); }
+  if (ownedBridges() < Math.min(theory.bridges, 4)) { inv.bridges++; toast('🌉 川をわたる人がいるので、橋を1本 もらったよ', true); }
+}
+
+const distCache = new Map();
+let distVer = -1;
+function idealDist(h, d) {
+  if (distVer !== bldVersion) { distCache.clear(); distVer = bldVersion; }
+  const k = h.id + '>' + d.id;
+  if (!distCache.has(k)) {
+    const { dist } = terrainBFS([entCell(h)]);
+    const e = entCell(d);
+    const v = dist[e.r * COLS + e.c];
+    distCache.set(k, v >= 0 ? v + 2 : manhattan(h, d) + 4);
+  }
+  return distCache.get(k);
+}
+function updateDemandRates() {
+  const rho = rhoFor(week);
+  for (let col = 0; col < COLORS.length; col++) {
+    const hs = buildings.filter(b => b.type === 'house' && b.color === col);
+    const ds = buildings.filter(b => b.type === 'dest' && b.color === col);
+    if (!hs.length || !ds.length) continue;
+    let tSum = 0, n = 0;
+    for (const h of hs) for (const d of ds) { tSum += 2 * idealDist(h, d) / CAR_SPEED + DWELL + HOUSE_LAUNCH_CD; n++; }
+    const T = tSum / n;
+    const carsN = hs.reduce((a, h) => a + h.maxCars, 0);
+    const lambda = rho * carsN / T;
+    const wSum = ds.reduce((a, d) => a + (d.mega ? 1.5 : 1), 0);
+    for (const d of ds) {
+      const ld = lambda * (d.mega ? 1.5 : 1) / wSum;
+      d.interval = Math.min(10, Math.max(1.6, 1 / ld));
+    }
+  }
+}
+
+/* ===================== 初期化 ===================== */
+function makeGrid(withRiver) {
+  hasRiver = withRiver;
+  grid = [];
+  for (let r = 0; r < ROWS; r++) {
+    const row = [];
+    for (let c = 0; c < COLS; c++)
+      row.push({ river: withRiver && r === riverRow(c), rock: false, road: false, bridge: false, roundabout: false, bld: null });
+    grid.push(row);
+  }
+}
+function resetCommon() {
+  score = 0; week = 1; dayTime = 0; isGameOver = false; failedDest = null;
+  houseCarBonus = 0; destCapBonus = 0;
+  buildings = []; highways = []; cars = []; popups = [];
+  hwyStart = null; spawnTimer = 0; slowTick = 0; comboCount = 0;
+  colorInfo = [];
+  stats = { peakCars: 0, roadsGranted: 0 };
+  netVersion++; pathCache.clear(); bldVersion++;
+  ['overModal', 'upgradeModal'].forEach(id => document.getElementById(id).classList.remove('show'));
+  document.getElementById('resultBar').classList.remove('show');
+}
+
+function initGame(skipIntro) {
+  resizeCanvas();
+  tut = null;
+  document.getElementById('tutPanel').classList.remove('show');
+  resetCommon();
+  inv = { roads: 0, bridges: 1, roundabouts: 1, highways: 0 };
+  makeGrid(true);
+
+  spawnBuilding('house', 0, 2, 3, 1);
+  spawnBuilding('house', 0, 2, 5, 1);
+  spawnBuilding('dest', 0, 8, 3, 3);
+  spawnBuilding('house', 1, 8, 12, 3);
+  spawnBuilding('dest', 1, 3, 11, 1);
+  colorInfo[0] = { homeReg: 0, destReg: 0 };
+  colorInfo[1] = { homeReg: 1, destReg: 1 };
+  for (const b of buildings) b.age = 10;
+
+  placeRocks();
+  bldVersion++;
+  refreshTheory();
+  inv.roads = Math.ceil(ALPHA_START * theory.S);
+  updateDemandRates();
+
+  selectTool('draw', true);
+  setSpeed(1);
+  modalOpen = !skipIntro;
+  updateToolLocks();
+  updateUI();
+}
+
+function placeRocks() {
+  let placed = 0;
+  for (let tries = 0; tries < 600 && placed < ROCK_COUNT; tries++) {
+    const c = Math.floor(Math.random() * COLS);
+    const r = Math.floor(Math.random() * ROWS);
+    const g = grid[r][c];
+    if (g.river || g.rock || g.bld || nearRiver(c, r)) continue;
+    if (buildings.some(b => manhattan(b, { c, r }) <= 1 || manhattan(entCell(b), { c, r }) <= 1)) continue;
+    g.rock = true;
+    if (!initialReachable()) { g.rock = false; continue; }
+    placed++;
+  }
+}
+function initialReachable() {
+  for (const d of buildings.filter(b => b.type === 'dest'))
+    for (const h of buildings.filter(b => b.type === 'house' && b.color === d.color))
+      if (!buildablePath(entCell(h), entCell(d))) return false;
+  return true;
+}
+function buildablePath(a, b, allowRiver = false) {
+  const seen = new Set([a.c + ',' + a.r]);
+  const q = [a];
+  while (q.length) {
+    const p = q.shift();
+    if (p.c === b.c && p.r === b.r) return true;
+    for (const [dc, dr] of DIRS4) {
+      const nc = p.c + dc, nr = p.r + dr, k = nc + ',' + nr;
+      if (!inBounds(nc, nr) || seen.has(k)) continue;
+      const g = grid[nr][nc];
+      if ((g.river && !allowRiver && !g.road) || g.rock || g.bld) continue;
+      seen.add(k);
+      q.push({ c: nc, r: nr });
+    }
+  }
+  return false;
+}
+
+function startGame() {
+  document.getElementById('startModal').classList.remove('show');
+  if (tut) { endTutorial(); return; }
+  modalOpen = false;
+  playTone(660, 0.1, 'triangle');
+  selectTool('draw', true);
+}
+function openHelp() {
+  if (isGameOver) return;
+  modalOpen = true;
+  isDragging = false;
+  document.getElementById('startModal').classList.add('show');
+}
+
+/* ===================== れんしゅう（チュートリアル） ===================== */
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+const LESSONS = [
+  {
+    title: 'れんしゅう 1/4　✏️ 道を引く',
+    tools: ['draw', 'erase'], tool: 'draw',
+    text: '赤い家🏠と 赤い🏢を つなごう！<br>家の<b>白いドア</b>から、<b>光っているマス</b>を 指でなぞってね。',
+    doneText: 'できた！🎉 車が走って、🏢の<b>白い点</b>がへったね。<br>白い点は「まっているお客さん」だよ。',
+    setup() {
+      spawnBuilding('house', 0, 2, 8, 1);
+      spawnBuilding('dest', 0, 8, 8, 3);
+      inv = { roads: 10, bridges: 0, roundabouts: 0, highways: 0 };
+    },
+    targets: () => range(3, 7).map(c => ({ c, r: 8 })).filter(p => !grid[p.r][p.c].road),
+    connected: () => !!cachedPath(buildings[0], buildings[1]),
+    check() { return this.connected() && score >= 1; }
+  },
+  {
+    title: 'れんしゅう 2/4　🧹 道を消す',
+    tools: ['erase', 'draw'], tool: 'draw',
+    text: '上に のびている道は いらないね。<br>下の <b>🧹 道を消す</b> をおして、<b>光っている道</b>を なぞって消そう。',
+    doneText: 'すっきり！🎉 消した道は<b>手もとにもどる</b>よ（🛣️の数を見てね）。<br>まちがえたら 消して 引きなおせばOK！',
+    setup() {
+      spawnBuilding('house', 0, 2, 8, 1);
+      spawnBuilding('dest', 0, 8, 8, 3);
+      range(3, 7).forEach(c => { grid[8][c].road = true; });
+      range(4, 7).forEach(r => { grid[r][5].road = true; });
+      inv = { roads: 0, bridges: 0, roundabouts: 0, highways: 0 };
+    },
+    targets: () => range(4, 7).map(r => ({ c: 5, r })).filter(p => grid[p.r][p.c].road),
+    check() { return this.targets().length === 0 && !!cachedPath(buildings[0], buildings[1]); }
+  },
+  {
+    title: 'れんしゅう 3/4　🔄 ロータリー',
+    tools: ['roundabout'], tool: 'draw',
+    text: '赤と青の道が まじわる<b>オレンジの点</b>では、車が1台ずつしか通れず、まちができるよ。<br><b>🔄 ロータリー</b>をおして、<b>オレンジの点</b>をタップしよう。',
+    doneText: 'すいすい！🎉 ロータリーなら<b>止まらずに3台いっしょ</b>に通れるよ。<br>こんでいる オレンジの点に つかおう。',
+    setup() {
+      spawnBuilding('house', 0, 1, 8, 1);
+      spawnBuilding('dest', 0, 9, 8, 3);
+      spawnBuilding('house', 1, 5, 4, 2);
+      spawnBuilding('dest', 1, 5, 13, 0);
+      range(2, 8).forEach(c => { grid[8][c].road = true; });
+      range(5, 12).forEach(r => { grid[r][5].road = true; });
+      for (const b of buildings) if (b.type === 'house') { b.maxCars = 3; b.carsReady = 3; }
+      inv = { roads: 0, bridges: 0, roundabouts: 1, highways: 0 };
+    },
+    targets: () => (grid[8][5].roundabout ? [] : [{ c: 5, r: 8 }]),
+    check() { return grid[8][5].roundabout; }
+  },
+  {
+    title: 'れんしゅう 4/4　🚀 高速道路',
+    tools: ['highway'], tool: 'draw',
+    text: '⛰山があって、道が つながらない！<br><b>🚀 高速道路</b>をおして、<b>こっちの道のはし → むこうの道のはし</b> の じゅんにタップしよう。',
+    doneText: 'とんだ！🎉 高速道路は<b>山も川も とびこえて</b>、はやく走れるよ。<br>これで れんしゅうは おしまい！',
+    setup() {
+      spawnBuilding('house', 0, 1, 8, 1);
+      spawnBuilding('dest', 0, 9, 8, 3);
+      range(0, ROWS - 1).forEach(r => { grid[r][5].rock = true; });
+      [2, 3, 7, 8].forEach(c => { grid[8][c].road = true; });
+      inv = { roads: 0, bridges: 0, roundabouts: 0, highways: 1 };
+    },
+    targets: () => (highways.length ? [] : hwyStart ? [{ c: 7, r: 8 }] : [{ c: 3, r: 8 }]),
+    check() { return !!cachedPath(buildings[0], buildings[1]) && score >= 1; }
+  }
+];
+
+function startTutorial() {
+  document.getElementById('startModal').classList.remove('show');
+  resizeCanvas();
+  modalOpen = false;
+  tut = { lesson: 0, done: false, saidConnected: false };
+  setSpeed(1);
+  setupLesson(0);
+  playTone(660, 0.1, 'triangle');
+}
+function setupLesson(i) {
+  resetCommon();
+  makeGrid(false);
+  tut.lesson = i; tut.done = false; tut.saidConnected = false;
+  const L = LESSONS[i];
+  L.setup();
+  for (const b of buildings) {
+    b.age = 10;
+    if (b.type === 'dest') { b.interval = 2.5; b.pins = 2; }
+  }
+  markNetChanged();
+  selectTool(L.tool, true);
+  document.getElementById('uiHint').classList.add('fade');
+  document.getElementById('tutPanel').classList.add('show');
+  renderTutPanel();
+  updateToolLocks();
+  updateUI();
+}
+function renderTutPanel() {
+  const L = LESSONS[tut.lesson];
+  document.getElementById('tutStep').textContent = L.title;
+  const t = document.getElementById('tutText');
+  t.innerHTML = tut.done ? L.doneText : L.text;
+  t.classList.toggle('done', tut.done);
+  const nx = document.getElementById('tutNext');
+  nx.classList.toggle('hidden', !tut.done);
+  nx.textContent = tut.lesson === LESSONS.length - 1 ? 'ほんばんへ ▶' : 'つぎへ ▶';
+}
+function nextLesson() {
+  if (!tut) return;
+  if (tut.lesson >= LESSONS.length - 1) { endTutorial(); return; }
+  setupLesson(tut.lesson + 1);
+}
+function endTutorial() {
+  try { localStorage.setItem('pocketTransitTutDone', '1'); } catch (e) { /* noop */ }
+  tut = null;
+  document.getElementById('tutPanel').classList.remove('show');
+  initGame(true);
+  toast('ほんばん スタート！がんばってね！', true);
+}
+function tutorialTick(step) {
+  for (const p of popups) p.t += step;
+  popups = popups.filter(p => p.t < 1);
+  for (const b of buildings) { b.age += step; b.bump = Math.max(0, b.bump - step); }
+  comboTimer = Math.max(0, comboTimer - step);
+  for (const h of buildings) if (h.type === 'house') h.cooldown = Math.max(0, h.cooldown - step);
+  for (const b of buildings) {
+    if (b.type !== 'dest' || b.pins >= b.maxPins) continue;
+    b.pinTimer += step;
+    if (b.pinTimer >= b.interval) { b.pinTimer = 0; b.pins++; }
+  }
+  dispatchCars();
+  updateCars(step);
+
+  const L = LESSONS[tut.lesson];
+  if (L.connected && !tut.saidConnected && L.connected()) {
+    tut.saidConnected = true;
+    toast('つながった！車が走るよ 🚗', true);
+  }
+  if (!tut.done && L.check()) {
+    tut.done = true;
+    fanfare();
+    renderTutPanel();
+    updateToolLocks();
+  }
+  updateUI();
+}
+function updateToolLocks() {
+  const ids = { draw: 'toolDraw', erase: 'toolErase', roundabout: 'toolRound', highway: 'toolHwy' };
+  for (const [t, id] of Object.entries(ids)) {
+    const el = document.getElementById(id);
+    const allowed = !tut || LESSONS[tut.lesson].tools.includes(t);
+    el.classList.toggle('locked', !allowed);
+    // れんしゅう中：つかうべき道具がえらばれていなければ光らせる
+    const main = tut && !tut.done && LESSONS[tut.lesson].tools[0];
+    el.classList.toggle('pulse', !!tut && !tut.done && t === main && currentTool !== main);
+  }
+}
+
+/* ===================== 建物の生成 ===================== */
+function isFreeLand(c, r) {
+  if (!inBounds(c, r)) return false;
+  const g = grid[r][c];
+  return !g.river && !g.rock && !g.bld && !g.road;
+}
+function validEnts(c, r) {
+  const out = [];
+  DIRS4.forEach(([dc, dr], i) => {
+    const nc = c + dc, nr = r + dr;
+    if (!inBounds(nc, nr)) return;
+    const g = grid[nr][nc];
+    if (g.river || g.rock || g.bld) return;
+    if (isEntranceOfAny(nc, nr)) return;
+    out.push(i);
+  });
+  return out;
+}
+function spawnBuilding(type, colorIdx, c, r, ent) {
+  if (!isFreeLand(c, r) || isEntranceOfAny(c, r)) return null;
+  if (ent === undefined) {
+    const opts = validEnts(c, r);
+    if (!opts.length) return null;
+    ent = opts[Math.floor(Math.random() * opts.length)];
+  }
+  const b = {
+    id: nextId++, type, color: colorIdx, c, r, ent,
+    carsReady: type === 'house' ? 2 + houseCarBonus : 0,
+    maxCars: 2 + houseCarBonus,
+    pins: type === 'dest' ? 1 : 0,
+    maxPins: 6 + destCapBonus,
+    interval: 6, pinTimer: 0, overloadTimer: 0, mega: false, delivered: 0,
+    cooldown: 0, bump: 0, age: 0, unreached: false
+  };
+  buildings.push(b);
+  grid[r][c].bld = b;
+  netVersion++; bldVersion++;
+  return b;
+}
+function removeBuilding(b) {
+  grid[b.r][b.c].bld = null;
+  buildings.splice(buildings.indexOf(b), 1);
+  netVersion++; bldVersion++;
+}
+function hasRoom(c, r) {
+  for (const [dc, dr] of DIRS4) {
+    const nc = c + dc, nr = r + dr;
+    if (inBounds(nc, nr) && grid[nr][nc].bld) return false;
+  }
+  return validEnts(c, r).length > 0;
+}
+function pickCell(pred) {
+  const cands = [];
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (isFreeLand(c, r) && !isEntranceOfAny(c, r) && hasRoom(c, r) && pred(c, r)) cands.push({ c, r });
+  return cands.length ? cands[Math.floor(Math.random() * cands.length)] : null;
+}
+const farFromDests = (c, r, d) => buildings.every(b => b.type !== 'dest' || manhattan(b, { c, r }) >= d);
+
+function reachableFrom(b) {
+  return buildings.filter(o => o.color === b.color && o.type !== b.type)
+    .some(o => buildablePath(entCell(b), entCell(o), true));
+}
+function spawnChecked(type, col, c, r) {
+  const b = spawnBuilding(type, col, c, r);
+  if (b && !reachableFrom(b)) { removeBuilding(b); return null; }
+  return b;
+}
+function spawnPair(col) {
+  const cross = Math.random() < 0.75;
+  const dest = pickCell((c, r) => farFromDests(c, r, 3));
+  if (!dest) return false;
+  const dReg = regionOf(dest.c, dest.r);
+  const hReg = cross ? 1 - dReg : dReg;
+  const house = pickCell((c, r) => {
+    const d = manhattan(dest, { c, r });
+    return regionOf(c, r) === hReg && d >= 3 && d <= (cross ? 9 : 7);
+  });
+  if (!house) return false;
+  const bd = spawnBuilding('dest', col, dest.c, dest.r);
+  let bh = bd && spawnBuilding('house', col, house.c, house.r);
+  if (bh && !reachableFrom(bh)) { removeBuilding(bh); bh = null; }
+  if (!bh) { if (bd) removeBuilding(bd); return false; }
+  colorInfo[col] = { homeReg: hReg, destReg: dReg };
+  toast(cross ? `あたらしい色「${COLORS[col].jp}」！ 川のむこうへ おでかけするよ` : `あたらしい色「${COLORS[col].jp}」が 出てきたよ！`, true);
+  return true;
+}
+function spawnHouseFor(col) {
+  const info = colorInfo[col];
+  const same = buildings.filter(b => b.color === col && b.type === 'house');
+  const spot = pickCell((c, r) => regionOf(c, r) === info.homeReg &&
+    same.some(b => { const m = manhattan(b, { c, r }); return m >= 2 && m <= 5; }));
+  return spot ? !!spawnChecked('house', col, spot.c, spot.r) : false;
+}
+function spawnDestFor(col) {
+  const info = colorInfo[col];
+  const houses = buildings.filter(b => b.type === 'house' && b.color === col);
+  const flip = week >= 2 && Math.random() < 0.3;
+  const reg = flip ? 1 - info.destReg : info.destReg;
+  const spot = pickCell((c, r) => regionOf(c, r) === reg && farFromDests(c, r, 3) &&
+    houses.some(h => { const m = manhattan(h, { c, r }); return m >= 3 && m <= 9; }));
+  if (!spot) return false;
+  return !!spawnChecked('dest', col, spot.c, spot.r);
+}
+function spawnTick() {
+  const unlocked = Math.min(COLORS.length, 2 + Math.floor(week / 2));
+  let spawned = false;
+  for (let col = 0; col < unlocked && !spawned; col++) {
+    if (!colorInfo[col]) {
+      if (spawnPair(col)) { playTone(360, 0.12, 'triangle', 0.08); playTone(540, 0.12, 'triangle', 0.06); }
+      spawned = true;
+    }
+  }
+  if (!spawned) {
+    const weights = [];
+    for (let c = 0; c < unlocked; c++) {
+      const pins = buildings.filter(b => b.type === 'dest' && b.color === c).reduce((a, b) => a + b.pins, 0);
+      const carsN = buildings.filter(b => b.type === 'house' && b.color === c).reduce((a, b) => a + b.maxCars, 0);
+      weights.push(1 + pins / Math.max(1, carsN) * 3);
+    }
+    let roll = Math.random() * weights.reduce((a, b) => a + b, 0), col = 0;
+    while (roll > weights[col] && col < unlocked - 1) { roll -= weights[col]; col++; }
+    const destN = buildings.filter(b => b.type === 'dest' && b.color === col).length;
+    const houseN = buildings.filter(b => b.type === 'house' && b.color === col).length;
+    const totalDest = buildings.filter(b => b.type === 'dest').length;
+    if (Math.random() < 0.3 && destN < 3 && totalDest < 8 && spawnDestFor(col)) playTone(360, 0.1, 'triangle', 0.07);
+    else if (houseN < MAX_HOUSES_PER_COLOR && spawnHouseFor(col)) playTone(520, 0.1, 'triangle', 0.07);
+  }
+  guaranteeFeasible();
+  updateDemandRates();
+}
+
+/* ===================== 操作 ===================== */
+function setSpeed(s) {
+  gameSpeed = s;
+  document.getElementById('btnPause').classList.toggle('active', s === 0);
+  document.getElementById('btn1x').classList.toggle('active', s === 1);
+  document.getElementById('btn2x').classList.toggle('active', s === 2);
+}
+function toggleTheme() {
+  document.body.classList.toggle('dark');
+  document.getElementById('btnTheme').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+}
+let hintTimer = null;
+function selectTool(t, force = false) {
+  if (!force && tut && !LESSONS[tut.lesson].tools.includes(t)) {
+    warn(`いまは「${TOOL_NAMES[LESSONS[tut.lesson].tools[0]]}」を つかってね`);
+    return;
+  }
+  currentTool = t;
+  hwyStart = null;
+  ['Draw', 'Erase', 'Round', 'Hwy'].forEach((n, i) =>
+    document.getElementById('tool' + n).classList.toggle('active', t === ['draw', 'erase', 'roundabout', 'highway'][i]));
+  updateToolLocks();
+  if (tut) return;   // れんしゅう中はパネルで説明するのでヒントは出さない
+  const hints = {
+    draw: '家と🏢の 白いドアから、指でなぞって道を引こう',
+    erase: 'いらない道を なぞって消そう（道は 手もとにもどるよ）',
+    roundabout: 'オレンジの点（道がまじわる所）を タップしてね',
+    highway: 'はじめの場所 → おわりの場所 の じゅんに タップ'
+  };
+  const el = document.getElementById('uiHint');
+  el.textContent = hints[t];
+  el.classList.remove('fade');
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => el.classList.add('fade'), 4000);
+}
+const isHwyEnd = (c, r) => highways.some(h => (h.c1 === c && h.r1 === r) || (h.c2 === c && h.r2 === r));
+
+function clearAllRoads() {
+  if (isGameOver) return;
+  if (tut) { setupLesson(tut.lesson); return; }   // れんしゅう中は「やりなおす」と同じ
+  for (const row of grid) for (const g of row) {
+    if (g.road) { g.road = false; inv.roads++; if (g.bridge) { g.bridge = false; inv.bridges++; } }
+    if (g.roundabout) { g.roundabout = false; inv.roundabouts++; }
+  }
+  inv.highways += highways.length;
+  highways = [];
+  hwyStart = null;
+  playTone(260, 0.1, 'sine');
+  markNetChanged();
+  updateUI();
+}
+
+function applyToolAt(c, r) {
+  const cell = grid[r][c];
+  if (currentTool === 'draw') {
+    if (cell.bld || cell.road) return;
+    if (cell.rock) { warn('⛰ 山には 道がつくれないよ（🚀高速道路なら とびこえられる）'); return; }
+    if (cell.river) {
+      if (inv.bridges <= 0) { warn('🌉 橋が たりないよ'); return; }
+      if (inv.roads <= 0) { warn('🛣️ 道が たりないよ'); return; }
+      cell.road = true; cell.bridge = true; inv.bridges--; inv.roads--;
+      playTone(540, 0.05);
+    } else {
+      if (inv.roads <= 0) { warn('🛣️ 道が たりないよ。いらない道を 消してみよう'); return; }
+      cell.road = true; inv.roads--;
+      playTone(440, 0.04);
+    }
+    markNetChanged(); updateUI();
+  } else if (currentTool === 'erase') {
+    const hIdx = highways.findIndex(h => (h.c1 === c && h.r1 === r) || (h.c2 === c && h.r2 === r));
+    if (hIdx !== -1) { highways.splice(hIdx, 1); inv.highways++; playTone(300, 0.08); }
+    else if (cell.roundabout) { cell.roundabout = false; inv.roundabouts++; playTone(320, 0.06); }
+    else if (cell.road) {
+      cell.road = false; inv.roads++;
+      if (cell.bridge) { cell.bridge = false; inv.bridges++; }
+      playTone(280, 0.04);
+    } else return;
+    markNetChanged(); updateUI();
+  } else if (currentTool === 'roundabout') {
+    if (cell.river || cell.bld || cell.rock) { warn('そこには おけないよ'); return; }
+    if (cell.roundabout) return;
+    if (inv.roundabouts <= 0) { warn('🔄 ロータリーが もうないよ（しゅうのおわりに もらえるかも）'); return; }
+    if (!cell.road) {
+      if (inv.roads <= 0) { warn('🛣️ 道が たりないよ'); return; }
+      cell.road = true; inv.roads--;
+    }
+    cell.roundabout = true; inv.roundabouts--;
+    playTone(620, 0.1, 'triangle');
+    markNetChanged(); selectTool('draw', true); updateUI();
+  } else if (currentTool === 'highway') {
+    if (inv.highways <= 0) { warn('🚀 高速道路が もうないよ（しゅうのおわりに もらえるかも）'); return; }
+    if (cell.river || cell.bld || cell.rock) { warn('はじめと おわりは、山や川や たてものじゃない所にしてね'); return; }
+    if (isHwyEnd(c, r)) { warn('そこは もう 高速道路のはしだよ'); return; }
+    if (hwyStart && grid[hwyStart.r][hwyStart.c].bld) hwyStart = null;
+    if (!hwyStart) { hwyStart = { c, r }; playTone(500, 0.06); toast('つぎは、おわりの場所を タップしてね', true); return; }
+    if (hwyStart.c === c && hwyStart.r === r) { hwyStart = null; return; }
+    if (manhattan(hwyStart, { c, r }) < 3) { warn('もうすこし はなれた場所を えらんでね'); return; }
+    const ends = [hwyStart, { c, r }];
+    const need = ends.filter(p => !grid[p.r][p.c].road).length;
+    if (inv.roads < need) { warn('🛣️ 道が たりないよ'); return; }
+    ends.forEach(p => { const g = grid[p.r][p.c]; if (!g.road) { g.road = true; inv.roads--; } });
+    highways.push({ c1: hwyStart.c, r1: hwyStart.r, c2: c, r2: r });
+    inv.highways--;
+    hwyStart = null;
+    playTone(740, 0.12, 'triangle');
+    markNetChanged(); selectTool('draw', true); updateUI();
+  }
+}
+
+function getCellFromEvent(e) {
+  const rect = cv.getBoundingClientRect();
+  const p = e.touches ? e.touches[0] : e;
+  if (!p) return null;
+  const x = p.clientX - rect.left, y = p.clientY - rect.top;
+  pointerPos = { x, y };
+  const c = Math.floor(x / cellSize), r = Math.floor(y / cellSize);
+  return inBounds(c, r) ? { c, r } : null;
+}
+function handlePointerDown(e) {
+  if (modalOpen || isGameOver) return;
+  e.preventDefault();
+  const cell = getCellFromEvent(e);
+  if (!cell) return;
+  isDragging = true; lastCell = cell;
+  applyToolAt(cell.c, cell.r);
+}
+function handlePointerMove(e) {
+  const cell = getCellFromEvent(e);
+  if (!isDragging) return;
+  e.preventDefault();
+  if (!cell) return;
+  if ((currentTool === 'draw' || currentTool === 'erase') && lastCell &&
+      (lastCell.c !== cell.c || lastCell.r !== cell.r)) {
+    let c0 = lastCell.c, r0 = lastCell.r;
+    while (c0 !== cell.c || r0 !== cell.r) {
+      if (Math.abs(cell.c - c0) >= Math.abs(cell.r - r0)) c0 += Math.sign(cell.c - c0);
+      else r0 += Math.sign(cell.r - r0);
+      applyToolAt(c0, r0);
+    }
+  }
+  lastCell = cell;
+}
+function handlePointerUp() { isDragging = false; lastCell = null; }
+
+cv.addEventListener('mousedown', handlePointerDown);
+window.addEventListener('mousemove', handlePointerMove);
+window.addEventListener('mouseup', handlePointerUp);
+cv.addEventListener('touchstart', handlePointerDown, { passive: false });
+cv.addEventListener('touchmove', handlePointerMove, { passive: false });
+window.addEventListener('touchend', handlePointerUp);
+window.addEventListener('keydown', e => {
+  if (modalOpen || isGameOver) return;
+  const map = { '1': 'draw', '2': 'erase', '3': 'roundabout', '4': 'highway' };
+  if (map[e.key]) selectTool(map[e.key]);
+  if (e.key === ' ') { e.preventDefault(); setSpeed(gameSpeed === 0 ? 1 : 0); }
+});
+
+/* ===================== 経路探索（重み付き：交差点を嫌う） ===================== */
+function stepCost(c, r) {
+  const g = grid[r][c];
+  if (g.bld) return 1;
+  if (g.roundabout) return COST.roundabout;
+  if (roadDegree(c, r) >= 3) return COST.junction;
+  return COST.road;
+}
+function findPath(sc, sr, destBld) {
+  const N = COLS * ROWS;
+  const dist = new Float32Array(N).fill(Infinity);
+  const prev = new Int16Array(N).fill(-1);
+  const viaHwy = new Uint8Array(N);
+  const done = new Uint8Array(N);
+  const start = sr * COLS + sc, goal = destBld.r * COLS + destBld.c;
+  dist[start] = 0; prev[start] = start;
+  const canStep = (nc, nr) => { const g = grid[nr][nc]; return g.bld ? g.bld === destBld : g.road; };
+  for (;;) {
+    let cur = -1, best = Infinity;
+    for (let i = 0; i < N; i++) if (!done[i] && dist[i] < best) { best = dist[i]; cur = i; }
+    if (cur === -1) return null;
+    done[cur] = 1;
+    if (cur === goal) break;
+    const cc = cur % COLS, cr = (cur / COLS) | 0;
+    const relax = (nc, nr, w, hwy) => {
+      const n = nr * COLS + nc;
+      if (done[n] || dist[cur] + w >= dist[n]) return;
+      dist[n] = dist[cur] + w; prev[n] = cur; viaHwy[n] = hwy ? 1 : 0;
+    };
+    for (const [dc, dr] of DIRS4) {
+      const nc = cc + dc, nr = cr + dr;
+      if (!linked(cc, cr, nc, nr) || !canStep(nc, nr)) continue;
+      relax(nc, nr, stepCost(nc, nr), false);
+    }
+    for (const h of highways) {
+      let tc = -1, tr = -1;
+      if (h.c1 === cc && h.r1 === cr) { tc = h.c2; tr = h.r2; }
+      else if (h.c2 === cc && h.r2 === cr) { tc = h.c1; tr = h.r1; }
+      if (tc === -1 || !grid[tr][tc].road) continue;
+      relax(tc, tr, COST.highway, true);
+    }
+  }
+  const path = [];
+  let k = goal;
+  for (;;) {
+    path.push({ c: k % COLS, r: (k / COLS) | 0, hwy: viaHwy[k] === 1 });
+    if (k === start) break;
+    k = prev[k];
+  }
+  return path.reverse();
+}
+function cachedPath(from, to) {
+  if (cacheVer !== netVersion) { pathCache.clear(); cacheVer = netVersion; }
+  const k = from.id + '>' + to.id;
+  if (!pathCache.has(k)) pathCache.set(k, findPath(from.c, from.r, to));
+  return pathCache.get(k);
+}
+
+/* ===================== 道路網の変更と車 ===================== */
+function markNetChanged() {
+  netVersion++;
+  for (const car of cars.slice()) {
+    car.needRepath = true;
+    if (car.state === 'atDest') continue;
+    const cur = car.path[car.idx], nxt = car.path[car.idx + 1];
+    if (car.prog > 0) { if (nxt && !cellUsable(nxt.c, nxt.r)) poofCar(car); }
+    else if (!cellUsable(cur.c, cur.r)) poofCar(car);
+  }
+}
+function poofCar(car) {
+  const i = cars.indexOf(car);
+  if (i < 0) return;
+  cars.splice(i, 1);
+  car.dead = true;
+  car.home.carsReady = Math.min(car.home.maxCars, car.home.carsReady + 1);
+  const p = carRenderPos(car);
+  if (!p.hidden) addPopup(p.x - 0.5, p.y - 0.5, '💨', '#94a3b8');
+}
+function repath(car) {
+  const cur = car.path[car.idx];
+  if (!cellUsable(cur.c, cur.r)) { poofCar(car); return false; }
+  let p = findPath(cur.c, cur.r, car.state === 'toDest' ? car.dest : car.home);
+  if (!p && car.state === 'toDest') { p = findPath(cur.c, cur.r, car.home); if (p) car.state = 'toHome'; }
+  if (!p) { poofCar(car); return false; }
+  car.path = p; car.idx = 0;
+  return true;
+}
+
+/* ===================== 渋滞モデル ===================== */
+function addOcc(occ, car) {
+  if (!car.hold) return;
+  let l = occ.get(car.hold.idx);
+  if (!l) { l = []; occ.set(car.hold.idx, l); }
+  l.push({ car, heading: car.hold.heading });
+}
+function removeOcc(occ, car) {
+  if (!car.hold) return;
+  const l = occ.get(car.hold.idx);
+  if (!l) return;
+  const i = l.findIndex(o => o.car === car);
+  if (i >= 0) l.splice(i, 1);
+}
+function canEnter(node, heading, car, occ) {
+  const g = grid[node.r][node.c];
+  if (g.bld) return true;
+  const others = (occ.get(node.r * COLS + node.c) || []).filter(o => o.car !== car);
+  let ok;
+  if (g.roundabout) ok = others.length < 3;
+  else if (roadDegree(node.c, node.r) >= 3) ok = others.length === 0;
+  else ok = others.length < 2 && !others.some(o => o.heading === heading);
+  if (ok) return true;
+  return car.wait >= DEADLOCK_WAIT && others.every(o => o.car.prog === 0 && o.car.wait >= 1);
+}
+function segDuration(cur, nxt) {
+  if (nxt.hwy) return 0.35 + Math.hypot(nxt.c - cur.c, nxt.r - cur.r) * 0.07;
+  const a = grid[cur.r][cur.c], b = grid[nxt.r][nxt.c];
+  let t = 1 / (CAR_SPEED * ((a.roundabout || b.roundabout) ? 1.4 : 1));
+  if (isJunction(nxt.c, nxt.r)) t += JUNCTION_STOP;
+  return t;
+}
+function arrive(car) {
+  car.hold = null;
+  if (car.state === 'toDest') {
+    const d = car.dest;
+    if (d.pins > 0) {
+      d.pins--; d.delivered++; d.bump = 0.25; score++;
+      comboCount = comboTimer > 0 ? comboCount + 1 : 0;
+      comboTimer = 1.2;
+      addPopup(d.c, d.r, comboCount >= 2 ? `+1 ×${comboCount + 1}` : '+1', COLORS[d.color].main);
+      playTone(620 + Math.min(comboCount, 8) * 45, 0.07, 'sine', 0.06);
+    }
+    car.state = 'atDest'; car.dwell = DWELL; car.stuck = 0;
+  } else {
+    car.home.carsReady = Math.min(car.home.maxCars, car.home.carsReady + 1);
+    const i = cars.indexOf(car);
+    if (i >= 0) cars.splice(i, 1);
+    car.dead = true;
+  }
+}
+function updateCars(step) {
+  const occ = new Map();
+  for (const car of cars) addOcc(occ, car);
+  for (const car of cars.slice()) {
+    if (car.dead) continue;
+    if (car.state === 'atDest') {
+      car.dwell -= step;
+      if (car.dwell > 0) continue;
+      const p = cachedPath(car.dest, car.home);
+      if (p) { car.state = 'toHome'; car.path = p; car.idx = 0; car.prog = 0; car.needRepath = false; }
+      else { car.stuck += 0.5; car.dwell = 0.5; if (car.stuck >= 3) poofCar(car); }
+      continue;
+    }
+    if (car.prog === 0) {
+      if (car.needRepath) { car.needRepath = false; if (!repath(car)) continue; }
+      const cur = car.path[car.idx], nxt = car.path[car.idx + 1];
+      if (!nxt) { arrive(car); continue; }
+      const heading = Math.sign(nxt.c - cur.c) + ',' + Math.sign(nxt.r - cur.r);
+      if (canEnter(nxt, heading, car, occ) || car.wait >= WAIT_BREAK) {
+        removeOcc(occ, car);
+        car.hold = grid[nxt.r][nxt.c].bld ? null : { idx: nxt.r * COLS + nxt.c, heading };
+        addOcc(occ, car);
+        car.wait = 0;
+        car.segDur = segDuration(cur, nxt);
+        car.prog = 1e-6;
+        if (!nxt.hwy) car.dir = { dx: Math.sign(nxt.c - cur.c), dy: Math.sign(nxt.r - cur.r) };
+      } else { car.wait += step; continue; }
+    }
+    car.prog += step / car.segDur;
+    if (car.prog >= 1) {
+      car.idx++; car.prog = 0;
+      if (car.idx >= car.path.length - 1) arrive(car);
+    }
+  }
+}
+
+/* ===================== 進行 ===================== */
+function isRush() {
+  if (tut) return false;
+  const d = Math.floor(dayTime);
+  if (d >= 5) return false;
+  const f = dayTime - d;
+  return (f > 0.2 && f < 0.4) || (f > 0.65 && f < 0.85);
+}
+
+function updateGame(dt) {
+  if (isGameOver || modalOpen || gameSpeed === 0) { updateUI(); return; }
+  const step = dt * gameSpeed;
+  if (tut) { tutorialTick(step); return; }
+
+  for (const p of popups) p.t += step;
+  popups = popups.filter(p => p.t < 1);
+  for (const b of buildings) { b.age += step; b.bump = Math.max(0, b.bump - step); }
+  comboTimer = Math.max(0, comboTimer - step);
+
+  dayTime += step / SEC_PER_DAY;
+  if (dayTime >= 7) { dayTime -= 7; week++; openWeeklyUpgrade(); updateUI(); return; }
+
+  spawnTimer += step;
+  if (spawnTimer >= Math.max(7, 12 - week * 0.5)) { spawnTimer = 0; spawnTick(); }
+
+  slowTick -= step;
+  if (slowTick <= 0) {
+    slowTick = 0.5;
+    for (const b of buildings) {
+      const others = buildings.filter(o => o.color === b.color && o.type !== b.type);
+      b.unreached = !others.some(o => (b.type === 'house' ? cachedPath(b, o) : cachedPath(o, b)));
+    }
+  }
+
+  const rush = isRush();
+  let anyOverload = false;
+  for (const h of buildings) if (h.type === 'house') h.cooldown = Math.max(0, h.cooldown - step);
+
+  for (const b of buildings) {
+    if (b.type !== 'dest') continue;
+    const interval = rush ? b.interval / RUSH_FACTOR : b.interval;
+    if (b.pins < b.maxPins) { b.pinTimer += step; if (b.pinTimer >= interval) { b.pinTimer = 0; b.pins++; } }
+    if (b.pins >= b.maxPins) {
+      anyOverload = true;
+      b.overloadTimer += step;
+      if (b.overloadTimer >= OVERLOAD_LIMIT) { gameOver(b); return; }
+    } else b.overloadTimer = Math.max(0, b.overloadTimer - step * 1.5);
+  }
+
+  dispatchCars();
+
+  if (anyOverload) { alarmTimer -= step; if (alarmTimer <= 0) { alarmTimer = 1; playTone(220, 0.12, 'square', 0.05); } }
+  else alarmTimer = 0;
+
+  updateCars(step);
+  stats.peakCars = Math.max(stats.peakCars, cars.length);
+  updateUI();
+}
+
+function dispatchCars() {
+  const dests = buildings.filter(b => b.type === 'dest').map(b => {
+    const inFlight = cars.filter(car => car.dest === b && car.state === 'toDest').length;
+    return { b, need: b.pins - inFlight, urg: b.pins - inFlight + b.overloadTimer };
+  }).filter(o => o.need > 0).sort((x, y) => y.urg - x.urg);
+  for (const { b } of dests) {
+    let best = null, bestPath = null;
+    for (const h of buildings) {
+      if (h.type !== 'house' || h.color !== b.color || h.carsReady <= 0 || h.cooldown > 0) continue;
+      const p = cachedPath(h, b);
+      if (p && (!bestPath || p.length < bestPath.length)) { best = h; bestPath = p; }
+    }
+    if (!best) continue;
+    best.carsReady--; best.cooldown = HOUSE_LAUNCH_CD;
+    cars.push({
+      id: nextId++, color: best.color, home: best, dest: b, state: 'toDest',
+      path: bestPath, idx: 0, prog: 0, segDur: 1, hold: null, wait: 0,
+      dir: { dx: 1, dy: 0 }, needRepath: false, stuck: 0, dwell: 0, dead: false
+    });
+  }
+}
+
+/* ===================== ゲームオーバー ===================== */
+let resultSummary = '';
+function gameOver(b) {
+  isGameOver = true;
+  failedDest = b;
+  isDragging = false;
+  playTone(180, 0.4, 'sawtooth', 0.12);
+  let best = score;
+  try {
+    best = Math.max(score, Number(localStorage.getItem('pocketTransitBestV4') || 0));
+    localStorage.setItem('pocketTransitBestV4', String(best));
+  } catch (e) { /* noop */ }
+  refreshTheory();
+  let placed = 0, junctions = 0;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (grid[r][c].road) placed++;
+    if (isJunction(c, r)) junctions++;
+  }
+  const eff = placed ? Math.round(theory.S / placed * 100) : 0;
+  const busy = Math.round(rhoFor(week) * 100);
+  const dayStr = `${week}しゅう目の ${DAYS[Math.min(6, Math.floor(dayTime))]}曜日`;
+  document.getElementById('overReason').textContent = `${COLORS[b.color].jp}の🏢で、お客さんが まちきれなくなったよ。`;
+  document.getElementById('finalScore').textContent = score + ' 台 とどいた！';
+  const items = [
+    ['がんばった日', dayStr], ['いちばんの記ろく', best + ' 台'],
+    ['📐 道のムダのなさ', `${eff}%`], ['🟠 まじわる所の数', junctions + ' か所'],
+    ['🔥 いそがしさ', busy + '%'], ['🚗 いちどに走った車', stats.peakCars + ' 台']
+  ];
+  document.getElementById('overStats').innerHTML =
+    items.map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  resultSummary = `<b>${score}台</b>　${dayStr}　${COLORS[b.color].jp}であふれた<br>道のムダのなさ ${eff}%（めやす${theory.S}／つかった${placed}）・まじわる所 ${junctions}・いそがしさ ${busy}%`;
+  showOverModal();
+}
+function showOverModal() {
+  document.getElementById('resultBar').classList.remove('show');
+  document.getElementById('overModal').classList.add('show');
+}
+function viewBoard() {
+  document.getElementById('overModal').classList.remove('show');
+  document.getElementById('uiHint').classList.add('fade');
+  document.getElementById('rbText').innerHTML = resultSummary;
+  document.getElementById('resultBar').classList.add('show');
+}
+
+/* ===================== 週末アップグレード ===================== */
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function openWeeklyUpgrade() {
+  modalOpen = true; isDragging = false;
+  refreshTheory();
+  const alpha = alphaFor(week);
+  const grant = Math.max(MIN_WEEKLY_ROADS, Math.ceil(alpha * theory.S) - ownedRoads());
+  inv.roads += grant;
+  stats.roadsGranted += grant;
+  updateDemandRates();
+  document.getElementById('upTitle').textContent = `${week - 1}しゅう目 クリア！🎉`;
+  document.getElementById('upBonus').innerHTML =
+    `🛣️ 道を ${grant}こ もらったよ<br><span style="font-weight:700;font-size:11px;color:var(--text-sub)">こんしゅうは お客さんが ふえるよ（🔥いそがしさ ${Math.round(rhoFor(week) * 100)}%）</span>`;
+  const pool = [
+    { icon: '🛣️', name: '道 +10', desc: '道が 10こ ふえる', act: () => { inv.roads += 10; } },
+    { icon: '🌉', name: '橋 +1', desc: '川を わたれる。道3こつき', act: () => { inv.bridges += 1; inv.roads += 3; } },
+    { icon: '🔄', name: 'ロータリー +1', desc: 'まじわる所で 止まらない。道3こつき', act: () => { inv.roundabouts += 1; inv.roads += 3; } },
+    { icon: '🚀', name: '高速道路 +1', desc: '山も川も とびこえる', act: () => { inv.highways += 1; } }
+  ];
+  if (houseCarBonus < 2) pool.push({ icon: '🚗', name: '車 +1', desc: 'ぜんぶの家の車が 1台ふえる（お客さんも ふえる）', act: () => {
+    houseCarBonus++;
+    for (const h of buildings) if (h.type === 'house') { h.maxCars++; h.carsReady++; }
+    updateDemandRates();
+  } });
+  if (destCapBonus < 4) pool.push({ icon: '🏢', name: 'まてる人 +2', desc: '🏢の白い点が 2こ多く たまっても だいじょうぶ', act: () => {
+    destCapBonus += 2;
+    for (const d of buildings) if (d.type === 'dest') d.maxPins += 2;
+  } });
+  const box = document.getElementById('choiceContainer');
+  box.innerHTML = '';
+  shuffle(pool).slice(0, 3).forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<div class="choice-icon">${item.icon}</div><div class="choice-name">${item.name}</div><div class="choice-desc">${item.desc}</div>`;
+    btn.onclick = () => {
+      item.act();
+      document.getElementById('upgradeModal').classList.remove('show');
+      playTone(680, 0.12, 'triangle');
+      modalOpen = false;
+      promoteMega();
+      updateUI();
+    };
+    box.appendChild(btn);
+  });
+  document.getElementById('upgradeModal').classList.add('show');
+}
+function promoteMega() {
+  if (week < 3) return;
+  const cands = buildings.filter(b => b.type === 'dest' && !b.mega);
+  if (!cands.length) return;
+  cands.sort((a, b) => b.delivered - a.delivered);
+  const t = cands[0];
+  t.mega = true; t.maxPins += 3;
+  updateDemandRates();
+  toast(`${COLORS[t.color].jp}の🏢が 大きくなった！お客さんが たくさん来るよ`, true);
+}
+
+/* ===================== UI ===================== */
+function updateUI() {
+  document.getElementById('uiScore').textContent = score;
+  document.getElementById('uiWeek').textContent = tut ? 'れんしゅう' : week + 'しゅう目';
+  const rush = isRush();
+  document.getElementById('uiDay').textContent = tut ? '' : DAYS[Math.min(6, Math.floor(dayTime))] + (rush ? ' 🚦' : '');
+  const bar = document.getElementById('uiWeekBar');
+  bar.style.width = tut ? '0%' : ((dayTime / 7) * 100).toFixed(1) + '%';
+  bar.classList.toggle('rush', rush);
+  document.getElementById('uiRoads').textContent = inv.roads;
+  document.getElementById('uiBridges').textContent = inv.bridges;
+  document.getElementById('uiSteiner').textContent = tut ? '-' : theory.S;
+  const rho = rush ? rhoFor(week) * RUSH_FACTOR : rhoFor(week);
+  document.getElementById('uiRho').textContent = tut ? '-' : Math.round(rho * 100) + '%';
+  document.getElementById('invRoads').classList.toggle('low', !tut && inv.roads <= 3);
+  document.getElementById('uiRounds').textContent = 'のこり ' + inv.roundabouts + 'こ';
+  document.getElementById('uiHwys').textContent = 'のこり ' + inv.highways + '本';
+  document.getElementById('toolRound').classList.toggle('empty', inv.roundabouts <= 0);
+  document.getElementById('toolHwy').classList.toggle('empty', inv.highways <= 0);
+}
+
+/* ===================== 描画 ===================== */
+const hwyCtrl = (x1, y1, x2, y2) => ({ x: (x1 + x2) / 2, y: (y1 + y2) / 2 - Math.hypot(x2 - x1, y2 - y1) * 0.35 });
+
+function carRenderPos(car) {
+  if (car.state === 'atDest') return { hidden: true };
+  const cur = car.path[car.idx], nxt = car.path[car.idx + 1];
+  if (!cur) return { hidden: true };
+  const x1 = cur.c + 0.5, y1 = cur.r + 0.5, lane = 0.14;
+  if (car.prog === 0 || !nxt) {
+    if (grid[cur.r][cur.c].bld) return { hidden: true };
+    return { x: x1 + car.dir.dy * lane, y: y1 - car.dir.dx * lane, angle: Math.atan2(car.dir.dy, car.dir.dx), air: 0 };
+  }
+  const x2 = nxt.c + 0.5, y2 = nxt.r + 0.5, t = Math.min(1, car.prog);
+  if (nxt.hwy) {
+    const k = hwyCtrl(x1, y1, x2, y2), u = 1 - t;
+    const x = u * u * x1 + 2 * u * t * k.x + t * t * x2;
+    const y = u * u * y1 + 2 * u * t * k.y + t * t * y2;
+    const ddx = 2 * u * (k.x - x1) + 2 * t * (x2 - k.x);
+    const ddy = 2 * u * (k.y - y1) + 2 * t * (y2 - k.y);
+    return { x, y, angle: Math.atan2(ddy, ddx), air: Math.sin(Math.PI * t) };
+  }
+  const dx = Math.sign(x2 - x1), dy = Math.sign(y2 - y1);
+  return { x: x1 + (x2 - x1) * t + dy * lane, y: y1 + (y2 - y1) * t - dx * lane, angle: Math.atan2(y2 - y1, x2 - x1), air: 0 };
+}
+
+function drawGame(now) {
+  const cs = cellSize;
+  const isDark = document.body.classList.contains('dark');
+  ctx.fillStyle = isDark ? '#181c24' : '#f3efe6';
+  ctx.fillRect(0, 0, cs * COLS, cs * ROWS);
+
+  ctx.fillStyle = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    ctx.beginPath(); ctx.arc((c + 0.5) * cs, (r + 0.5) * cs, Math.max(1.2, cs * 0.05), 0, Math.PI * 2); ctx.fill();
+  }
+
+  // 川
+  if (hasRiver) {
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = isDark ? '#1d3b58' : '#a8d5e5';
+    ctx.lineWidth = cs * 0.92;
+    ctx.beginPath();
+    for (let c = 0; c < COLS; c++) {
+      const x = (c + 0.5) * cs, y = (riverRow(c) + 0.5) * cs;
+      if (c === 0) ctx.moveTo(x - cs * 0.5, y);
+      ctx.lineTo(x, y);
+      if (c === COLS - 1) ctx.lineTo(x + cs * 0.5, y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ゲームオーバー後：めやすの道（最小網の近似）を薄く表示
+  if (isGameOver) {
+    ctx.fillStyle = 'rgba(124, 58, 237, 0.18)';
+    theory.cells.forEach(k => {
+      const c = k % COLS, r = (k / COLS) | 0;
+      ctx.beginPath(); ctx.roundRect(c * cs + cs * 0.12, r * cs + cs * 0.12, cs * 0.76, cs * 0.76, cs * 0.18); ctx.fill();
+    });
+  }
+
+  // 山
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (!grid[r][c].rock) continue;
+    const x = (c + 0.5) * cs, y = (r + 0.5) * cs;
+    ctx.fillStyle = isDark ? '#4b5563' : '#a8a29e';
+    ctx.beginPath();
+    ctx.moveTo(x - cs * 0.42, y + cs * 0.32); ctx.lineTo(x - cs * 0.08, y - cs * 0.34);
+    ctx.lineTo(x + cs * 0.1, y - cs * 0.02); ctx.lineTo(x + cs * 0.2, y - cs * 0.18);
+    ctx.lineTo(x + cs * 0.44, y + cs * 0.32); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = isDark ? '#9ca3af' : '#f5f5f4';
+    ctx.beginPath();
+    ctx.moveTo(x - cs * 0.17, y - cs * 0.16); ctx.lineTo(x - cs * 0.08, y - cs * 0.34);
+    ctx.lineTo(x + cs * 0.02, y - cs * 0.15); ctx.closePath(); ctx.fill();
+  }
+
+  // 道路
+  const roadColor = isDark ? '#434d61' : '#57606f';
+  const bridgeDeck = isDark ? '#637089' : '#8395a7';
+  const segs = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++)
+    for (const [dc, dr] of [[1, 0], [0, 1]])
+      if (linked(c, r, c + dc, r + dr)) segs.push([c, r, c + dc, r + dr, grid[r][c].bridge || grid[r + dr][c + dc].bridge]);
+  ctx.lineCap = 'round';
+  ctx.lineWidth = cs * 0.5;
+  for (const [c1, r1, c2, r2, br] of segs) {
+    ctx.strokeStyle = br ? bridgeDeck : roadColor;
+    ctx.beginPath(); ctx.moveTo((c1 + 0.5) * cs, (r1 + 0.5) * cs); ctx.lineTo((c2 + 0.5) * cs, (r2 + 0.5) * cs); ctx.stroke();
+  }
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const cell = grid[r][c];
+    if (!cell.road) continue;
+    const x = (c + 0.5) * cs, y = (r + 0.5) * cs;
+    ctx.fillStyle = cell.bridge ? bridgeDeck : roadColor;
+    ctx.beginPath(); ctx.arc(x, y, cs * 0.25, 0, Math.PI * 2); ctx.fill();
+    if (cell.bridge) {
+      ctx.strokeStyle = isDark ? '#9aa8bd' : '#4b5563';
+      ctx.lineWidth = Math.max(1.5, cs * 0.06);
+      const vertical = linked(c, r, c, r - 1) || linked(c, r, c, r + 1);
+      ctx.beginPath();
+      if (vertical) {
+        ctx.moveTo(x - cs * 0.3, y - cs * 0.42); ctx.lineTo(x - cs * 0.3, y + cs * 0.42);
+        ctx.moveTo(x + cs * 0.3, y - cs * 0.42); ctx.lineTo(x + cs * 0.3, y + cs * 0.42);
+      } else {
+        ctx.moveTo(x - cs * 0.42, y - cs * 0.3); ctx.lineTo(x + cs * 0.42, y - cs * 0.3);
+        ctx.moveTo(x - cs * 0.42, y + cs * 0.3); ctx.lineTo(x + cs * 0.42, y + cs * 0.3);
+      }
+      ctx.stroke();
+    }
+  }
+  ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.45)';
+  ctx.lineWidth = Math.max(1, cs * 0.05);
+  for (const [c1, r1, c2, r2] of segs) {
+    ctx.beginPath(); ctx.moveTo((c1 + 0.5) * cs, (r1 + 0.5) * cs); ctx.lineTo((c2 + 0.5) * cs, (r2 + 0.5) * cs); ctx.stroke();
+  }
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const x = (c + 0.5) * cs, y = (r + 0.5) * cs;
+    if (grid[r][c].roundabout) {
+      ctx.fillStyle = roadColor;
+      ctx.beginPath(); ctx.arc(x, y, cs * 0.46, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = isDark ? '#2ecc71' : '#27ae60';
+      ctx.beginPath(); ctx.arc(x, y, cs * 0.2, 0, Math.PI * 2); ctx.fill();
+    } else if (isJunction(c, r)) {
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.95)';
+      ctx.beginPath(); ctx.arc(x, y, cs * 0.11, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // つながっていないドアに矢印
+  for (const b of buildings) {
+    const e = entCell(b);
+    if (linked(b.c, b.r, e.c, e.r)) continue;
+    const [dx, dy] = DIRS4[b.ent];
+    const cx = (b.c + 0.5) * cs, cy = (b.r + 0.5) * cs;
+    ctx.save();
+    ctx.translate(cx + dx * cs * 0.62, cy + dy * cs * 0.62);
+    ctx.rotate(Math.atan2(dy, dx));
+    ctx.fillStyle = COLORS[b.color].main;
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath();
+    ctx.moveTo(cs * 0.16, 0); ctx.lineTo(-cs * 0.1, -cs * 0.15); ctx.lineTo(-cs * 0.1, cs * 0.15); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 建物
+  for (const b of buildings) {
+    const col = COLORS[b.color];
+    const cx = (b.c + 0.5) * cs, cy = (b.r + 0.5) * cs;
+    const grow = Math.min(1, 0.4 + b.age / 0.35 * 0.6);
+    const scale = grow * (1 + b.bump * 0.6);
+    const [edx, edy] = DIRS4[b.ent];
+
+    if (b.unreached && b.age > 2 && !tut) {
+      const pulse = isGameOver ? 1 : 0.5 + 0.5 * Math.sin(now * 5);
+      ctx.save();
+      ctx.strokeStyle = col.main; ctx.globalAlpha = 0.35 + 0.45 * pulse;
+      ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.arc(cx, cy, cs * 0.62, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+
+    if (b.type === 'house') {
+      const s = cs * 0.34 * scale;
+      ctx.fillStyle = col.main;
+      ctx.beginPath(); ctx.roundRect(cx - s, cy - s * 0.55, s * 2, s * 1.5, s * 0.25); ctx.fill();
+      ctx.fillStyle = col.dark;
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 1.2, cy - s * 0.4); ctx.lineTo(cx, cy - s * 1.3); ctx.lineTo(cx + s * 1.2, cy - s * 0.4);
+      ctx.closePath(); ctx.fill();
+      const n = b.maxCars;
+      const sp = Math.min(s * 0.5, (s * 1.7) / Math.max(1, n - 1));
+      for (let i = 0; i < n; i++) {
+        ctx.fillStyle = i < b.carsReady ? '#ffffff' : 'rgba(0,0,0,0.25)';
+        ctx.beginPath(); ctx.arc(cx - (sp * (n - 1)) / 2 + i * sp, cy + s * 0.35, s * 0.16, 0, Math.PI * 2); ctx.fill();
+      }
+    } else {
+      const half = cs * (b.mega ? 0.48 : 0.42) * scale;
+      if (b.overloadTimer > 0 || b === failedDest) {
+        const ratio = b === failedDest ? 1 : Math.min(1, b.overloadTimer / OVERLOAD_LIMIT);
+        const blink = !isGameOver && b.pins >= b.maxPins && Math.sin(now * 12) > 0;
+        ctx.fillStyle = blink || b === failedDest ? 'rgba(239,68,68,0.35)' : 'rgba(239,68,68,0.2)';
+        ctx.beginPath(); ctx.arc(cx, cy, half + cs * 0.24, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#ef4444'; ctx.lineWidth = Math.max(3, cs * 0.12);
+        ctx.beginPath(); ctx.arc(cx, cy, half + cs * 0.18, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio); ctx.stroke();
+      }
+      ctx.fillStyle = col.dark;
+      ctx.beginPath(); ctx.roundRect(cx - half, cy - half, half * 2, half * 2, half * 0.3); ctx.fill();
+      const inset = half * 0.14;
+      ctx.fillStyle = col.main;
+      ctx.beginPath(); ctx.roundRect(cx - half + inset, cy - half + inset, (half - inset) * 2, (half - inset) * 2, half * 0.22); ctx.fill();
+      if (b.mega) {
+        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = Math.max(2, cs * 0.07);
+        ctx.beginPath(); ctx.roundRect(cx - half, cy - half, half * 2, half * 2, half * 0.3); ctx.stroke();
+      }
+      const cols = Math.ceil(Math.sqrt(b.maxPins)), rows = Math.ceil(b.maxPins / cols);
+      const gap = ((half - inset) * 2) / (cols + 0.2);
+      const rad = Math.max(1.6, Math.min(gap * 0.32, cs * 0.09));
+      const ox = cx - (gap * (cols - 1)) / 2, oy = cy - (gap * (rows - 1)) / 2;
+      for (let p = 0; p < b.maxPins; p++) {
+        ctx.fillStyle = p < b.pins ? '#ffffff' : 'rgba(0,0,0,0.2)';
+        ctx.beginPath(); ctx.arc(ox + (p % cols) * gap, oy + Math.floor(p / cols) * gap, rad, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    const ex = cx + edx * cs * 0.4, ey = cy + edy * cs * 0.4;
+    ctx.roundRect(ex - cs * (edx ? 0.04 : 0.12), ey - cs * (edy ? 0.04 : 0.12), cs * (edx ? 0.08 : 0.24), cs * (edy ? 0.08 : 0.24), 2);
+    ctx.fill();
+  }
+
+  // 高速道路
+  for (const h of highways) {
+    const x1 = (h.c1 + 0.5) * cs, y1 = (h.r1 + 0.5) * cs, x2 = (h.c2 + 0.5) * cs, y2 = (h.r2 + 0.5) * cs;
+    const k = hwyCtrl(x1, y1, x2, y2);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = cs * 0.22;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = cs * 0.2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(k.x, k.y, x2, y2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = Math.max(1, cs * 0.04);
+    ctx.setLineDash([cs * 0.25, cs * 0.2]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(k.x, k.y, x2, y2); ctx.stroke();
+    ctx.restore();
+    for (const [px, py] of [[x1, y1], [x2, y2]]) {
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath(); ctx.arc(px, py, cs * 0.2, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  if (currentTool === 'highway' && hwyStart && !isGameOver) {
+    const sx = (hwyStart.c + 0.5) * cs, sy = (hwyStart.r + 0.5) * cs;
+    ctx.fillStyle = 'rgba(245,158,11,0.85)';
+    ctx.beginPath(); ctx.arc(sx, sy, cs * 0.22, 0, Math.PI * 2); ctx.fill();
+    if (pointerPos) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(245,158,11,0.7)'; ctx.lineWidth = Math.max(2, cs * 0.12); ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(pointerPos.x, pointerPos.y); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // 車
+  const list = cars.map(car => ({ car, p: carRenderPos(car) })).filter(o => !o.p.hidden);
+  list.sort((a, b) => a.p.air - b.p.air);
+  for (const { car, p } of list) {
+    const col = COLORS[car.color];
+    const sc = 1 + p.air * 0.35;
+    const L = cs * 0.46 * sc, W = cs * 0.3 * sc;
+    const x = p.x * cs, y = p.y * cs;
+    if (p.air > 0) {
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.beginPath(); ctx.ellipse(x, y + p.air * cs * 0.35, L * 0.45, W * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(p.angle);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.roundRect(-L / 2, -W / 2, L, W, W * 0.3); ctx.fill();
+    ctx.fillStyle = col.main;
+    ctx.beginPath(); ctx.roundRect(-L / 2 + W * 0.15, -W / 2 + W * 0.15, L - W * 0.3, W * 0.7, W * 0.2); ctx.fill();
+    ctx.restore();
+    if (car.wait > 1.5) {
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath(); ctx.arc(x, y - cs * 0.3, cs * 0.08, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // れんしゅう：光るマスと 指のアイコン
+  if (tut && !tut.done) {
+    const tg = LESSONS[tut.lesson].targets();
+    const pulse = 0.5 + 0.5 * Math.sin(now * 6);
+    ctx.save();
+    ctx.strokeStyle = `rgba(250, 204, 21, ${0.55 + 0.45 * pulse})`;
+    ctx.fillStyle = `rgba(250, 204, 21, ${0.12 + 0.12 * pulse})`;
+    ctx.lineWidth = Math.max(2, cs * 0.09);
+    ctx.setLineDash([cs * 0.18, cs * 0.12]);
+    for (const t of tg) {
+      ctx.beginPath(); ctx.roundRect(t.c * cs + 2, t.r * cs + 2, cs - 4, cs - 4, cs * 0.2);
+      ctx.fill(); ctx.stroke();
+    }
+    ctx.restore();
+    if (tg.length) {
+      const t = tg[Math.floor(now * 2.5) % tg.length];
+      const bob = Math.sin(now * 8) * cs * 0.06;
+      ctx.font = `${Math.round(cs * 0.7)}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('👆', (t.c + 0.62) * cs, (t.r + 1.0) * cs + bob);
+    }
+  }
+
+  if (!isGameOver) {
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const p of popups) {
+      ctx.globalAlpha = 1 - p.t;
+      ctx.font = `900 ${Math.round(cs * 0.45)}px sans-serif`;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = isDark ? '#181c24' : '#ffffff';
+      const y = (p.y - 0.4 - p.t * 0.8) * cs;
+      ctx.strokeText(p.text, p.x * cs, y);
+      ctx.fillStyle = p.color;
+      ctx.fillText(p.text, p.x * cs, y);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* ===================== ループ ===================== */
+let lastTS = performance.now();
+function loop(ts) {
+  const dt = Math.min(0.1, Math.max(0, (ts - lastTS) / 1000));
+  lastTS = ts;
+  updateGame(dt);
+  drawGame(ts / 1000);
+  requestAnimationFrame(loop);
+}
+initGame(false);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
