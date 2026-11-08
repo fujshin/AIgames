@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Pocket Transit v7.5 - まちの道づくりパズル</title>
+<title>Pocket Transit v7.7 - まちの道づくりパズル</title>
 <style>
   :root {
     --bg-main: #f3efe6; --bg-panel: #ffffff; --text-main: #2c3540;
@@ -33,8 +33,8 @@
   .score-val { font-size: 20px; font-weight: 900; color: var(--accent); font-variant-numeric: tabular-nums; }
   .clock-area { display: flex; flex-direction: column; width: 92px; gap: 3px; }
   .clock-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; }
-  .week-bar { width: 100%; height: 6px; background: rgba(128,128,128,0.2); border-radius: 3px; overflow: hidden; }
   .hdr-ver { font-size: 9px; color: var(--text-sub); font-weight: 700; text-align: right; line-height: 1; }
+  .week-bar { width: 100%; height: 6px; background: rgba(128,128,128,0.2); border-radius: 3px; overflow: hidden; }
   .week-fill { height: 100%; background: var(--accent); width: 0%; }
   .week-fill.rush { background: #f59e0b; }
   .top-btns { display: flex; align-items: center; gap: 4px; }
@@ -328,7 +328,7 @@
     <ul class="rules">
       <li>🏠 <b>おなじ色</b>の 家と🏢を、道でつなごう！</li>
       <li>🚗 車が🏢に つくと、🏢の<b>白い点</b>（まっているお客さん）が へるよ。白い点が いっぱいのまま ほうっておくと まけ。</li>
-      <li>🏠 お客さんは <b>家が ふえるほど ふえる</b>よ。<b>新しい家も どんどん つなごう</b>。つながっていない家は 💢<b>だんだん おこって</b>、ずっと ほうっておくと まけ。</li>
+      <li>🏠 お客さんは <b>家が ふえるほど ふえる</b>よ。<b>新しい家も どんどん つなごう</b>。1けんだけでは 車が たりなくなるよ。</li>
       <li>✏️ 道は<b>指をはなさずに なぞった</b>ところだけ つながるよ。</li>
       <li>🎨 <b>色ごとに 道を わける</b>と、まじわらないので こみにくいよ。</li>
       <li>✂️ となりの道と くっついちゃったら、<b>あいだを なぞって 切りはなせる</b>よ。</li>
@@ -403,7 +403,7 @@
 'use strict';
 
 /* ===================== バージョンと キャッシュ対策 ===================== */
-const APP_VERSION = '7.5.0';
+const APP_VERSION = '7.7.0';
 (function checkLatest() {
   try {
     if (!/^https?:$/.test(location.protocol) || typeof fetch !== 'function') return;
@@ -426,31 +426,36 @@ const APP_VERSION = '7.5.0';
    難易度の理論的な設計
    (1) 道路網＝障害物つき直交シュタイナー木問題（NP困難）
    (2) 輸送＝待ち行列。需要 λ = ρ(週) × 理想輸送能力 μ。
-   (3) 交差点＝単一サーバ。網の目にすると一時停止で容量が落ちる（Braess 的状況）。
+       μ = Σ_家 min(車数 ÷ いちばん近い🏢との往復時間, 1 ÷ 発車間隔)
+   (3) 交差点＝サーバ。網の目にすると一時停止で容量が落ちる（Braess 的状況）。
+   v7.5: ピンチゲージは「満員と1つ手前を行き来している間」は減らない（バグ修正）。
+   v7.6: 家のゲージ削除。本番の合流点を軽く（2台まで・0.15秒）。
+   v7.7: 少し難しく調整（いそがしさ 50%から週+9%。上手でも 6〜8しゅう目で 限界が来る）。
    ===================================================================== */
 const COLS = 11;
 const ROWS = 15;
 const PANEL_ROWS = 4;
 const ALPHA_START = 1.7, ALPHA_STEP = 0.1, ALPHA_MIN = 1.2;
 const MIN_WEEKLY_ROADS = 4;
-const RHO_START = 0.7, RHO_STEP = 0.1;
-const RHO_LATE_FROM = 9, RHO_LATE_STEP = 0.05;
-// 需要の間隔の下限（低くして 需要が 頭打ちに ならないように）
+const RHO_START = 0.5, RHO_STEP = 0.09;   // 1しゅう目 50% → 5しゅう目 86% → 7しゅう目 104%
+const RHO_LATE_FROM = 9, RHO_LATE_STEP = 0.09;
 const minPinInterval = w => 0.3;
 const RUSH_FACTOR = 1.5;
 const ROCK_COUNT = 9;
 const SEC_PER_DAY = 9;
 const CAR_SPEED = 2.8;
-const JUNCTION_STOP = 0.45;
-const OVERLOAD_LIMIT = 15;
+const JUNCTION_STOP = 0.15;          // ほんばん
+const JUNCTION_STOP_LESSON = 0.45;   // れんしゅう・つめ道路（まじわりの こまり方を はっきり 見せる）
+const strictJunction = () => !!(tut || puz);
+const OVERLOAD_LIMIT = 20;
+const OVERLOAD_RECOVER = 1.0;
 const DANGER_RATIO = 0.5;
-// つながっていない家の まんぞくゲージ。この秒数 つながらないと まけ（ほったらかし対策）
-const HOUSE_GRACE = 10;     // 出てきてから この秒数は 待ってくれる
-const HOUSE_LIMIT = 40;     // そのあと この秒数で まけ（半分で 自動ストップ）
 const WAIT_BREAK = 12;
 const DEADLOCK_WAIT = 2.5;
 const HOUSE_LAUNCH_CD = 0.6;
 const DWELL = 0.35;
+const START_PINS = 6;
+const SPAWN_BASE = 9, SPAWN_MIN = 5;
 const COST = { road: 1, junction: 3, roundabout: 1.2, highway: 2 };
 
 const COLORS = [
@@ -935,22 +940,6 @@ function openHelp() {
 
 /* ===================== ピンチ（自動 一時停止） ===================== */
 function checkDanger() {
-  for (const h of buildings) {
-    if (h.type !== 'house' || tut) continue;
-    if (h.angry < HOUSE_LIMIT * 0.2) h.alerted = false;
-    if (!h.alerted && h.angry >= HOUSE_LIMIT * DANGER_RATIO) {
-      h.alerted = true;
-      dangerDest = h;
-      stats.pinches++;
-      if (stats.firstPinchScore == null) stats.firstPinchScore = score;
-      setSpeed(0);
-      isDragging = false;
-      playTone(330, 0.12, 'square', 0.06);
-      setTimeout(() => playTone(250, 0.18, 'square', 0.06), 140);
-      toast(`⏸ ピンチ！ ${COLORS[h.color].jp}の 家が 道に つながってなくて おこってるよ。つないであげよう！`);
-      return true;
-    }
-  }
   for (const b of buildings) {
     if (b.type !== 'dest') continue;
     if (b.overloadTimer < OVERLOAD_LIMIT * 0.2) b.alerted = false;
@@ -1614,8 +1603,8 @@ function spawnBuilding(type, colorIdx, c, r, ent) {
     carsReady: type === 'house' ? 2 + houseCarBonus : 0,
     maxCars: 2 + houseCarBonus,
     pins: type === 'dest' ? 1 : 0,
-    maxPins: 6 + destCapBonus,
-    interval: 6, pinTimer: 0, overloadTimer: 0, alerted: false, angry: 0, mega: false, delivered: 0,
+    maxPins: START_PINS + destCapBonus,
+    interval: 6, pinTimer: 0, overloadTimer: 0, alerted: false, mega: false, delivered: 0,
     cooldown: 0, bump: 0, age: 0, unreached: false
   };
   buildings.push(b);
@@ -2040,7 +2029,7 @@ function canEnter(node, heading, car, occ) {
   const others = (occ.get(node.r * COLS + node.c) || []).filter(o => o.car !== car);
   let ok;
   if (g.roundabout) ok = others.length < 3;
-  else if (roadDegree(node.c, node.r) >= 3) ok = others.length === 0;
+  else if (roadDegree(node.c, node.r) >= 3) ok = strictJunction() ? others.length === 0 : (others.length < 2 && !others.some(o => o.heading === heading));
   else ok = others.length < 2 && !others.some(o => o.heading === heading);
   if (ok) return true;
   return car.wait >= DEADLOCK_WAIT && others.every(o => o.car.prog === 0 && o.car.wait >= 1);
@@ -2049,7 +2038,7 @@ function segDuration(cur, nxt) {
   if (nxt.hwy) return 0.35 + Math.hypot(nxt.c - cur.c, nxt.r - cur.r) * 0.07;
   const a = grid[cur.r][cur.c], b = grid[nxt.r][nxt.c];
   let t = 1 / (CAR_SPEED * ((a.roundabout || b.roundabout) ? 1.4 : 1));
-  if (isJunction(nxt.c, nxt.r)) t += JUNCTION_STOP;
+  if (isJunction(nxt.c, nxt.r)) t += strictJunction() ? JUNCTION_STOP_LESSON : JUNCTION_STOP;
   return t;
 }
 function arrive(car) {
@@ -2134,7 +2123,7 @@ function updateGame(dt) {
   if (dayTime >= 7) { dayTime -= 7; week++; openWeeklyUpgrade(); updateUI(); return; }
 
   spawnTimer += step;
-  if (spawnTimer >= Math.max(5, 9 - week * 0.5)) { spawnTimer = 0; spawnTick(); }
+  if (spawnTimer >= Math.max(SPAWN_MIN, SPAWN_BASE - week * 0.5)) { spawnTimer = 0; spawnTick(); }
 
   slowTick -= step;
   if (slowTick <= 0) {
@@ -2143,15 +2132,6 @@ function updateGame(dt) {
       const others = buildings.filter(o => o.color === b.color && o.type !== b.type);
       b.unreached = !others.some(o => (b.type === 'house' ? cachedPath(b, o) : cachedPath(o, b)));
     }
-  }
-
-  // つながっていない家は だんだん おこる（いかりゲージ）
-  for (const h of buildings) {
-    if (h.type !== 'house') continue;
-    if (h.unreached && h.age > HOUSE_GRACE) {
-      h.angry += step;
-      if (h.angry >= HOUSE_LIMIT) { gameOver(h); return; }
-    } else h.angry = Math.max(0, h.angry - step * 3);
   }
 
   const rush = isRush();
@@ -2167,9 +2147,8 @@ function updateGame(dt) {
       b.overloadTimer += step;
       if (b.overloadTimer >= OVERLOAD_LIMIT) { gameOver(b); return; }
     } else if (b.pins >= b.maxPins - 1) {
-      // v7.5 バグ修正：満員と「1つ手前」を いったりきたり している あいだは ゲージを へらさない。
-      // （以前は 1つ手前で 1.5倍の はやさで へっていたため、需要の 4わり しか はこべなくても まけなかった）
-    } else b.overloadTimer = Math.max(0, b.overloadTimer - step * 0.75);
+      // 満員と「1つ手前」を いったりきたり している あいだは ゲージを へらさない
+    } else b.overloadTimer = Math.max(0, b.overloadTimer - step * OVERLOAD_RECOVER);
   }
 
   if (checkDanger()) { updateUI(); return; }
@@ -2215,8 +2194,8 @@ function gameOver(b) {
   playTone(180, 0.4, 'sawtooth', 0.12);
   let best = score;
   try {
-    best = Math.max(score, Number(localStorage.getItem('pocketTransitBestV73') || 0));
-    localStorage.setItem('pocketTransitBestV73', String(best));
+    best = Math.max(score, Number(localStorage.getItem('pocketTransitBestV76') || 0));
+    localStorage.setItem('pocketTransitBestV76', String(best));
   } catch (e) { /* noop */ }
   refreshTheory();
   let placed = 0, junctions = 0;
@@ -2229,9 +2208,7 @@ function gameOver(b) {
   const eff = placed ? Math.round(theory.S / placed * 100) : 0;
   const busy = Math.round(rhoFor(week) * 100);
   const dayStr = `${week}しゅう目の ${DAYS[Math.min(6, Math.floor(dayTime))]}曜日`;
-  document.getElementById('overReason').textContent = b.type === 'house'
-    ? `${COLORS[b.color].jp}の 家が ずっと 道に つながらなくて、みんな おこっちゃった。`
-    : `${COLORS[b.color].jp}の🏢で、お客さんが まちきれなくなったよ。`;
+  document.getElementById('overReason').textContent = `${COLORS[b.color].jp}の🏢で、お客さんが まちきれなくなったよ。`;
   document.getElementById('finalScore').textContent = score + ' 台 とどいた！';
   const items = [
     ['がんばった日', dayStr], ['いちばんの記ろく', best + ' 台'],
@@ -2241,7 +2218,7 @@ function gameOver(b) {
   ];
   document.getElementById('overStats').innerHTML =
     items.map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
-  resultSummary = `<b>${score}台</b>　${dayStr}　${COLORS[b.color].jp}の${b.type === 'house' ? '家が おこった' : '🏢が あふれた'}<br>つないだ家 ${housesOn}/${housesAll.length}・まじわる所 ${junctions}・道のムダのなさ ${eff}%・いそがしさ ${busy}%`;
+  resultSummary = `<b>${score}台</b>　${dayStr}　${COLORS[b.color].jp}の🏢が あふれた<br>つないだ家 ${housesOn}/${housesAll.length}・まじわる所 ${junctions}・道のムダのなさ ${eff}%・いそがしさ ${busy}%`;
   updatePausePill();
   showOverModal();
 }
@@ -2517,30 +2494,7 @@ function drawGame(now) {
     const scale = grow * (1 + b.bump * 0.6);
     const [edx, edy] = DIRS4[b.ent];
 
-    if (b.type === 'house' && (b.angry > 0 || b === failedDest)) {
-      const ratio = b === failedDest ? 1 : Math.min(1, b.angry / HOUSE_LIMIT);
-      ctx.save();
-      ctx.fillStyle = 'rgba(239,68,68,0.18)';
-      ctx.beginPath(); ctx.arc(cx, cy, cs * 0.6, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = 'rgba(239,68,68,0.3)'; ctx.lineWidth = Math.max(3, cs * 0.1);
-      ctx.beginPath(); ctx.arc(cx, cy, cs * 0.56, 0, Math.PI * 2); ctx.stroke();
-      ctx.strokeStyle = '#ef4444';
-      ctx.beginPath(); ctx.arc(cx, cy, cs * 0.56, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio); ctx.stroke();
-      ctx.restore();
-      if (ratio > 0.25) {
-        ctx.font = `${Math.round(cs * 0.36)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('💢', cx + cs * 0.38, cy - cs * 0.42);
-      }
-    }
-    if (b === dangerDest && b.type === 'house' && gameSpeed === 0) {
-      const pulse = 0.5 + 0.5 * Math.sin(now * 6);
-      ctx.save();
-      ctx.strokeStyle = `rgba(250, 204, 21, ${0.5 + 0.5 * pulse})`;
-      ctx.lineWidth = Math.max(3, cs * 0.12);
-      ctx.beginPath(); ctx.arc(cx, cy, cs * (0.72 + 0.08 * pulse), 0, Math.PI * 2); ctx.stroke();
-      ctx.restore();
-    }
-    if (b.unreached && b.age > 2 && !tut && !puz && !(b.type === 'house' && b.angry > 0)) {
+    if (b.unreached && b.age > 2 && !tut && !puz) {
       const pulse = isGameOver ? 1 : 0.5 + 0.5 * Math.sin(now * 5);
       ctx.save();
       ctx.strokeStyle = colr.main; ctx.globalAlpha = 0.35 + 0.45 * pulse;
