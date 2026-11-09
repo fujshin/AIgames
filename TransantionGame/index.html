@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Pocket Transit v7.7 - まちの道づくりパズル</title>
+<title>Pocket Transit v7.8 - まちの道づくりパズル</title>
 <style>
   :root {
     --bg-main: #f3efe6; --bg-panel: #ffffff; --text-main: #2c3540;
@@ -193,6 +193,14 @@
   .choice-icon { font-size: 26px; }
   .choice-name { font-size: 13px; font-weight: 800; }
   .choice-desc { font-size: 11px; color: var(--text-sub); line-height: 1.4; }
+  .choice-box.shop { grid-template-columns: repeat(2, 1fr); }
+  .choice-btn { position: relative; }
+  .choice-btn .cost { position: absolute; top: 6px; right: 8px; font-size: 12px; font-weight: 900; color: #b45309; background: #fef3c7; border-radius: 8px; padding: 1px 6px; }
+  .choice-btn .own { font-size: 10.5px; font-weight: 800; color: var(--accent); }
+  .choice-btn:disabled { opacity: 0.38; cursor: default; }
+  .pts-line { font-size: 15px; font-weight: 900; margin-bottom: 8px; }
+  .pts-line b { color: #b45309; font-size: 20px; }
+  .cart { min-height: 20px; font-size: 12px; font-weight: 800; color: var(--text-sub); margin-top: 8px; }
   .primary-btn { width: 100%; padding: 12px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; }
   .primary-btn.puz { background: #9333ea; }
   .primary-btn.pulse { animation: pop 0.9s ease-in-out infinite; }
@@ -382,8 +390,11 @@
   <div class="modal-card">
     <h2 id="upTitle">1しゅう目 クリア！</h2>
     <div class="bonus-line" id="upBonus"></div>
-    <p>ごほうびを 1つ えらんでね。</p>
-    <div class="choice-box" id="choiceContainer"></div>
+    <p>ポイントで ごほうびを えらんでね。のこった ポイントは 来週に くりこせるよ。</p>
+    <div class="pts-line" id="ptsLine"></div>
+    <div class="choice-box shop" id="choiceContainer"></div>
+    <div class="cart" id="cartLine"></div>
+    <div class="row-btns"><button class="secondary-btn" onclick="shopUndo()">↩ ひとつ もどす</button><button class="primary-btn" style="margin-top:8px" onclick="shopDone()">けってい ▶</button></div>
   </div>
 </div>
 
@@ -403,7 +414,7 @@
 'use strict';
 
 /* ===================== バージョンと キャッシュ対策 ===================== */
-const APP_VERSION = '7.7.0';
+const APP_VERSION = '7.8.0';
 (function checkLatest() {
   try {
     if (!/^https?:$/.test(location.protocol) || typeof fetch !== 'function') return;
@@ -431,6 +442,8 @@ const APP_VERSION = '7.7.0';
    v7.5: ピンチゲージは「満員と1つ手前を行き来している間」は減らない（バグ修正）。
    v7.6: 家のゲージ削除。本番の合流点を軽く（2台まで・0.15秒）。
    v7.7: 少し難しく調整（いそがしさ 50%から週+9%。上手でも 6〜8しゅう目で 限界が来る）。
+   v7.8: ごほうびを ポイント制に（毎週3pt・のこりは くりこし）。運の要素を なくし、えらび方で 差がつくように。
+         お客さんの量は 車2台を 基準に 固定 → 🚗車+1 が 本当の 強化に。道+10 は 廃止（道は 自動で もらえる）。
    ===================================================================== */
 const COLS = 11;
 const ROWS = 15;
@@ -455,6 +468,8 @@ const DEADLOCK_WAIT = 2.5;
 const HOUSE_LAUNCH_CD = 0.6;
 const DWELL = 0.35;
 const START_PINS = 6;
+const BASE_CARS = 2;
+const WEEKLY_POINTS = 3, MAX_POINTS = 6;
 const SPAWN_BASE = 9, SPAWN_MIN = 5;
 const COST = { road: 1, junction: 3, roundabout: 1.2, highway: 2 };
 
@@ -495,7 +510,7 @@ let score = 0, week = 1, dayTime = 0, gameSpeed = 1;
 let isGameOver = false, modalOpen = true, failedDest = null, dangerDest = null;
 let currentTool = 'draw';
 let inv = { roads: 0, bridges: 1, roundabouts: 1, highways: 0 };
-let houseCarBonus = 0, destCapBonus = 0;
+let houseCarBonus = 0, destCapBonus = 0, shopPts = 0, shopLog = [];
 let isDragging = false, lastCell = null, downCell = null, dragMoved = false, hwyStart = null, pointerPos = null;
 let spawnTimer = 0, slowTick = 0, alarmTimer = 0, comboCount = 0, comboTimer = 0, comboDay = -1;
 let nextId = 1;
@@ -813,7 +828,7 @@ function updateDemandRates() {
     for (const h of hs) {
       const best = Math.min(...ds.map(d => idealDist(h, d)));
       const T = 2 * best / CAR_SPEED + DWELL + HOUSE_LAUNCH_CD;
-      mu += Math.min(h.maxCars / T, 1 / HOUSE_LAUNCH_CD);
+      mu += Math.min(BASE_CARS / T, 1 / HOUSE_LAUNCH_CD);   // 車+1 では お客さんは ふえない
     }
     const lambda = rho * mu;
     const wSum = ds.reduce((a, d) => a + (d.mega ? 1.5 : 1), 0);
@@ -837,7 +852,7 @@ function makeGrid(withRiver) {
 }
 function resetCommon() {
   score = 0; week = 1; dayTime = 0; isGameOver = false; failedDest = null; dangerDest = null;
-  houseCarBonus = 0; destCapBonus = 0;
+  houseCarBonus = 0; destCapBonus = 0; shopPts = 0; shopLog = [];
   buildings = []; highways = []; cars = []; popups = [];
   hwyStart = null; spawnTimer = 0; slowTick = 0; comboCount = 0; comboDay = -1;
   colorInfo = [];
@@ -2252,38 +2267,65 @@ function openWeeklyUpgrade() {
     ? '<br><span style="color:#ef4444">ここからは お客さんが どんどん ふえるよ。どこまで まもれるかな？</span>' : '';
   document.getElementById('upBonus').innerHTML =
     `🛣️ 道を ${grant}こ もらったよ<br><span style="font-weight:700;font-size:11px;color:var(--text-sub)">こんしゅうの 🔥いそがしさ ${busy}%</span>${late}`;
-  const pool = [
-    { icon: '🛣️', name: '道 +10', desc: '道が 10こ ふえる', act: () => { inv.roads += 10; } },
-    { icon: '🌉', name: '橋 +1', desc: '川を わたれる。道3こつき', act: () => { inv.bridges += 1; inv.roads += 3; } },
-    { icon: '🔄', name: 'ロータリー +1', desc: 'まじわる所で 止まらない。道3こつき', act: () => { inv.roundabouts += 1; inv.roads += 3; } },
-    { icon: '🚀', name: '高速道路 +1', desc: '山も川も とびこえる', act: () => { inv.highways += 1; } }
-  ];
-  if (houseCarBonus < 2) pool.push({ icon: '🚗', name: '車 +1', desc: 'ぜんぶの家の車が 1台ふえる（お客さんも ふえる）', act: () => {
-    houseCarBonus++;
-    for (const h of buildings) if (h.type === 'house') { h.maxCars++; h.carsReady++; }
-    updateDemandRates();
-  } });
-  if (destCapBonus < 4) pool.push({ icon: '🏢', name: 'まてる人 +2', desc: '🏢の白い点が 2こ多く たまっても だいじょうぶ', act: () => {
-    destCapBonus += 2;
-    for (const d of buildings) if (d.type === 'dest') d.maxPins += 2;
-  } });
+  shopPts = Math.min(MAX_POINTS, shopPts + WEEKLY_POINTS);
+  shopLog = [];
+  renderShop();
+  showModal('upgradeModal', true);
+}
+
+/* ===================== ごほうびショップ（ポイント制） ===================== */
+const SHOP = [
+  { id: 'round', icon: '🔄', name: 'ロータリー', cost: 1, desc: 'まじわる所で 止まらず 3台いっしょに 通れる',
+    own: () => inv.roundabouts, act: () => { inv.roundabouts++; }, undo: () => { inv.roundabouts--; } },
+  { id: 'bridge', icon: '🌉', name: '橋', cost: 1, desc: '川を わたれる（道3こつき）',
+    own: () => inv.bridges, act: () => { inv.bridges++; inv.roads += 3; }, undo: () => { inv.bridges--; inv.roads -= 3; } },
+  { id: 'hwy', icon: '🚀', name: '高速道路', cost: 2, desc: '山も川も とびこえて はやく 走る',
+    own: () => inv.highways, act: () => { inv.highways++; }, undo: () => { inv.highways--; } },
+  { id: 'car', icon: '🚗', name: '車 +1', cost: 2, max: () => houseCarBonus < 3,
+    desc: 'ぜんぶの家の車が 1台ふえる。お客さんは ふえないので 運ぶ力だけ アップ（道は こみやすく）',
+    own: () => 2 + houseCarBonus, ownLabel: '台/家',
+    act: () => { houseCarBonus++; for (const h of buildings) if (h.type === 'house') { h.maxCars++; h.carsReady++; } },
+    undo: () => { houseCarBonus--; for (const h of buildings) if (h.type === 'house') { h.maxCars--; h.carsReady = Math.min(h.carsReady, h.maxCars); } } },
+  { id: 'cap', icon: '🏢', name: 'まてる人 +2', cost: 2, max: () => destCapBonus < 4,
+    desc: 'ぜんぶの🏢で 白い点が 2こ多く たまっても だいじょうぶ（ピンチまでの よゆう）',
+    own: () => START_PINS + destCapBonus, ownLabel: 'こ',
+    act: () => { destCapBonus += 2; for (const d of buildings) if (d.type === 'dest') d.maxPins += 2; },
+    undo: () => { destCapBonus -= 2; for (const d of buildings) if (d.type === 'dest') { d.maxPins -= 2; d.pins = Math.min(d.pins, d.maxPins); } } }
+];
+function renderShop() {
+  document.getElementById('ptsLine').innerHTML = `のこり <b>${shopPts}</b> ポイント（毎週 +${WEEKLY_POINTS}・最大${MAX_POINTS}）`;
   const box = document.getElementById('choiceContainer');
   box.innerHTML = '';
-  shuffle(pool).slice(0, 3).forEach(item => {
+  for (const it of SHOP) {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
-    btn.innerHTML = `<div class="choice-icon">${item.icon}</div><div class="choice-name">${item.name}</div><div class="choice-desc">${item.desc}</div>`;
-    btn.onclick = () => {
-      item.act();
-      showModal('upgradeModal', false);
-      playTone(680, 0.12, 'triangle');
-      modalOpen = false;
-      promoteMega();
-      updateUI();
-    };
+    btn.disabled = !(shopPts >= it.cost && (!it.max || it.max()));
+    btn.innerHTML = `<span class="cost">${it.cost}pt</span><div class="choice-icon">${it.icon}</div><div class="choice-name">${it.name}</div><div class="choice-desc">${it.desc}</div><div class="own">いま ${it.own()}${it.ownLabel || 'こ'}</div>`;
+    btn.onclick = () => shopBuy(it.id);
     box.appendChild(btn);
-  });
-  showModal('upgradeModal', true);
+  }
+  document.getElementById('cartLine').textContent = shopLog.length ? 'えらんだ もの：' + shopLog.map(id => SHOP.find(x => x.id === id).icon).join(' ') : '';
+}
+function shopBuy(id) {
+  const it = SHOP.find(x => x.id === id);
+  if (!it || shopPts < it.cost || (it.max && !it.max())) return false;
+  shopPts -= it.cost; it.act(); shopLog.push(id);
+  playTone(680, 0.08, 'triangle');
+  renderShop(); updateUI();
+  return true;
+}
+function shopUndo() {
+  const id = shopLog.pop(); if (!id) return;
+  const it = SHOP.find(x => x.id === id);
+  it.undo(); shopPts += it.cost;
+  renderShop(); updateUI();
+}
+function shopDone() {
+  showModal('upgradeModal', false);
+  playTone(680, 0.12, 'triangle');
+  modalOpen = false;
+  promoteMega();
+  updateUI();
 }
 function promoteMega() {
   if (week < 3) return;
