@@ -7,7 +7,7 @@
 // - れんぞく記録：7日ごとに「おやすみ札」
 // =====================================================================
 const Game = (() => {
-  const APP_VERSION = '1.1.0';
+  const APP_VERSION = '1.1.4';
   const SAVE_KEY = 'eitanQuest_v1';
   const STAGE_SIZE = 10, CH_SIZE = 100;
   const INTERVAL_DAYS = [0, 1, 2, 4, 7, 14, 30];
@@ -90,7 +90,7 @@ const Game = (() => {
     return {
       name, lv: 1, xp: 0, created: Date.now(), cleared: {}, words: {}, dex: {},
       streak: { last: null, count: 0, best: 0, freeze: 0 },
-      settings: { sound: true, voice: true, think: false, rate: 0.9, exVoice: true },
+      settings: { sound: true, voice: true, think: false, rate: 0.9, exVoice: true, autoNext: false },
       tab: 'j1', open: {}
     };
   }
@@ -101,6 +101,7 @@ const Game = (() => {
       for (const g of GRADES) { const c = S.cleared[g.id]; if (Array.isArray(c) || (c && !c.s)) S.cleared[g.id] = { s: [], b: [] }; }
       S.open = S.open || {};
       if (S.settings.exVoice === undefined) S.settings.exVoice = true;
+      if (S.settings.autoNext === undefined) S.settings.autoNext = false;
     }
   }
   function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* noop */ } }
@@ -137,15 +138,39 @@ const Game = (() => {
     enVoice = vs.find(v => /en[-_]US/i.test(v.lang) && /Samantha|Google|Aria|Jenny/i.test(v.name)) || vs.find(v => /en[-_]US/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || null;
   }
   if (canSpeak) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-  function speak(text) {
-    if (!canSpeak || !S || !S.settings.voice) return;
-    try {
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'en-US'; u.rate = S.settings.rate || 0.9; if (enVoice) u.voice = enVoice;
-      speechSynthesis.speak(u);
-    } catch (e) { /* noop */ }
+  // ---- 読み上げ（Chrome 対策込み）----
+  // ・cancel() の直後に speak() すると 読み上げが 消えることがある → 少し待ってから 話す
+  // ・読み上げ中の 発話オブジェクトが 消されると onend が 来ない → 配列で 保持
+  // ・2つ目以降は キューに まとめて積まず、前の文が 終わってから 次を 話す（つながって 消えるのを 防ぐ）
+  // ・onend が 来ないときの 保険として、文の長さから 終わる時間を 見積もって 次へ
+  let speechToken = 0;
+  const liveUtter = [];
+  function speakSeq(texts, onEnd) {
+    const token = ++speechToken;
+    if (!canSpeak || !S || !S.settings.voice) { if (onEnd) onEnd(); return; }
+    try { speechSynthesis.cancel(); } catch (e) { /* noop */ }
+    let idx = 0;
+    const step = () => {
+      if (token !== speechToken) return;              // 別の読み上げが 始まったら やめる
+      if (idx >= texts.length) { if (onEnd) onEnd(); return; }
+      const text = texts[idx], first = idx === 0; idx++;
+      let done = false;
+      const finish = () => { if (done) return; done = true; clearTimeout(guard); liveUtter.length = 0; setTimeout(step, first && texts.length > 1 ? 200 : 0); };
+      const rate = (S.settings.rate || 0.9) * (first && texts.length > 1 ? 0.9 : 1);
+      const guard = setTimeout(finish, 1500 + text.length * 110 / rate);   // 保険
+      try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US'; u.rate = rate; if (enVoice) u.voice = enVoice;
+        u.onend = finish; u.onerror = e => { if (!e || e.error !== 'interrupted') finish(); };
+        liveUtter.push(u);
+        if (speechSynthesis.paused) speechSynthesis.resume();
+        speechSynthesis.speak(u);
+      } catch (e) { finish(); }
+    };
+    setTimeout(step, 55);                              // cancel 直後を さける（短すぎると Chrome で 消える）
   }
+  function speak(text, onEnd) { speakSeq([text], onEnd); }
+  function stopSpeak() { speechToken++; try { if (canSpeak) speechSynthesis.cancel(); } catch (e) { /* noop */ } }
   const markEx = w => esc(w.ex).replace(/\[([^\]]+)\]/, '<mark>$1</mark>');
 
   function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('show', s.id === id)); }
@@ -316,10 +341,10 @@ const Game = (() => {
     $('learnEx').innerHTML = `<div class="ex-en">${markEx(w)}</div><div class="ex-ja">${esc(w.exj)}</div>`;
     $('learnNext').textContent = L.i === L.list.length - 1 ? 'たたかいへ ⚔️' : 'つぎへ ▶';
     const c = $('learnCard'); c.style.animation = 'none'; void c.offsetWidth; c.style.animation = '';
-    speak(w.en);
+    speakSeq([w.en, w.plain]);
   }
-  function nextLearn() { sfx.tap(); if (++L.i >= L.list.length) enterArena(); else showLearn(); }
-  function speakCurrent() { if (!L) return; const w = L.list[L.i]; speak(w.en + '. ' + w.plain); }
+  function nextLearn() { sfx.tap(); stopSpeak(); if (++L.i >= L.list.length) enterArena(); else showLearn(); }
+  function speakCurrent() { if (!L) return; const w = L.list[L.i]; speakSeq([w.en, w.plain]); }
 
   // ================= バトル =================
   function enterArena() {
@@ -481,13 +506,21 @@ const Game = (() => {
       <div class="ex-head"><b>${esc(w.en)}</b><span>${esc(w.ja)}</span></div>
       ${w.pat ? `<div class="ex-pat">${esc(w.pat)}</div>` : ''}
       <div class="ex-en">${markEx(w)}</div><div class="ex-ja">${esc(w.exj)}</div>
-      <button class="btn" onclick="Game.next()">${ok ? 'つぎへ ▶' : 'わかった！ つぎへ ▶'}</button>`;
-    if (S.settings.exVoice) speak(w.plain); else if (ok) speak(w.en);
+      <button class="btn" onclick="Game.next()">${ok ? 'つぎへ ▶' : 'わかった！ つぎへ ▶'}</button>
+      <button class="btn ghost small" onclick="Game.sayText(${JSON.stringify(w.plain).replace(/"/g, '&quot;')})">🔊 もう一度 きく</button>`;
     clearTimeout(B.autoT);
-    if (ok) B.autoT = setTimeout(next, 1800);
+    const qid = B.qid = (B.qid || 0) + 1;
+    const auto = ok && S.settings.autoNext;
+    B.explainAt = performance.now();
+    const goLater = auto ? () => { if (B && B.qid === qid) B.autoT = setTimeout(() => next(true), 1200); } : null;
+    if (S.settings.exVoice) speak(w.plain, goLater);
+    else if (ok) speak(w.en, goLater);
+    else if (goLater) goLater();
   }
-  function next() {
+  function next(fromAuto) {
     if (!B || $('explain').classList.contains('hidden')) return;
+    if (!fromAuto && performance.now() - (B.explainAt || 0) < 700) return;
+    stopSpeak();
     clearTimeout(B.autoT); $('explain').classList.add('hidden');
     afterAnswer();
   }
@@ -613,6 +646,7 @@ const Game = (() => {
       <label class="set-row"><div>🔊 効果音</div><input type="checkbox" ${s.sound ? 'checked' : ''} onchange="Game.setOpt('sound',this.checked)"></label>
       <label class="set-row"><div>🗣️ 英語の 読み上げ<small>${canSpeak ? 'ブラウザの 音声で 発音します' : 'この ブラウザは 読み上げに 対応していません'}</small></div><input type="checkbox" ${s.voice ? 'checked' : ''} ${canSpeak ? '' : 'disabled'} onchange="Game.setOpt('voice',this.checked)"></label>
       <label class="set-row"><div>📜 こたえたあと 例文を 読み上げる</div><input type="checkbox" ${s.exVoice ? 'checked' : ''} onchange="Game.setOpt('exVoice',this.checked)"></label>
+      <label class="set-row"><div>⏩ 正解したら 自動で つぎへ<small>例文の 読み上げが 終わってから 進みます（まちがえたときは いつも ボタンで 進みます）</small></div><input type="checkbox" ${s.autoNext ? 'checked' : ''} onchange="Game.setOpt('autoNext',this.checked)"></label>
       <label class="set-row"><div>🐢 読み上げを ゆっくりに</div><input type="checkbox" ${s.rate < 0.85 ? 'checked' : ''} onchange="Game.setOpt('rate',this.checked?0.7:0.9)"></label>
       <label class="set-row"><div>💡 思い出してから 選ぶ<small>4択の 選択肢を すぐに 見せません。頭の中で 答えを 思い出してから ボタンを おそう</small></div><input type="checkbox" ${s.think ? 'checked' : ''} onchange="Game.setOpt('think',this.checked)"></label>
       <div class="set-row"><div>🔥 れんぞく記録<small>さいこう ${S.streak.best}日・おやすみ札 ${S.streak.freeze}まい（7日つづけると 1まい。1日 休んでも 記録が きれません）</small></div></div>
