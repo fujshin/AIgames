@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="app-version" content="1.1.0">
+<meta name="theme-color" content="#1e1b4b">
+<title>えいたんクエスト - 英単語RPG</title>
+<link rel="stylesheet" href="css/style.css?v=1.1.0">
+</head>
+<body>
+<div id="app">
+
+  <section id="scrTitle" class="screen show">
+    <div class="title-wrap">
+      <div class="title-logo">⚔️📖</div>
+      <h1>えいたん<br>クエスト</h1>
+      <p class="title-sub">英単語で たたかう RPG</p>
+      <div id="titleNew">
+        <input id="inpName" maxlength="8" placeholder="ゆうしゃの なまえ" autocomplete="off">
+        <button class="btn big" onclick="Game.newGame()">ぼうけんを はじめる</button>
+      </div>
+      <div id="titleCont" class="hidden">
+        <p id="titleWelcome"></p>
+        <button class="btn big" onclick="Game.toMap()">つづきから</button>
+        <button class="btn ghost small" onclick="Game.resetConfirm()">さいしょから やりなおす</button>
+      </div>
+      <p class="ver" id="verTxt"></p>
+    </div>
+  </section>
+
+  <section id="scrMap" class="screen">
+    <header class="hud">
+      <div class="hud-hero"><span id="hudHero" class="hero-ico"></span><div><b id="hudName"></b><small id="hudLv"></small></div></div>
+      <div class="hud-xp"><div class="bar"><div id="hudXpBar"></div></div></div>
+      <div class="hud-streak" id="hudStreak"></div>
+    </header>
+    <div class="map-tabs" id="gradeTabs"></div>
+    <div class="map-body" id="mapBody"></div>
+    <nav class="bottom-nav">
+      <button onclick="Game.startReview()"><span>🗼</span>おさらいの塔<em id="dueBadge"></em></button>
+      <button onclick="Game.showDex()"><span>📕</span>図鑑</button>
+      <button onclick="Game.showBook()"><span>📒</span>単語ノート</button>
+      <button onclick="Game.showSettings()"><span>⚙️</span>せってい</button>
+    </nav>
+  </section>
+
+  <section id="scrLearn" class="screen">
+    <div class="learn-head"><span id="learnStep"></span><button class="btn ghost small" onclick="Game.skipLearn()">たたかいへ ▶</button></div>
+    <div class="card" id="learnCard">
+      <button class="speak" onclick="Game.speakCurrent()">🔊</button>
+      <div class="card-en" id="learnEn"></div>
+      <div class="card-pos" id="learnPos"></div>
+      <div class="card-ja" id="learnJa"></div>
+      <div class="card-pat" id="learnPat"></div>
+      <div class="card-ex" id="learnEx"></div>
+    </div>
+    <p class="learn-tip">例文も 声に出して 読んでみよう。つぎの たたかいで 出てくるよ！</p>
+    <button class="btn big" id="learnNext" onclick="Game.nextLearn()">つぎへ ▶</button>
+  </section>
+
+  <section id="scrBattle" class="screen">
+    <div class="battle-top">
+      <div class="hearts" id="hearts"></div>
+      <div class="combo" id="combo"></div>
+      <button class="btn ghost tiny" onclick="Game.quitBattle()">にげる</button>
+    </div>
+    <div class="arena" id="arena">
+      <div class="enemy-wrap">
+        <div class="enemy-name" id="enemyName"></div>
+        <div class="enemy-hp"><div id="enemyHp"></div></div>
+        <div class="enemy" id="enemy"></div>
+      </div>
+      <div class="wave" id="wave"></div>
+      <div class="fx" id="fx"></div>
+    </div>
+    <div class="timer"><div id="timerBar"></div></div>
+    <div class="qbox">
+      <div class="q-kind" id="qKind"></div>
+      <div class="q-main" id="qMain"></div>
+      <div class="q-sub" id="qSub"></div>
+      <div class="q-area" id="qArea"></div>
+      <div class="explain hidden" id="explain"></div>
+    </div>
+  </section>
+
+  <section id="scrResult" class="screen">
+    <div class="result">
+      <h2 id="resTitle"></h2>
+      <div class="res-big" id="resIcon"></div>
+      <div class="res-stats" id="resStats"></div>
+      <div class="res-miss" id="resMiss"></div>
+      <div class="res-btns" id="resBtns"></div>
+    </div>
+  </section>
+
+  <section id="scrPanel" class="screen">
+    <div class="panel-head"><h2 id="panelTitle"></h2><button class="btn ghost small" onclick="Game.toMap()">もどる</button></div>
+    <div class="panel-body" id="panelBody"></div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="js/config.js?v=1.1.0"></script>
+<script src="js/words_j1.js?v=1.1.0"></script>
+<!-- 学年がふえたら ここに js/words_j2.js などを 追加 -->
+<script src="js/game.js?v=1.1.0"></script>
+</body>
+</html>
