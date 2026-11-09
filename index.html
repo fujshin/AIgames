@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#7c3aed">
+<title>あそびの広場 - ゲームをえらんでね！</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+    color: #1f2937;
+    background: linear-gradient(160deg, #fde68a 0%, #fbcfe8 45%, #c4b5fd 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+  }
+
+  /* ふわふわ浮かぶ背景の飾り */
+  .sky { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .float {
+    position: absolute; bottom: -60px; font-size: 28px; opacity: .55;
+    animation: rise linear infinite;
+  }
+  @keyframes rise {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(-115vh) rotate(360deg); }
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 36px 18px 48px; }
+
+  /* タイトル */
+  header { text-align: center; margin-bottom: 30px; }
+  .badge {
+    display: inline-block; background: #fff; color: #7c3aed; font-weight: 900; font-size: 13px;
+    padding: 6px 14px; border-radius: 999px; box-shadow: 0 4px 0 #ddd6fe; margin-bottom: 14px;
+  }
+  h1 {
+    font-size: clamp(34px, 8vw, 58px); font-weight: 900; line-height: 1.1; letter-spacing: 2px;
+    color: #fff; text-shadow: 0 4px 0 #7c3aed, 0 8px 18px rgba(124,58,237,.35);
+  }
+  h1 .bounce { display: inline-block; animation: hop 1.6s ease-in-out infinite; }
+  h1 .bounce:nth-child(2) { animation-delay: .1s; } h1 .bounce:nth-child(3) { animation-delay: .2s; }
+  h1 .bounce:nth-child(4) { animation-delay: .3s; } h1 .bounce:nth-child(5) { animation-delay: .4s; }
+  h1 .bounce:nth-child(6) { animation-delay: .5s; }
+  @keyframes hop { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
+  .lead { margin-top: 14px; font-weight: 800; color: #6b21a8; font-size: 16px; }
+
+  /* ゲームカード */
+  .games { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; }
+  .card {
+    position: relative; display: flex; flex-direction: column; text-decoration: none; color: inherit;
+    background: #fff; border-radius: 26px; overflow: hidden;
+    box-shadow: 0 10px 0 rgba(0,0,0,.08), 0 18px 30px rgba(124,58,237,.18);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .card:hover, .card:focus-visible { transform: translateY(-6px) rotate(-.6deg); box-shadow: 0 16px 0 rgba(0,0,0,.08), 0 26px 40px rgba(124,58,237,.28); outline: none; }
+  .card:active { transform: translateY(2px); }
+
+  .scene { height: 190px; position: relative; overflow: hidden; }
+  .body { padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .card h2 { font-size: 24px; font-weight: 900; }
+  .card p { font-size: 14px; line-height: 1.7; color: #4b5563; font-weight: 600; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; }
+  .play {
+    margin-top: auto; align-self: flex-start; font-weight: 900; font-size: 17px; color: #fff;
+    padding: 12px 22px; border-radius: 16px; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .play .arrow { display: inline-block; transition: transform .2s; }
+  .card:hover .play .arrow { transform: translateX(5px); }
+
+  /* --- 交通ゲームの場面：道路を車が走る --- */
+  .city { background: linear-gradient(#bae6fd 0 55%, #86efac 55% 100%); }
+  .city .sun { position: absolute; top: 16px; right: 22px; font-size: 38px; animation: spin 12s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .city .bld { position: absolute; bottom: 45%; font-size: 40px; }
+  .city .road {
+    position: absolute; left: 0; right: 0; bottom: 18%; height: 44px; background: #57606f;
+    border-top: 4px solid #fff; border-bottom: 4px solid #fff;
+  }
+  .city .road::after {
+    content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px;
+    background: repeating-linear-gradient(90deg, #facc15 0 22px, transparent 22px 40px);
+    animation: lane 1s linear infinite;
+  }
+  @keyframes lane { to { background-position: 40px 0; } }
+  .city .car { position: absolute; font-size: 30px; bottom: calc(18% + 6px); animation: drive linear infinite; }
+  .city .car.r { transform: scaleX(-1); }
+  @keyframes drive { from { left: -60px; } to { left: 110%; } }
+  .city .car.back { animation-name: driveBack; bottom: calc(18% + 18px); font-size: 24px; }
+  @keyframes driveBack { from { left: 110%; } to { left: -60px; } }
+  .tag.t1 { background: #dbeafe; color: #1d4ed8; } .tag.t2 { background: #dcfce7; color: #15803d; } .tag.t3 { background: #fef3c7; color: #b45309; }
+  .play.blue { background: #2b7de9; box-shadow: 0 5px 0 #1b56a8; }
+
+  /* --- 英単語ゲームの場面：モンスターと文字が舞う --- */
+  .quest { background: radial-gradient(circle at 50% 30%, #a78bfa, #4c1d95 75%); }
+  .quest .hero, .quest .mon { position: absolute; bottom: 26px; font-size: 54px; animation: bob 1.8s ease-in-out infinite; }
+  .quest .hero { left: 16%; } .quest .mon { right: 16%; animation-delay: .6s; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .quest .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; background: rgba(0,0,0,.25); }
+  .quest .letter {
+    position: absolute; color: #fde68a; font-weight: 900; font-size: 22px; text-shadow: 0 2px 6px rgba(0,0,0,.4);
+    animation: twinkle 3s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%, 100% { opacity: .2; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
+  .quest .spark { position: absolute; left: 50%; bottom: 52px; font-size: 26px; transform: translateX(-50%); animation: zap 1.6s ease-in-out infinite; }
+  @keyframes zap { 0%, 100% { opacity: 0; transform: translateX(-90%) scale(.6); } 40% { opacity: 1; } 70% { opacity: 1; transform: translateX(10%) scale(1.2); } }
+  .tag.e1 { background: #ede9fe; color: #6d28d9; } .tag.e2 { background: #fce7f3; color: #be185d; } .tag.e3 { background: #e0f2fe; color: #0369a1; }
+  .play.purple { background: #7c3aed; box-shadow: 0 5px 0 #4c1d95; }
+
+  footer { text-align: center; margin-top: 34px; font-size: 12px; color: #6b21a8; font-weight: 700; line-height: 1.8; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky" id="sky" aria-hidden="true"></div>
+
+<div class="wrap">
+  <header>
+    <span class="badge">🎮 ゲームの ひろば</span>
+    <h1><span class="bounce">あ</span><span class="bounce">そ</span><span class="bounce">び</span><span class="bounce">の</span><span class="bounce">広</span><span class="bounce">場</span></h1>
+    <p class="lead">きょうは どっちで あそぶ？ カードを タップしてね！</p>
+  </header>
+
+  <main class="games">
+    <!-- 交通ゲーム -->
+    <a class="card" href="TransantionGame/index.html" aria-label="まちの道づくり で あそぶ">
+      <div class="scene city" aria-hidden="true">
+        <span class="sun">☀️</span>
+        <span class="bld" style="left:8%">🏠</span>
+        <span class="bld" style="left:30%">🏫</span>
+        <span class="bld" style="left:52%">🏢</span>
+        <span class="bld" style="left:74%">🏪</span>
+        <div class="road"></div>
+        <span class="car r" style="animation-duration:4.5s">🚗</span>
+        <span class="car r" style="animation-duration:6s; animation-delay:-3s">🚌</span>
+        <span class="car back" style="animation-duration:5.2s; animation-delay:-1s">🚕</span>
+      </div>
+      <div class="body">
+        <h2>🚗 まちの道づくり</h2>
+        <p>おなじ色の 家と🏢を 道で つなごう！ 道が こまないように くふうして、まちを 守りぬけ。</p>
+        <div class="tags">
+          <span class="tag t1">🧩 パズル</span>
+          <span class="tag t2">🧠 考える力</span>
+          <span class="tag t3">🏙️ まちづくり</span>
+        </div>
+        <span class="play blue">あそぶ <span class="arrow">▶</span></span>
+      </div>
+    </a>
+
+    <!-- 英単語ゲーム -->
+    <a class="card" href="EnglishGame/index.html" aria-label="えいたんクエスト で あそぶ">
+      <div class="scene quest" aria-hidden="true">
+        <span class="letter" style="left:10%; top:14%">A</span>
+        <span class="letter" style="left:30%; top:30%; animation-delay:.5s">b</span>
+        <span class="letter" style="left:48%; top:10%; animation-delay:1s">C</span>
+        <span class="letter" style="left:68%; top:28%; animation-delay:1.5s">d</span>
+        <span class="letter" style="left:86%; top:12%; animation-delay:2s">E</span>
+        <div class="ground"></div>
+        <span class="hero">🧙</span>
+        <span class="spark">✨</span>
+        <span class="mon">🐉</span>
+      </div>
+      <div class="body">
+        <h2>⚔️ えいたんクエスト</h2>
+        <p>英単語で モンスターと たたかう RPG！ 中1から 高校まで、レベル診断で ぴったりの ステージから スタート。</p>
+        <div class="tags">
+          <span class="tag e1">📖 英単語 3,600語</span>
+          <span class="tag e2">🔮 レベル診断</span>
+          <span class="tag e3">🔊 発音つき</span>
+        </div>
+        <span class="play purple">あそぶ <span class="arrow">▶</span></span>
+      </div>
+    </a>
+  </main>
+
+  <footer>
+    セーブデータは この ブラウザに 保存されるよ 💾<br>
+    たのしく あそんでね！
+  </footer>
+</div>
+
+<script>
+  // 背景に ふわふわ のぼる 飾りを ちらす（動きを へらす設定の 端末では 出さない）
+  (function () {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const items = ['⭐', '🎈', '🚗', '📖', '✨', '🔤', '🌟', '🚌', '💡', '🎉'];
+    const sky = document.getElementById('sky');
+    for (let i = 0; i < 16; i++) {
+      const s = document.createElement('span');
+      s.className = 'float';
+      s.textContent = items[i % items.length];
+      s.style.left = (Math.random() * 100) + 'vw';
+      s.style.fontSize = (18 + Math.random() * 22) + 'px';
+      s.style.animationDuration = (12 + Math.random() * 14) + 's';
+      s.style.animationDelay = (-Math.random() * 20) + 's';
+      sky.appendChild(s);
+    }
+  })();
+</script>
+</body>
+</html>
