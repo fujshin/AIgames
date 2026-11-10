@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Pocket Transit v7.12 - まちの道づくりパズル</title>
+<title>Pocket Transit v7.15 - まちの道づくりパズル</title>
 <style>
   :root {
     --bg-main: #f3efe6; --bg-panel: #ffffff; --text-main: #2c3540;
@@ -140,9 +140,9 @@
   .puz-btns { display: flex; gap: 4px; }
   footer {
     background: var(--bg-panel); border-top: 1px solid var(--border-col);
-    padding: 6px 6px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; z-index: 10;
+    padding: 3px 4px 6px; display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; z-index: 10;
   }
-  .inv-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 800; padding: 0 4px; }
+  .inv-row { display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 800; padding: 0 4px; }
   .inv-badges { display: flex; gap: 9px; align-items: baseline; }
   .inv-item span { color: var(--accent); font-size: 14px; margin-left: 2px; }
   .inv-item.low span { color: #ef4444; }
@@ -153,22 +153,27 @@
     background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3);
     border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 800; cursor: pointer;
   }
-  .tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-  .tool-grid .tool-btn { padding: 2px 1px; }
-  .tool-grid .tool-icon { font-size: 16px; }
-  @media (max-width: 380px) { .tool-title { font-size: 10px; } .tool-sub { font-size: 8.5px; } }
+  .tool-grid { display: flex; gap: 3px; overflow-x: auto; scrollbar-width: none; padding-top: 4px; }
+  .tool-grid::-webkit-scrollbar { display: none; }
   .tool-btn {
-    background: var(--bg-main); border: 2px solid var(--border-col); border-radius: 10px;
-    padding: 4px 1px; display: flex; flex-direction: column; align-items: center; gap: 1px;
-    cursor: pointer; color: var(--text-main);
+    background: var(--bg-main); border: 2px solid var(--border-col); border-radius: 9px;
+    padding: 1px 4px 2px; display: flex; flex-direction: column; align-items: center; gap: 0;
+    cursor: pointer; color: var(--text-main); flex: 0 0 auto; min-width: 48px; position: relative;
   }
+  .tool-btn.empty { order: 1; }
+  .tool-btn.locked { order: 2; }
+  .tool-cnt {
+    position: absolute; top: -5px; right: -2px; min-width: 15px; height: 15px; line-height: 15px; padding: 0 3px;
+    border-radius: 8px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 900; text-align: center;
+  }
+  .tool-btn.empty .tool-cnt { display: none; }
   .tool-btn.active { border-color: var(--accent); background: rgba(43,125,233,0.12); }
   .tool-btn.empty { opacity: 0.45; }
   .tool-btn.locked { opacity: 0.3; }
   .tool-btn.pulse { border-color: #facc15; animation: glow 1s ease-in-out infinite; opacity: 1; }
   @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(250,204,21,0.8); } 50% { box-shadow: 0 0 0 6px rgba(250,204,21,0); } }
-  .tool-icon { font-size: 18px; line-height: 1.1; }
-  .tool-title { font-size: 11px; font-weight: 800; white-space: nowrap; }
+  .tool-icon { font-size: 17px; line-height: 1.15; }
+  .tool-title { font-size: 9.5px; font-weight: 800; white-space: nowrap; }
   .tool-sub { font-size: 9.5px; color: var(--text-sub); font-weight: 700; white-space: nowrap; }
   .modal-wrap {
     position: fixed; inset: 0; background: rgba(10,15,25,0.72); backdrop-filter: blur(4px);
@@ -316,28 +321,34 @@
   </div>
   <div class="tool-grid">
     <button class="tool-btn active" id="toolDraw" onclick="selectTool('draw')">
-      <span class="tool-icon">✏️</span><span class="tool-title">道を引く</span><span class="tool-sub">なぞる</span>
+      <span class="tool-icon">✏️</span><span class="tool-title">道を引く</span>
     </button>
     <button class="tool-btn" id="toolErase" onclick="selectTool('erase')">
-      <span class="tool-icon">🧹</span><span class="tool-title">道を消す</span><span class="tool-sub">なぞる</span>
+      <span class="tool-icon">🧹</span><span class="tool-title">道を消す</span>
     </button>
     <button class="tool-btn" id="toolCut" onclick="selectTool('cut')">
-      <span class="tool-icon">✂️</span><span class="tool-title">切りはなす</span><span class="tool-sub">あいだをなぞる</span>
+      <span class="tool-icon">✂️</span><span class="tool-title">切りはなす</span>
     </button>
     <button class="tool-btn" id="toolRound" onclick="selectTool('roundabout')">
-      <span class="tool-icon">🔄</span><span class="tool-title">ロータリー</span><span class="tool-sub" id="uiRounds">のこり 1</span>
+      <span class="tool-icon">🔄</span><span class="tool-title">ロータリー</span><span class="tool-cnt" id="uiRounds">0</span>
     </button>
     <button class="tool-btn" id="toolOver" onclick="selectTool('overpass')">
-      <span class="tool-icon">🌁</span><span class="tool-title">立体交差</span><span class="tool-sub" id="uiOvers">のこり 0</span>
+      <span class="tool-icon">🌁</span><span class="tool-title">立体交差</span><span class="tool-cnt" id="uiOvers">0</span>
     </button>
     <button class="tool-btn" id="toolOne" onclick="selectTool('oneway')">
-      <span class="tool-icon">➡️</span><span class="tool-title">一方通行</span><span class="tool-sub" id="uiOnes">のこり 0</span>
+      <span class="tool-icon">➡️</span><span class="tool-title">一方通行</span><span class="tool-cnt" id="uiOnes">0</span>
     </button>
     <button class="tool-btn" id="toolHwy" onclick="selectTool('highway')">
-      <span class="tool-icon">🚀</span><span class="tool-title">高速道路</span><span class="tool-sub" id="uiHwys">のこり 0</span>
+      <span class="tool-icon">🚀</span><span class="tool-title">高速道路</span><span class="tool-cnt" id="uiHwys">0</span>
+    </button>
+    <button class="tool-btn" id="toolPrio" onclick="selectTool('prio')">
+      <span class="tool-icon">🚥</span><span class="tool-title">優先道路</span><span class="tool-cnt" id="uiPrios">0</span>
+    </button>
+    <button class="tool-btn" id="toolBus" onclick="selectTool('bus')">
+      <span class="tool-icon">🚌</span><span class="tool-title">バス</span><span class="tool-cnt" id="uiBuses">0</span>
     </button>
     <button class="tool-btn" id="toolInter" onclick="selectTool('inter')">
-      <span class="tool-icon">🔀</span><span class="tool-title">インター</span><span class="tool-sub" id="uiInters">のこり 0</span>
+      <span class="tool-icon">🔀</span><span class="tool-title">インター</span><span class="tool-cnt" id="uiInters">0</span>
     </button>
   </div>
 </footer>
@@ -355,6 +366,8 @@
       <li>🚪 たてものの<b>白いドア</b>に 道をつなげてね。たてものを<b>タップすると ドアの向きが かわる</b>よ。</li>
       <li>🛣️ 道の数には かぎりがあるよ。⛰山には道がつくれない。川をわたるには🌉橋がいるよ。</li>
       <li>🟠 道がまじわる<b>オレンジの点</b>では、車が いちど止まるよ（⏳が 出たら 待っている車）。🔄ロータリー・🌁立体交差・🚀高速道路で たすけよう！</li>
+      <li>🚌 <b>バス</b>は いちどに 4人 はこべる（おそいけど まじわる所が すく）。</li>
+      <li>🚥 <b>優先道路</b>は まじわる所の 本線（黄色い線）を 止まらず 通す。わき道は 長く 待つよ。</li>
       <li>➡️ <b>一方通行</b>は 行きと帰りを 分けると 2台つづけて 走れる。🔀<b>インター</b>は 🚀高速道路の はしで 3台いっしょに 出入りできる。<b>組み合わせると 強い</b>よ！</li>
       <li>⏸ 🏢の<b>赤いわっか（ピンチゲージ）</b>が 半分を こえると、<b>自動で 時間が とまる</b>よ。止まっているあいだに 道を なおそう。</li>
     </ul>
@@ -427,7 +440,7 @@
 'use strict';
 
 /* ===================== バージョンと キャッシュ対策 ===================== */
-const APP_VERSION = '7.12.0';
+const APP_VERSION = '7.15.0';
 (function checkLatest() {
   try {
     if (!/^https?:$/.test(location.protocol) || typeof fetch !== 'function') return;
@@ -462,6 +475,10 @@ const APP_VERSION = '7.12.0';
    v7.11: 🚀高速道路を 道の 約1.8倍の 速さに（前は 約3倍）・3ptに。🚗車+1は 最大2回・お客さんに 回る 割合 0.5→0.75。
    v7.12: ➡️一方通行（1ptで5マス・1.7倍の速さ・その先の まじわる所で 止まらない・車間をあけて 2台）と
           🔀インターチェンジ（2pt・着く側の はしに おくと 高速道路を 間をあけて 何台も 走れる・止まらない）を 追加。
+   v7.14: 🚌バス（3pt・家1けんの 車1台を バスに。4人のせ・速さ0.6倍・道では 1台分）を 追加。
+   v7.15: 道具らんを 1行に（マップを 広く）。➡️一方通行・🚥優先道路が なぞって おけない バグを 修正。
+          れんしゅうに 5つ・つめ道路に 2もん 追加。
+   v7.13: 🚥優先道路（1ptで2か所・まじわる所の 本線は 止まらず 2台。わき道は 長く 待つ）を 追加。
    ===================================================================== */
 const COLS = 11;
 const ROWS = 15;
@@ -503,9 +520,9 @@ const DAYS = ['月', '火', '水', '木', '金', '土', '日'];
 const DIRS4 = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 const TOOL_NAMES = {
   draw: '✏️ 道を引く', erase: '🧹 道を消す', cut: '✂️ 切りはなす',
-  roundabout: '🔄 ロータリー', overpass: '🌁 立体交差', oneway: '➡️ 一方通行', highway: '🚀 高速道路', inter: '🔀 インター', rotate: '🚪 たてものタップ'
+  roundabout: '🔄 ロータリー', overpass: '🌁 立体交差', oneway: '➡️ 一方通行', prio: '🚥 優先道路', bus: '🚌 バス', highway: '🚀 高速道路', inter: '🔀 インター', rotate: '🚪 たてものタップ'
 };
-const TOOL_IDS = { draw: 'toolDraw', erase: 'toolErase', cut: 'toolCut', roundabout: 'toolRound', overpass: 'toolOver', oneway: 'toolOne', highway: 'toolHwy', inter: 'toolInter' };
+const TOOL_IDS = { draw: 'toolDraw', erase: 'toolErase', cut: 'toolCut', roundabout: 'toolRound', overpass: 'toolOver', oneway: 'toolOne', prio: 'toolPrio', highway: 'toolHwy', inter: 'toolInter', bus: 'toolBus' };
 const riverRow = c => Math.round(7 + Math.sin(c * 0.55) * 1.5);
 
 const cv = document.getElementById('cv');
@@ -529,7 +546,7 @@ let hasRiver = true;
 let score = 0, week = 1, dayTime = 0, gameSpeed = 1;
 let isGameOver = false, modalOpen = true, failedDest = null, dangerDest = null;
 let currentTool = 'draw';
-let inv = { roads: 0, bridges: 1, roundabouts: 1, highways: 0, overpasses: 0, oneways: 0, interchanges: 0 };
+let inv = { roads: 0, bridges: 1, roundabouts: 1, highways: 0, overpasses: 0, oneways: 0, interchanges: 0, prios: 0, buses: 0 };
 let houseCarBonus = 0, destCapBonus = 0, shopPts = 0, shopLog = [];
 let isDragging = false, lastCell = null, downCell = null, dragMoved = false, hwyStart = null, pointerPos = null;
 let spawnTimer = 0, slowTick = 0, alarmTimer = 0, comboCount = 0, comboTimer = 0, comboDay = -1;
@@ -732,7 +749,17 @@ function roadDegree(c, r) {
 }
 const isJunction = (c, r) => grid[r][c].road && !grid[r][c].roundabout && !grid[r][c].overpass && !grid[r][c].inter && roadDegree(c, r) >= 3;
 // 一方通行：その マスを 通れる 向きか
-const owOK = (c, r, d) => { const o = grid[r][c].oneway; return o < 0 || o === d; };
+const PRIO_SIDE = 1.5;   // 優先道路の わき道から 入る 車の 一時停止の 倍率
+const BUS_CAP = 4;     // バスに のれる 人数
+const BUS_SPEED = 0.6;   // バスの 速さ（車＝1）
+const PRIO_MERGE = 1.0;   // わき道の 車が これ以上 待ったら 本線に わりこむ
+const axisOfHeading = h => (h.split(',')[0] !== '0' ? 1 : 0);
+const prioAt = (c, r) => (grid[r][c].prio >= 0 && isJunction(c, r) ? grid[r][c].prio : -1);
+function refundPrio(g) { if (g.prio >= 0) { g.prio = -1; inv.prios = invN('prios') + 1; } }
+let owIgnore = false;
+const owOK = (c, r, d) => { if (owIgnore) return true; const o = grid[r][c].oneway; return o < 0 || o === d; };
+// 一方通行の せいで 道が ないか（一方通行を むしすれば 行ける）
+function blockedByOneway(sc, sr, target) { owIgnore = true; const p = findPath(sc, sr, target); owIgnore = false; return !!p; }
 // まっすぐな 道（2方向で 向かい合う）か
 const isStraight = (c, r) => { const L = [0, 1, 2, 3].filter(d => linked(c, r, c + DIRS4[d][0], r + DIRS4[d][1])); return L.length === 2 && (L[0] + 2) % 4 === L[1]; };
 // 十字路（上下左右 すべて つながっている）か
@@ -872,7 +899,7 @@ function makeGrid(withRiver) {
   for (let r = 0; r < ROWS; r++) {
     const row = [];
     for (let c = 0; c < COLS; c++)
-      row.push({ river: withRiver && r === riverRow(c), rock: false, road: false, links: 0, bridge: false, roundabout: false, overpass: false, oneway: -1, inter: false, bld: null });
+      row.push({ river: withRiver && r === riverRow(c), rock: false, road: false, links: 0, bridge: false, roundabout: false, overpass: false, oneway: -1, inter: false, prio: -1, bld: null });
     grid.push(row);
   }
 }
@@ -894,7 +921,7 @@ function initGame(skipIntro) {
   setPanel('puzBar', false);
   resizeCanvas();
   resetCommon();
-  inv = { roads: 0, bridges: 1, roundabouts: 1, highways: 0, overpasses: 0, oneways: 0, interchanges: 0 };
+  inv = { roads: 0, bridges: 1, roundabouts: 1, highways: 0, overpasses: 0, oneways: 0, interchanges: 0, prios: 0, buses: 0 };
   makeGrid(true);
 
   spawnBuilding('house', 0, 2, 3, 1);
@@ -1172,6 +1199,100 @@ const LESSONS = [
     },
     targets: () => (highways.length ? [] : hwyStart ? [{ c: 7, r: 9 }] : [{ c: 3, r: 9 }]),
     check() { return pathOK() && score >= 1; }
+  },
+  {
+    title: '🌁 立体交差',
+    tools: ['overpass'],
+    text: '赤は 横に、青は たてに <b>まっすぐ 通りぬける</b>だけ。<b>🌁</b>を えらんで、まん中の <b>十字路</b>を タップしよう。',
+    hint: '下の 🌁ボタンを おしてから、まん中の 光っている マスを タップ。',
+    doneText: 'すれちがった！🎉 立体交差は <b>止まらない</b>けど <b>曲がれない</b>よ。まっすぐ ぬける 十字路に つかおう。',
+    setup() {
+      spawnBuilding('house', 0, 1, 9, 1);
+      spawnBuilding('dest', 0, 9, 9, 3);
+      spawnBuilding('house', 1, 5, 4, 2);
+      spawnBuilding('dest', 1, 5, 14, 0);
+      lay(row(9, 2, 8));
+      lay(col(5, 5, 13));
+      for (const b of buildings) if (b.type === 'house') { b.maxCars = 3; b.carsReady = 3; }
+      inv = { roads: 0, bridges: 0, roundabouts: 0, highways: 0, overpasses: 1 };
+    },
+    targets: () => (grid[9][5].overpass ? [] : [{ c: 5, r: 9 }]),
+    check() { return grid[9][5].overpass && score >= 3; }
+  },
+  {
+    title: '➡️ 一方通行',
+    tools: ['oneway'],
+    text: '道が 上と下の <b>2本</b>あるよ。<b>➡️</b>を えらんで、<b>上の道は 右へ</b>（🏢へ 行く道）、<b>下の道は 左へ</b>（家に 帰る道）なぞろう。',
+    hint: '上の 横の道を 左から右へ、下の 横の道を 右から左へ、指を はなさずに なぞってね。タップすると 向きが 反対に なるよ。',
+    doneText: '行きと帰りが 分かれた！🎉 一方通行は <b>対向車が いないので 速く</b>、その先の まじわる所でも <b>止まらない</b>よ。',
+    setup() {
+      spawnBuilding('house', 0, 1, 8, 1);
+      spawnBuilding('dest', 0, 9, 8, 3);
+      lay([...col(2, 8, 6), ...row(6, 3, 8), ...col(8, 7, 8)]);
+      lay([...col(2, 9, 10), ...row(10, 3, 8), ...col(8, 9, 8)]);
+      setLink({ c: 2, r: 8 }, { c: 2, r: 9 }, true);
+      buildings[0].maxCars = 4; buildings[0].carsReady = 4;
+      inv = { roads: 0, bridges: 0, roundabouts: 0, highways: 0, oneways: 10 };
+    },
+    targets: () => [...row(6, 3, 7).filter(p => grid[p.r][p.c].oneway !== 1), ...row(10, 7, 3).filter(p => grid[p.r][p.c].oneway !== 3)],
+    check() {
+      const top = row(6, 3, 7).map(p => grid[p.r][p.c].oneway), bot = row(10, 3, 7).map(p => grid[p.r][p.c].oneway);
+      const same = a => a.every(x => x === a[0]) && a[0] >= 0;
+      return same(top) && same(bot) && top[0] !== bot[0] && pathOK() && !!cachedPath(buildings[1], buildings[0]) && score >= 3;
+    }
+  },
+  {
+    title: '🚥 優先道路',
+    tools: ['prio'],
+    text: '横の <b>大通り</b>に 車が たくさん 走るよ。<b>🚥</b>を えらんで、オレンジの点を <b>横に なぞろう</b>（横が 本線に なる）。',
+    hint: '光っている 3マスを 左から右へ なぞってね。タップすると 本線が たて／よこ 入れかわるよ。',
+    doneText: '黄色い線が 本線！🎉 本線の車は <b>止まらず</b>、わき道の車は 本線が すいたら 入るよ。',
+    setup() {
+      spawnBuilding('house', 0, 1, 9, 1);
+      spawnBuilding('dest', 0, 9, 9, 3);
+      spawnBuilding('house', 0, 5, 5, 2);
+      lay(row(9, 2, 8));
+      lay(col(5, 6, 9));
+      buildings[0].maxCars = 4; buildings[0].carsReady = 4;
+      inv = { roads: 0, bridges: 0, roundabouts: 0, highways: 0, prios: 1 };
+    },
+    targets: () => (prioAt(5, 9) === 1 ? [] : [{ c: 4, r: 9 }, { c: 5, r: 9 }, { c: 6, r: 9 }]),
+    check() { return prioAt(5, 9) === 1 && score >= 3; }
+  },
+  {
+    title: '🔀 インター',
+    tools: ['inter'],
+    text: '高速道路は ふつう <b>1台ずつ</b>しか とべないよ。<b>🔀</b>を えらんで、高速道路の <b>りょうはし</b>（オレンジの丸）を タップしよう。',
+    hint: '左の はしと 右の はしを、1回ずつ タップしてね。',
+    doneText: 'つづけて とべる！🎉 インターは <b>行きと帰りの りょうはし</b>に おくのが コツ。',
+    setup() {
+      spawnBuilding('house', 0, 1, 9, 1);
+      spawnBuilding('dest', 0, 9, 9, 3);
+      range(PANEL_ROWS, ROWS - 1).forEach(r => { grid[r][5].rock = true; });
+      lay(row(9, 2, 3));
+      lay(row(9, 7, 8));
+      highways.push({ c1: 3, r1: 9, c2: 7, r2: 9 });
+      buildings[0].maxCars = 4; buildings[0].carsReady = 4;
+      inv = { roads: 0, bridges: 0, roundabouts: 0, highways: 0, interchanges: 2 };
+    },
+    targets: () => [{ c: 3, r: 9 }, { c: 7, r: 9 }].filter(p => !grid[p.r][p.c].inter),
+    check() { return grid[9][3].inter && grid[9][7].inter && score >= 3; }
+  },
+  {
+    title: '🚌 バス',
+    tools: ['bus'],
+    text: '🏢が とても <b>遠い</b>よ。<b>🚌</b>を えらんで <b>家を タップ</b>すると、車1台が <b>バス</b>に なるよ。',
+    hint: '下の 🚌ボタンを おしてから、光っている 家を タップ。',
+    doneText: 'バスは 1回で <b>4人</b> はこべる！🎉 おそいけど、<b>遠い🏢</b>や まじわる所が 多い まちで たよりになるよ。',
+    setup() {
+      spawnBuilding('house', 0, 1, 5, 2);
+      spawnBuilding('dest', 0, 9, 13, 3);
+      lay([...col(1, 6, 13), ...row(13, 2, 8)]);
+      buildings[0].maxCars = 3; buildings[0].carsReady = 3;
+      inv = { roads: 0, bridges: 0, roundabouts: 0, highways: 0, buses: 1 };
+    },
+    targets: () => (buildings[0].bus ? [] : [{ c: 1, r: 5 }]),
+    check() { return buildings[0].bus && score >= 4; }
   },
   {
     title: '⏸ ピンチは 止めて なおす',
@@ -1465,6 +1586,38 @@ const PUZZLES = [
       house(2, 4, 2, 0); dest(2, 12, 0, 0);
       house(8, 4, 2, 1); dest(8, 12, 0, 1);
       inv = { roads: 24, bridges: 1, roundabouts: 0, highways: 0 };
+    }
+  },
+  {
+    icon: '🚌', name: 'バスで まとめて', theme: '🚌 1回で たくさん はこぶ',
+    tools: ['draw', 'erase', 'bus'], par: 36, goal: 13, time: 40, river: false,
+    story: 'まちの <b>バス</b>は 1台で、車 何十台ぶんもの 人を はこべます。だから 道が こんでいる 大きな まちほど、バスや 電車を ふやして <b>車の 数を へらす</b> くふうを しています。',
+    tip: '🏢は 山の むこうで <b>とても 遠い</b>。車が 1人ずつ 行き来していては まにあわないよ。道を つないだら <b>🚌バス</b>で まとめて はこぼう。',
+    why: '遠い所ほど、行って 帰るのに 時間が かかります。<b>1回で 4人</b> はこべる バスなら、遠くても たくさん とどけられます。',
+    hint: '家から 下へ のばして、山の 下を まわって 🏢へ つなごう。つないだら 🚌を えらんで 家を タップ！',
+    setup() {
+      house(2, 5, 2, 0, 3); dest(9, 12, 3, 0);
+      rocksWhere((c, r) => c === 5 && r <= 12);
+      inv = { roads: 22, bridges: 0, roundabouts: 0, highways: 0, buses: 1 };
+    }
+  },
+  {
+    icon: '🗽', name: 'マンハッタンの 一方通行', theme: '➡️ 行きと帰りを 分ける',
+    tools: ['oneway', 'draw', 'erase'], par: 29, goal: 20, time: 30, river: false,
+    story: 'アメリカの <b>ニューヨーク</b>の マンハッタンでは、大通りの 多くが <b>一方通行</b>です。となりあう 通りを 反対むきに すると、むかってくる 車が いないので、交差点を すいすい ぬけられます。',
+    tip: '赤の 道は 上と下の 2本。でも 青の 道と まじわる所で <b>止まって</b>しまう。<b>➡️一方通行</b>で、上は 行き・下は 帰りに 分けよう。',
+    why: '一方通行の 道から 入る 車は、まじわる所で <b>止まらずに</b> 通れます。行きと 帰りを 分けると、<b>すれちがいも なくなり</b> 速く 走れます。',
+    hint: '➡️を えらんで、上の 横の道を 左から右へ、下の 横の道を 右から左へ なぞろう。',
+    setup() {
+      house(1, 8, 1, 0, 5); dest(9, 8, 3, 0);
+      house(5, 4, 2, 1, 3); dest(5, 14, 0, 1);
+      lay([...col(2, 8, 6), ...row(6, 3, 8), ...col(8, 7, 8)]);
+      lay([...col(2, 9, 10), ...row(10, 3, 8), ...col(8, 9, 8)]);
+      setLink({ c: 2, r: 8 }, { c: 2, r: 9 }, true);
+      lay(col(5, 5, 13));
+      setLink({ c: 4, r: 6 }, { c: 5, r: 6 }, true); setLink({ c: 5, r: 6 }, { c: 6, r: 6 }, true);
+      setLink({ c: 4, r: 10 }, { c: 5, r: 10 }, true); setLink({ c: 5, r: 10 }, { c: 6, r: 10 }, true);
+      inv = { roads: 4, bridges: 0, roundabouts: 0, highways: 0, oneways: 12 };
     }
   }
 ];
@@ -1794,6 +1947,8 @@ function selectTool(t, force = false) {
     roundabout: 'オレンジの点（道がまじわる所）を タップしてね',
     overpass: '十字路（上下左右に のびる オレンジの点）を タップ。たて・よこが 止まらず すれちがうよ',
     oneway: 'まっすぐな 道を 進ませたい 向きに なぞってね（タップで 向きが 反対に）',
+    prio: 'オレンジの点を 本線の 向きに なぞってね（タップで たて／よこ 入れかえ）',
+    bus: '家を タップすると 車1台が バスに なるよ（4人のせ・おそい）',
     inter: '🚀高速道路の はし（オレンジの丸）を タップ。3台いっしょに 出入りできるよ',
     highway: 'はじめの場所 → おわりの場所 の じゅんに タップ'
   };
@@ -1816,6 +1971,7 @@ function clearAllRoads() {
     if (g.overpass) { g.overpass = false; inv.overpasses++; }
     if (g.oneway >= 0) { g.oneway = -1; inv.oneways = invN('oneways') + 1; }
     if (g.inter) { g.inter = false; inv.interchanges = invN('interchanges') + 1; }
+    refundPrio(g);
     g.links = 0;
   }
   inv.highways += highways.length;
@@ -1875,6 +2031,7 @@ function applyToolAt(c, r, from = null) {
       const h = highways[hIdx];
       for (const [hc, hr] of [[h.c1, h.r1], [h.c2, h.r2]]) if (grid[hr][hc].inter && highways.filter(x => (x.c1 === hc && x.r1 === hr) || (x.c2 === hc && x.r2 === hr)).length === 1) { grid[hr][hc].inter = false; inv.interchanges = invN('interchanges') + 1; }
       highways.splice(hIdx, 1); inv.highways++; playTone(300, 0.08); }
+    else if (cell.prio >= 0) { refundPrio(cell); playTone(320, 0.06); }
     else if (cell.roundabout) { cell.roundabout = false; inv.roundabouts++; playTone(320, 0.06); }
     else if (cell.overpass) { cell.overpass = false; inv.overpasses++; playTone(320, 0.06); }
     else if (cell.road) {
@@ -1885,6 +2042,28 @@ function applyToolAt(c, r, from = null) {
     } else return;
     markNetChanged(); updateUI();
 
+  } else if (currentTool === 'bus') {
+    if (from) return;
+    const h = cell.bld;
+    if (!h || h.type !== 'house') { warn('🚌 バスは 家を タップしてね'); return; }
+    if (invN('buses') <= 0) { warn('🚌 バスが もうないよ（しゅうのおわりの ごほうびで えらべるよ）'); return; }
+    if (h.bus) { warn('その家には もう バスが あるよ'); return; }
+    if (h.maxCars < 2) { warn('車が 2台以上 ある 家に おいてね'); return; }
+    h.bus = true; h.busReady = 1; h.maxCars--; h.carsReady = Math.min(h.carsReady, h.maxCars);
+    inv.buses--; playTone(520, 0.1, 'triangle'); playTone(780, 0.12, 'triangle');
+    addPopup(h.c, h.r, '🚌', COLORS[h.color].main);
+    selectTool('draw', true); updateUI();
+  } else if (currentTool === 'prio') {
+    // オレンジの点を なぞった 向きが 本線。タップで たて／よこ 入れかえ
+    let tc = c, tr = r, ax;
+    if (from) { ax = from.r === r ? 1 : 0; if (!isJunction(c, r) && isJunction(from.c, from.r)) { tc = from.c; tr = from.r; } }
+    const g = grid[tr][tc];
+    if (!isJunction(tc, tr)) { if (!from) warn('🚥 優先道路は オレンジの点（まじわる所）に おいてね'); return; }
+    if (ax === undefined) { if (g.prio >= 0) { g.prio = 1 - g.prio; playTone(600, 0.06); markNetChanged(); } else warn('本線の 向きに なぞってね（たて か よこ）'); return; }
+    if (g.prio === ax) return;
+    if (g.prio < 0) { if (invN('prios') <= 0) { warn('🚥 優先道路が もうないよ（しゅうのおわりの ごほうびで えらべるよ）'); return; } inv.prios--; }
+    g.prio = ax; playTone(660, 0.08, 'triangle');
+    markNetChanged(); updateUI();
   } else if (currentTool === 'roundabout') {
     if (from) return;
     if (cell.river || cell.bld || cell.rock) { warn('そこには おけないよ'); return; }
@@ -1894,35 +2073,43 @@ function applyToolAt(c, r, from = null) {
       if (inv.roads <= 0) { warn('🛣️ 道が たりないよ'); return; }
       cell.road = true; inv.roads--;
     }
+    refundPrio(cell);
     cell.roundabout = true; inv.roundabouts--;
     playTone(620, 0.1, 'triangle');
     markNetChanged(); selectTool('draw', true); updateUI();
 
   } else if (currentTool === 'overpass') {
     if (from) return;
-    if (inv.overpasses <= 0) { warn('🌁 立体交差が もうないよ（しゅうのおわりの ごほうびで えらべるよ）'); return; }
+    if (invN('overpasses') <= 0) { warn('🌁 立体交差が もうないよ（しゅうのおわりの ごほうびで えらべるよ）'); return; }
     if (cell.overpass) return;
     if (!cell.road || cell.roundabout || cell.bridge || !isCrossing(c, r)) { warn('立体交差は 上下左右 4方向に 道が のびた 十字路にだけ おけるよ'); return; }
-    cell.overpass = true; inv.overpasses--;
+    refundPrio(cell);
+    cell.overpass = true; inv.overpasses = invN('overpasses') - 1;
     playTone(640, 0.1, 'triangle'); playTone(860, 0.1, 'triangle');
     markNetChanged(); selectTool('draw', true); updateUI();
 
   } else if (currentTool === 'oneway') {
-    // なぞった 1マス目に、なぞった 向きの 一方通行を おく。タップは 向きを 反対に
-    const tgt = from ? grid[from.r][from.c] : cell, tc = from ? from.c : c, tr = from ? from.r : r;
+    // なぞった 道に そって、通った マスに なぞった 向きの 一方通行を おく。タップは 向きを 反対に
     if (!from) {
       if (cell.oneway >= 0) { cell.oneway = (cell.oneway + 2) % 4; playTone(600, 0.06); markNetChanged(); owWarn(); }
+      else warn('➡️ 道に そって、すすませたい 向きに なぞってね');
       return;
     }
     const d = dirBetween(from, { c, r });
-    if (tgt.oneway >= 0) { if (tgt.oneway !== d && tgt.oneway % 2 === d % 2) { tgt.oneway = d; markNetChanged(); owWarn(); } return; }
-    if (invN('oneways') <= 0) { warn('➡️ 一方通行が もうないよ（しゅうのおわりの ごほうびで えらべるよ）'); return; }
-    if (!tgt.road || tgt.roundabout || tgt.overpass || tgt.inter || isHwyEnd(tc, tr) || !isStraight(tc, tr) || (d % 2) !== (linked(tc, tr, tc, tr - 1) ? 0 : 1)) {
-      warn('一方通行は まっすぐな 道に、道の 向きに そって なぞってね'); return; }
-    tgt.oneway = d; inv.oneways--;
-    playTone(600, 0.08, 'triangle');
-    markNetChanged(); updateUI(); owWarn();
-    isDragging = false;
+    if (d < 0) return;
+    let placed = false;
+    const put = (pc, pr, loud) => {
+      const g = grid[pr][pc];
+      if (g.oneway >= 0) { if (g.oneway !== d && g.oneway % 2 === d % 2) { g.oneway = d; placed = true; } return; }
+      const ok = g.road && !g.roundabout && !g.overpass && !g.inter && !g.bld && !isHwyEnd(pc, pr) && isStraight(pc, pr) && (d % 2) === (linked(pc, pr, pc, pr - 1) ? 0 : 1);
+      if (!ok) { if (loud && g.road) warn('一方通行は まっすぐな 道に、道の 向きに そって なぞってね'); return; }
+      if (invN('oneways') <= 0) { warn('➡️ 一方通行が もうないよ（しゅうのおわりの ごほうびで えらべるよ）'); return; }
+      g.oneway = d; inv.oneways = invN('oneways') - 1; placed = true;
+    };
+    if (!linked(from.c, from.r, c, r)) return;
+    put(from.c, from.r, true);
+    put(c, r, false);
+    if (placed) { playTone(600, 0.06, 'triangle'); markNetChanged(); updateUI(); owWarn(); }
   } else if (currentTool === 'inter') {
     if (from) return;
     if (invN('interchanges') <= 0) { warn('🔀 インターが もうないよ（しゅうのおわりの ごほうびで えらべるよ）'); return; }
@@ -1930,7 +2117,7 @@ function applyToolAt(c, r, from = null) {
     if (!isHwyEnd(c, r)) { warn('インターは 🚀高速道路の はし（オレンジの丸）に おいてね'); return; }
     cell.inter = true; cell.roundabout = false; inv.interchanges--;
     playTone(700, 0.1, 'triangle'); playTone(940, 0.1, 'triangle');
-    markNetChanged(); selectTool('draw', true); updateUI();
+    markNetChanged(); if (invN('interchanges') <= 0) selectTool('draw', true); updateUI();
   } else if (currentTool === 'highway') {
     if (from) return;
     if (inv.highways <= 0) { warn('🚀 高速道路が もうないよ（しゅうのおわりに もらえるかも）'); return; }
@@ -1974,6 +2161,7 @@ function handlePointerDown(e) {
   const cell = getCellFromEvent(e);
   if (!cell) return;
   isDragging = true; lastCell = cell; downCell = cell; dragMoved = false;
+  if (currentTool === 'oneway' || currentTool === 'prio') return;   // なぞる道具は 指を はなすまで 待つ（タップは はなした ときに）
   applyToolAt(cell.c, cell.r, null);
 }
 function handlePointerMove(e) {
@@ -1983,7 +2171,7 @@ function handlePointerMove(e) {
   if (!cell) return;
   if (lastCell && (lastCell.c !== cell.c || lastCell.r !== cell.r)) {
     dragMoved = true;
-    if (currentTool === 'draw' || currentTool === 'erase' || currentTool === 'cut') {
+    if (currentTool === 'draw' || currentTool === 'erase' || currentTool === 'cut' || currentTool === 'oneway' || currentTool === 'prio') {
       let c0 = lastCell.c, r0 = lastCell.r;
       while (c0 !== cell.c || r0 !== cell.r) {
         const prev = { c: c0, r: r0 };
@@ -1996,6 +2184,8 @@ function handlePointerMove(e) {
   lastCell = cell;
 }
 function handlePointerUp() {
+  if (isDragging && !dragMoved && downCell && !isGameOver && !modalOpen && (currentTool === 'oneway' || currentTool === 'prio'))
+    applyToolAt(downCell.c, downCell.r, null);
   if (isDragging && !dragMoved && downCell && !isGameOver && !modalOpen &&
       (currentTool === 'draw' || currentTool === 'erase' || currentTool === 'cut')) {
     const b = grid[downCell.r][downCell.c].bld;
@@ -2100,7 +2290,7 @@ function poofCar(car) {
   if (i < 0) return;
   cars.splice(i, 1);
   car.dead = true;
-  car.home.carsReady = Math.min(car.home.maxCars, car.home.carsReady + 1);
+  if (car.isBus) car.home.busReady = 1; else car.home.carsReady = Math.min(car.home.maxCars, car.home.carsReady + 1);
   const p = carRenderPos(car);
   if (!p.hidden) addPopup(p.x - 0.5, p.y - 0.5, '💨', '#94a3b8');
 }
@@ -2109,6 +2299,9 @@ function repath(car) {
   if (!cellUsable(cur.c, cur.r)) { poofCar(car); return false; }
   let p = findPath(cur.c, cur.r, car.state === 'toDest' ? car.dest : car.home);
   if (!p && car.state === 'toDest') { p = findPath(cur.c, cur.r, car.home); if (p) car.state = 'toHome'; }
+  if (!p && blockedByOneway(cur.c, cur.r, car.state === 'toDest' ? car.dest : car.home)) {
+    car.needRepath = true; car.owBlock = 0.5; return false;   // 一方通行で すすめない：ワープせずに まつ
+  }
   if (!p) { poofCar(car); return false; }
   car.path = p; car.idx = 0;
   return true;
@@ -2137,6 +2330,13 @@ function canEnter(node, heading, car, occ) {
   if (g.roundabout || g.inter) ok = others.length < 3;
   else if (g.oneway >= 0) { ok = others.length < 2 && others.every(o => o.car.prog >= 0.5); }   // 一方通行：車間を あけて 2台まで
   else if (g.overpass) { const axis = h => (h.split(',')[0] !== '0' ? 'h' : 'v'); const same = others.filter(o => axis(o.heading) === axis(heading)); ok = same.length < 2 && !same.some(o => o.heading === heading); }
+  else if (prioAt(node.c, node.r) >= 0) {
+    const ax = prioAt(node.c, node.r), main = axisOfHeading(heading) === ax;
+    const mainOthers = others.filter(o => axisOfHeading(o.heading) === ax), sideOthers = others.filter(o => axisOfHeading(o.heading) !== ax);
+    // 本線：わき道の 車は 気にせず 2台（立体交差のように 別レーン）。わき道：本線が 空いたら。待ちすぎたら わりこむ
+    ok = main ? (mainOthers.length < 2 && !mainOthers.some(o => o.heading === heading))
+              : (sideOthers.length === 0 && (mainOthers.length === 0 || (car.wait >= PRIO_MERGE && mainOthers.length < 2)));
+  }
   else if (roadDegree(node.c, node.r) >= 3) ok = strictJunction() ? others.length === 0 : (others.length < 2 && !others.some(o => o.heading === heading));
   else ok = others.length < 2 && !others.some(o => o.heading === heading);
   if (ok) return true;
@@ -2150,24 +2350,28 @@ function segDuration(cur, nxt) {
   const fromOw = grid[cur.r][cur.c].oneway >= 0;
   if (fromOw || grid[nxt.r][nxt.c].oneway >= 0) t /= OW_SPEED;
   // 一方通行から 入る 車は 交差点で 止まらない（優先）
-  if (isJunction(nxt.c, nxt.r) && !fromOw) t += strictJunction() ? JUNCTION_STOP_LESSON : JUNCTION_STOP;
+  if (isJunction(nxt.c, nxt.r) && !fromOw) {
+    const ax = prioAt(nxt.c, nxt.r), main = ax >= 0 && (ax === 1 ? nxt.r === cur.r : nxt.c === cur.c);
+    if (!main) t += (strictJunction() ? JUNCTION_STOP_LESSON : JUNCTION_STOP) * (ax >= 0 ? PRIO_SIDE : 1);
+  }
   return t;
 }
 function arrive(car) {
   car.hold = null;
   if (car.state === 'toDest') {
     const d = car.dest;
-    if (d.pins > 0) {
-      d.pins--; d.delivered++; d.bump = 0.25; score++;
+    const n = Math.min(car.load || 1, d.pins);
+    if (n > 0) {
+      d.pins -= n; d.delivered += n; d.bump = 0.25; score += n;
       comboCount = comboTimer > 0 ? comboCount + 1 : 0;
       comboTimer = 1.2;
       const cmb = comboCount + 1;
-      addPopup(d.c, d.r, cmb >= 3 ? (cmb >= 10 ? '+1 ×10!' : `+1 ×${cmb}`) : '+1', COLORS[d.color].main);
+      addPopup(d.c, d.r, car.isBus ? `🚌+${n}` : (cmb >= 3 ? (cmb >= 10 ? '+1 ×10!' : `+1 ×${cmb}`) : '+1'), COLORS[d.color].main);
       playTone(620 + Math.min(comboCount, 8) * 45, 0.07, 'sine', 0.06);
     }
-    car.state = 'atDest'; car.dwell = DWELL; car.stuck = 0;
+    car.state = 'atDest'; car.dwell = DWELL * (car.isBus ? 2 : 1); car.stuck = 0;
   } else {
-    car.home.carsReady = Math.min(car.home.maxCars, car.home.carsReady + 1);
+    if (car.isBus) car.home.busReady = 1; else car.home.carsReady = Math.min(car.home.maxCars, car.home.carsReady + 1);
     const i = cars.indexOf(car);
     if (i >= 0) cars.splice(i, 1);
     car.dead = true;
@@ -2183,10 +2387,12 @@ function updateCars(step) {
       if (car.dwell > 0) continue;
       const p = cachedPath(car.dest, car.home);
       if (p) { car.state = 'toHome'; car.path = p; car.idx = 0; car.prog = 0; car.needRepath = false; }
+      else if (blockedByOneway(car.dest.c, car.dest.r, car.home)) { car.dwell = 0.5; }   // 一方通行で かえれない：ワープせずに その場で まつ
       else { car.stuck += 0.5; car.dwell = 0.5; if (car.stuck >= 3) poofCar(car); }
       continue;
     }
     if (car.prog === 0) {
+      if (car.owBlock > 0) { car.owBlock -= step; car.wait += step; continue; }
       if (car.needRepath) { car.needRepath = false; if (!repath(car)) continue; }
       const cur = car.path[car.idx], nxt = car.path[car.idx + 1];
       if (!nxt) { arrive(car); continue; }
@@ -2198,7 +2404,7 @@ function updateCars(step) {
         car.hold = grid[nxt.r][nxt.c].bld ? null : { idx: lane || (nxt.r * COLS + nxt.c), heading };
         addOcc(occ, car);
         car.wait = 0;
-        car.segDur = segDuration(cur, nxt);
+        car.segDur = segDuration(cur, nxt) / (car.isBus ? BUS_SPEED : 1);
         if (tut && !nxt.hwy && isJunction(nxt.c, nxt.r)) tut.stops.push(tut.t);
         car.prog = 1e-6;
         if (!nxt.hwy) car.dir = { dx: Math.sign(nxt.c - cur.c), dy: Math.sign(nxt.r - cur.r) };
@@ -2279,10 +2485,25 @@ function updateGame(dt) {
 
 function dispatchCars() {
   const dests = buildings.filter(b => b.type === 'dest').map(b => {
-    const inFlight = cars.filter(car => car.dest === b && car.state === 'toDest').length;
+    const inFlight = cars.filter(car => car.dest === b && car.state === 'toDest').reduce((a, car) => a + (car.load || 1), 0);
     return { b, need: b.pins - inFlight, urg: b.pins - inFlight + b.overloadTimer };
   }).filter(o => o.need > 0).sort((x, y) => y.urg - x.urg);
-  for (const { b } of dests) {
+  for (const { b, need } of dests) {
+    // 2人以上 まっていれば バスを 先に さがす
+    if (need >= 2) {
+      let bh = null, bp = null;
+      for (const h of buildings) {
+        if (h.type !== 'house' || h.color !== b.color || !h.busReady || h.cooldown > 0) continue;
+        const p = cachedPath(h, b);
+        if (p && (!bp || p.length < bp.length)) { bh = h; bp = p; }
+      }
+      if (bh) {
+        bh.busReady = 0; bh.cooldown = HOUSE_LAUNCH_CD;
+        cars.push({ id: nextId++, color: bh.color, home: bh, dest: b, state: 'toDest', isBus: true, load: Math.min(BUS_CAP, need),
+          path: bp, idx: 0, prog: 0, segDur: 1, hold: null, wait: 0, dir: { dx: 1, dy: 0 }, needRepath: false, stuck: 0, dwell: 0, dead: false });
+        continue;
+      }
+    }
     let best = null, bestPath = null;
     for (const h of buildings) {
       if (h.type !== 'house' || h.color !== b.color || h.carsReady <= 0 || h.cooldown > 0) continue;
@@ -2380,6 +2601,11 @@ const SHOP = [
     own: () => inv.bridges, act: () => { inv.bridges++; inv.roads += 3; }, undo: () => { inv.bridges--; inv.roads -= 3; } },
   { id: 'over', icon: '🌁', name: '立体交差', cost: 1, desc: '十字路で たて・よこが 止まらず すれちがう（曲がれない）',
     own: () => inv.overpasses, act: () => { inv.overpasses++; }, undo: () => { inv.overpasses--; } },
+  { id: 'bus', icon: '🚌', name: 'バス', cost: 3, max: () => invN('buses') + buildings.filter(h => h.bus).length < buildings.filter(h => h.type === 'house').length,
+    desc: '家1けんの 車1台を バスに。いちどに 4人 はこべるが おそい（速さ0.6倍）。まじわる所では 1台分',
+    own: () => invN('buses') + buildings.filter(h => h.bus).length, ownLabel: '台', act: () => { inv.buses = invN('buses') + 1; }, undo: () => { inv.buses--; } },
+  { id: 'prio', icon: '🚥', name: '優先道路 ×2', cost: 1, desc: 'まじわる所の 本線は 止まらず 2台 通れる。わき道は 長く 待つ（太い 道と 細い 道を 分けると 強い）',
+    own: () => invN('prios'), act: () => { inv.prios = invN('prios') + 2; }, undo: () => { inv.prios -= 2; } },
   { id: 'one', icon: '➡️', name: '一方通行 ×5', cost: 1, desc: 'まっすぐな 道を 一方通行に。少し速く 走れて、その先の まじわる所で 止まらない（かえり道は べつに いるよ）',
     own: () => invN('oneways'), act: () => { inv.oneways = invN('oneways') + 5; }, undo: () => { inv.oneways -= 5; } },
   { id: 'inter', icon: '🔀', name: 'インター', cost: 2, desc: '🚀高速道路の はしに おくと、そこへ 向かう 車が 間をあけて 何台も 走れる・止まらない（行きと帰りの 両はしに おくと 強い）',
@@ -2463,16 +2689,20 @@ function updateUI() {
   document.getElementById('uiRho').textContent = mini ? '-' : Math.round(rho * 100) + '%';
   document.getElementById('invRho').classList.toggle('hot', !mini && rho >= 1);
   document.getElementById('invRoads').classList.toggle('low', !mini && inv.roads <= 3);
-  document.getElementById('uiRounds').textContent = 'のこり ' + inv.roundabouts;
-  document.getElementById('uiHwys').textContent = 'のこり ' + inv.highways;
-  document.getElementById('uiOvers').textContent = 'のこり ' + inv.overpasses;
-  document.getElementById('uiOnes').textContent = 'のこり ' + invN('oneways');
-  document.getElementById('uiInters').textContent = 'のこり ' + invN('interchanges');
+  document.getElementById('uiRounds').textContent = String(invN('roundabouts'));
+  document.getElementById('uiHwys').textContent = String(invN('highways'));
+  document.getElementById('uiOvers').textContent = String(invN('overpasses'));
+  document.getElementById('uiOnes').textContent = String(invN('oneways'));
+  document.getElementById('uiInters').textContent = String(invN('interchanges'));
+  document.getElementById('uiPrios').textContent = String(invN('prios'));
+  document.getElementById('uiBuses').textContent = String(invN('buses'));
+  document.getElementById('toolBus').classList.toggle('empty', invN('buses') <= 0);
+  document.getElementById('toolPrio').classList.toggle('empty', invN('prios') <= 0);
   document.getElementById('toolOne').classList.toggle('empty', invN('oneways') <= 0);
   document.getElementById('toolInter').classList.toggle('empty', invN('interchanges') <= 0);
-  document.getElementById('toolOver').classList.toggle('empty', inv.overpasses <= 0);
-  document.getElementById('toolRound').classList.toggle('empty', inv.roundabouts <= 0);
-  document.getElementById('toolHwy').classList.toggle('empty', inv.highways <= 0);
+  document.getElementById('toolOver').classList.toggle('empty', invN('overpasses') <= 0);
+  document.getElementById('toolRound').classList.toggle('empty', invN('roundabouts') <= 0);
+  document.getElementById('toolHwy').classList.toggle('empty', invN('highways') <= 0);
   const pulse1x = !!(tut && L.pinch && !tut.done && gameSpeed === 0 && pathOK());
   document.getElementById('btn1x').classList.toggle('pulse', pulse1x);
   updatePausePill();
@@ -2614,6 +2844,13 @@ function drawGame(now) {
       ctx.strokeStyle = isDark ? '#dbe4f0' : '#ffffff'; ctx.lineWidth = Math.max(1.5, cs * 0.06);
       ctx.beginPath(); ctx.moveTo(x - cs * 0.3, y - cs * 0.5); ctx.lineTo(x - cs * 0.3, y + cs * 0.5);
       ctx.moveTo(x + cs * 0.3, y - cs * 0.5); ctx.lineTo(x + cs * 0.3, y + cs * 0.5); ctx.stroke();
+    } else if (prioAt(c, r) >= 0) {
+      const ax = prioAt(c, r);
+      ctx.save(); ctx.translate(x, y); if (ax === 0) ctx.rotate(Math.PI / 2);
+      ctx.fillStyle = '#facc15'; ctx.fillRect(-cs * 0.5, -cs * 0.09, cs, cs * 0.18);
+      ctx.fillStyle = '#ffffff';
+      for (const sx of [-1, 1]) ctx.fillRect(-cs * 0.06, sx * cs * 0.18 - cs * 0.03, cs * 0.12, cs * 0.06);
+      ctx.restore();
     } else if (isJunction(c, r)) {
       ctx.fillStyle = 'rgba(245, 158, 11, 0.95)';
       ctx.beginPath(); ctx.arc(x, y, cs * 0.11, 0, Math.PI * 2); ctx.fill();
@@ -2672,6 +2909,10 @@ function drawGame(now) {
       ctx.beginPath();
       ctx.moveTo(cx - s * 1.2, cy - s * 0.4); ctx.lineTo(cx, cy - s * 1.3); ctx.lineTo(cx + s * 1.2, cy - s * 0.4);
       ctx.closePath(); ctx.fill();
+      if (b.bus) {
+        ctx.fillStyle = b.busReady ? '#facc15' : 'rgba(0,0,0,0.25)';
+        ctx.beginPath(); ctx.roundRect(cx - s * 0.5, cy - s * 1.65, s, s * 0.42, s * 0.12); ctx.fill();
+      }
       const n = b.maxCars;
       const sp = Math.min(s * 0.5, (s * 1.7) / Math.max(1, n - 1));
       for (let i = 0; i < n; i++) {
@@ -2775,7 +3016,7 @@ function drawGame(now) {
   for (const { car, p } of list) {
     const colr = COLORS[car.color];
     const sc = 1 + p.air * 0.35;
-    const L = cs * 0.46 * sc, W = cs * 0.3 * sc;
+    const L = cs * (car.isBus ? 0.72 : 0.46) * sc, W = cs * (car.isBus ? 0.34 : 0.3) * sc;
     const x = p.x * cs, y = p.y * cs;
     if (p.air > 0) {
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
@@ -2785,8 +3026,12 @@ function drawGame(now) {
     ctx.translate(x, y); ctx.rotate(p.angle);
     ctx.fillStyle = '#ffffff';
     ctx.beginPath(); ctx.roundRect(-L / 2, -W / 2, L, W, W * 0.3); ctx.fill();
-    ctx.fillStyle = colr.main;
+    ctx.fillStyle = car.isBus ? '#facc15' : colr.main;
     ctx.beginPath(); ctx.roundRect(-L / 2 + W * 0.15, -W / 2 + W * 0.15, L - W * 0.3, W * 0.7, W * 0.2); ctx.fill();
+    if (car.isBus) {
+      ctx.fillStyle = colr.main; ctx.fillRect(-L / 2 + W * 0.15, -W * 0.1, L - W * 0.3, W * 0.2);
+      ctx.fillStyle = '#ffffff'; for (let k = 0; k < 3; k++) ctx.fillRect(-L * 0.3 + k * L * 0.22, -W * 0.3, L * 0.12, W * 0.16);
+    }
     ctx.restore();
     if (car.wait > (tut ? 0.3 : 0.6)) {
       ctx.font = `${Math.round(cs * 0.34)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
