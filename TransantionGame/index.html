@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Pocket Transit v7.9 - まちの道づくりパズル</title>
+<title>Pocket Transit v7.10 - まちの道づくりパズル</title>
 <style>
   :root {
     --bg-main: #f3efe6; --bg-panel: #ffffff; --text-main: #2c3540;
@@ -418,7 +418,7 @@
 'use strict';
 
 /* ===================== バージョンと キャッシュ対策 ===================== */
-const APP_VERSION = '7.9.0';
+const APP_VERSION = '7.10.0';
 (function checkLatest() {
   try {
     if (!/^https?:$/.test(location.protocol) || typeof fetch !== 'function') return;
@@ -448,6 +448,8 @@ const APP_VERSION = '7.9.0';
    v7.7: 少し難しく調整（いそがしさ 50%から週+9%。上手でも 6〜8しゅう目で 限界が来る）。
    v7.8: ごほうびを ポイント制に（毎週3pt・のこりは くりこし）。お客さんの量は 車2台基準で 固定（車+1 が 本当の 強化に）。道+10 は 廃止。
    v7.9: まじわる所の 一時停止を 0.15→0.3秒に。🌁立体交差（十字路を 上下で すれちがう・止まらない）を 追加。待っている車に ⏳。
+   v7.10: 山を 1000台前後へ。🚗車+1は 運ぶ力+25%（お客さんも 少し ふえる）。🔄ロータリーの 速さ1.4倍を なくす。
+          いそがしさは 6しゅう目まで 今と同じ、7しゅう目から 毎週+0.15に。
    ===================================================================== */
 const COLS = 11;
 const ROWS = 15;
@@ -455,7 +457,7 @@ const PANEL_ROWS = 4;
 const ALPHA_START = 1.7, ALPHA_STEP = 0.1, ALPHA_MIN = 1.2;
 const MIN_WEEKLY_ROADS = 4;
 const RHO_START = 0.5, RHO_STEP = 0.09;   // 1しゅう目 50% → 5しゅう目 86% → 7しゅう目 104%
-const RHO_LATE_FROM = 9, RHO_LATE_STEP = 0.09;
+const RHO_LATE_FROM = 6, RHO_LATE_STEP = 0.15;
 const minPinInterval = w => 0.3;
 const RUSH_FACTOR = 1.5;
 const ROCK_COUNT = 9;
@@ -473,6 +475,7 @@ const HOUSE_LAUNCH_CD = 0.6;
 const DWELL = 0.35;
 const START_PINS = 6;
 const BASE_CARS = 2;
+const CAR_DEMAND_SHARE = 0.5;   // 車+1 の うち お客さんに 回る 割合
 const WEEKLY_POINTS = 3, MAX_POINTS = 6;
 const SPAWN_BASE = 9, SPAWN_MIN = 5;
 const COST = { road: 1, junction: 3, roundabout: 1.2, highway: 2 };
@@ -792,8 +795,8 @@ const alphaFor = w => Math.max(ALPHA_MIN, ALPHA_START - ALPHA_STEP * (w - 1));
 const rhoFor = w => (w <= RHO_LATE_FROM
   ? RHO_START + RHO_STEP * (w - 1)
   : RHO_START + RHO_STEP * (RHO_LATE_FROM - 1) + RHO_LATE_STEP * (w - RHO_LATE_FROM));
-const maxDestsFor = w => Math.min(12, 8 + Math.max(0, w - RHO_LATE_FROM));
-const maxHousesFor = w => (w > RHO_LATE_FROM ? 6 : 5);
+const maxDestsFor = w => Math.min(12, 8 + Math.max(0, w - 9));
+const maxHousesFor = w => (w > 9 ? 6 : 5);
 function ownedRoads() {
   let n = inv.roads;
   for (const row of grid) for (const g of row) if (g.road) n++;
@@ -834,7 +837,7 @@ function updateDemandRates() {
     for (const h of hs) {
       const best = Math.min(...ds.map(d => idealDist(h, d)));
       const T = 2 * best / CAR_SPEED + DWELL + HOUSE_LAUNCH_CD;
-      mu += Math.min(BASE_CARS / T, 1 / HOUSE_LAUNCH_CD);   // 車+1 では お客さんは ふえない
+      mu += Math.min((BASE_CARS + houseCarBonus * CAR_DEMAND_SHARE) / T, 1 / HOUSE_LAUNCH_CD);   // 車+1 は 運ぶ力+50%・お客さん+25% → 差し引き +25%
     }
     const lambda = rho * mu;
     const wSum = ds.reduce((a, d) => a + (d.mega ? 1.5 : 1), 0);
@@ -2077,8 +2080,7 @@ function canEnter(node, heading, car, occ) {
 }
 function segDuration(cur, nxt) {
   if (nxt.hwy) return 0.35 + Math.hypot(nxt.c - cur.c, nxt.r - cur.r) * 0.07;
-  const a = grid[cur.r][cur.c], b = grid[nxt.r][nxt.c];
-  let t = 1 / (CAR_SPEED * ((a.roundabout || b.roundabout) ? 1.4 : 1));
+  let t = 1 / CAR_SPEED;   // v7.10: ロータリーの 速さボーナスは なし（止まらない・3台いっしょ は のこす）
   if (isJunction(nxt.c, nxt.r)) t += strictJunction() ? JUNCTION_STOP_LESSON : JUNCTION_STOP;
   return t;
 }
@@ -2310,10 +2312,10 @@ const SHOP = [
   { id: 'hwy', icon: '🚀', name: '高速道路', cost: 2, desc: '山も川も とびこえて はやく 走る',
     own: () => inv.highways, act: () => { inv.highways++; }, undo: () => { inv.highways--; } },
   { id: 'car', icon: '🚗', name: '車 +1', cost: 2, max: () => houseCarBonus < 3,
-    desc: 'ぜんぶの家の車が 1台ふえる。お客さんは ふえないので 運ぶ力だけ アップ（道は こみやすく）',
+    desc: 'ぜんぶの家の車が 1台ふえる。お客さんも 少し ふえるので、運ぶ よゆうは 少しだけ アップ（道は こみやすく）',
     own: () => 2 + houseCarBonus, ownLabel: '台/家',
-    act: () => { houseCarBonus++; for (const h of buildings) if (h.type === 'house') { h.maxCars++; h.carsReady++; } },
-    undo: () => { houseCarBonus--; for (const h of buildings) if (h.type === 'house') { h.maxCars--; h.carsReady = Math.min(h.carsReady, h.maxCars); } } },
+    act: () => { houseCarBonus++; for (const h of buildings) if (h.type === 'house') { h.maxCars++; h.carsReady++; } updateDemandRates(); },
+    undo: () => { houseCarBonus--; for (const h of buildings) if (h.type === 'house') { h.maxCars--; h.carsReady = Math.min(h.carsReady, h.maxCars); } updateDemandRates(); } },
   { id: 'cap', icon: '🏢', name: 'まてる人 +2', cost: 2, max: () => destCapBonus < 4,
     desc: 'ぜんぶの🏢で 白い点が 2こ多く たまっても だいじょうぶ（ピンチまでの よゆう）',
     own: () => START_PINS + destCapBonus, ownLabel: 'こ',
