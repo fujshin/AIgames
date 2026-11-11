@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Pocket Transit v7.15 - まちの道づくりパズル</title>
+<title>Pocket Transit v7.16 - まちの道づくりパズル</title>
 <style>
   :root {
     --bg-main: #f3efe6; --bg-panel: #ffffff; --text-main: #2c3540;
@@ -33,7 +33,8 @@
   .score-val { font-size: 20px; font-weight: 900; color: var(--accent); font-variant-numeric: tabular-nums; }
   .clock-area { display: flex; flex-direction: column; width: 92px; gap: 3px; }
   .clock-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; }
-  .hdr-ver { font-size: 9px; color: var(--text-sub); font-weight: 700; text-align: right; line-height: 1; }
+  .hdr-ver { font-size: 9px; color: var(--text-sub); font-weight: 700; text-align: right; line-height: 1; cursor: default; }
+  .hdr-ver.debug { color: #fff; background: #dc2626; border-radius: 4px; padding: 1px 3px; }
   .week-bar { width: 100%; height: 6px; background: rgba(128,128,128,0.2); border-radius: 3px; overflow: hidden; }
   .week-fill { height: 100%; background: var(--accent); width: 0%; }
   .week-fill.rush { background: #f59e0b; }
@@ -180,6 +181,15 @@
     display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100;
   }
   .modal-wrap.light { background: rgba(10,15,25,0.45); backdrop-filter: none; }
+  .modal-wrap.peek { background: transparent; backdrop-filter: none; align-items: flex-end; pointer-events: none; padding: 8px; }
+  .modal-wrap.peek .modal-card { display: none; }
+  .peek-bar { display: none; pointer-events: auto; width: 100%; max-width: 380px; margin: 0 auto; background: var(--bg-panel); border: 3px solid #b45309;
+    border-radius: 16px; padding: 8px 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.3); align-items: center; gap: 8px; font-weight: 900; font-size: 14px; }
+  .modal-wrap.peek .peek-bar { display: flex; }
+  .peek-bar .pb-txt { flex: 1; }
+  .peek-bar .pb-txt b { color: #b45309; font-size: 18px; }
+  .peek-bar button { border: none; border-radius: 10px; padding: 9px 14px; background: var(--accent); color: #fff; font-weight: 900; font-size: 14px; cursor: pointer; }
+  .peek-btn { border: 2px solid var(--border-col); background: var(--bg-main); color: var(--text-main); border-radius: 10px; padding: 6px 10px; font-weight: 800; font-size: 13px; cursor: pointer; margin-bottom: 8px; }
   .modal-wrap.show { display: flex; }
   .modal-card {
     background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border-col);
@@ -188,6 +198,13 @@
   }
   .modal-card h2 { font-size: 20px; margin-bottom: 8px; }
   .modal-card p { font-size: 13px; color: var(--text-sub); line-height: 1.5; margin-bottom: 14px; }
+  .intro3 { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 14px; text-align: left; }
+  .intro3 div { background: var(--bg-main); border-radius: 12px; padding: 8px 10px; font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+  .intro3 span { font-size: 20px; min-width: 2.4em; text-align: center; }
+  .more-rules { margin-top: 12px; text-align: left; font-size: 13px; }
+  .more-rules summary { color: var(--text-sub); font-weight: 800; cursor: pointer; text-align: center; }
+  .more-rules .rules { margin-top: 8px; font-size: 13px; }
+  .secondary-btn.pulse { border-color: #facc15; animation: glow 1s ease-in-out infinite; }
   .rules { text-align: left; font-size: 14px; line-height: 1.6; margin: 0 0 16px; list-style: none; }
   .rules li { margin-bottom: 7px; padding-left: 1.8em; text-indent: -1.8em; }
   .bonus-line { font-size: 13px; font-weight: 800; color: var(--accent); background: rgba(43,125,233,0.1); border-radius: 10px; padding: 6px; margin-bottom: 12px; line-height: 1.5; }
@@ -272,7 +289,7 @@
   <div class="toast" id="uiToast"></div>
   <div class="pause-pill" id="pausePill">
     <span class="grip" id="pauseGrip" title="ドラッグで うごかせるよ">⋮⋮</span>
-    <button class="go" onclick="setSpeed(1)">▶ つづける</button>
+    <button class="go" onclick="resumePlay()">▶ つづける</button>
     <button class="x" onclick="hidePausePill()" title="かくす（上の 1x でも つづけられるよ）">✕</button>
   </div>
   <div class="result-bar" id="resultBar">
@@ -354,27 +371,28 @@
 </footer>
 
 <div class="modal-wrap show" id="startModal">
-  <div class="modal-card">
-    <h2>🚗 まちの道づくり</h2>
-    <ul class="rules">
-      <li>🏠 <b>おなじ色</b>の 家と🏢を、道でつなごう！</li>
-      <li>🚗 車が🏢に つくと、🏢の<b>白い点</b>（まっているお客さん）が へるよ。白い点が いっぱいのまま ほうっておくと まけ。</li>
-      <li>🏠 お客さんは <b>家が ふえるほど ふえる</b>よ。<b>新しい家も どんどん つなごう</b>。1けんだけでは 車が たりなくなるよ。</li>
-      <li>✏️ 道は<b>指をはなさずに なぞった</b>ところだけ つながるよ。</li>
-      <li>🎨 <b>色ごとに 道を わける</b>と、まじわらないので こみにくいよ。</li>
-      <li>✂️ となりの道と くっついちゃったら、<b>あいだを なぞって 切りはなせる</b>よ。</li>
-      <li>🚪 たてものの<b>白いドア</b>に 道をつなげてね。たてものを<b>タップすると ドアの向きが かわる</b>よ。</li>
-      <li>🛣️ 道の数には かぎりがあるよ。⛰山には道がつくれない。川をわたるには🌉橋がいるよ。</li>
-      <li>🟠 道がまじわる<b>オレンジの点</b>では、車が いちど止まるよ（⏳が 出たら 待っている車）。🔄ロータリー・🌁立体交差・🚀高速道路で たすけよう！</li>
-      <li>🚌 <b>バス</b>は いちどに 4人 はこべる（おそいけど まじわる所が すく）。</li>
-      <li>🚥 <b>優先道路</b>は まじわる所の 本線（黄色い線）を 止まらず 通す。わき道は 長く 待つよ。</li>
-      <li>➡️ <b>一方通行</b>は 行きと帰りを 分けると 2台つづけて 走れる。🔀<b>インター</b>は 🚀高速道路の はしで 3台いっしょに 出入りできる。<b>組み合わせると 強い</b>よ！</li>
-      <li>⏸ 🏢の<b>赤いわっか（ピンチゲージ）</b>が 半分を こえると、<b>自動で 時間が とまる</b>よ。止まっているあいだに 道を なおそう。</li>
-    </ul>
-    <button class="primary-btn" id="btnStartTut" onclick="startTutorial()">🎓 れんしゅうする（はじめての人）</button>
-    <button class="primary-btn puz" id="btnStartPuz" style="margin-top:8px" onclick="openPuzzleList()">🧩 つめ道路（ミニゲーム）</button>
-    <button class="secondary-btn" onclick="startGame()">▶ ほんばんで あそぶ</button>
-    <div class="ver" id="verText"></div>
+    <div class="modal-card">
+      <h2>🚗 まちの道づくり</h2>
+      <div class="intro3">
+        <div><span>🏠➜🏢</span>おなじ色を 道で つなごう</div>
+        <div><span>🏢⚪</span>白い点が いっぱいで まけ</div>
+        <div><span>🔄🚥</span>道具で こまない くふうを！</div>
+      </div>
+      <button class="primary-btn" id="btnPlay" onclick="startGame()">▶ あそぶ</button>
+      <div class="row-btns">
+        <button class="secondary-btn" id="btnStartTut" onclick="startTutorial()">🎓 れんしゅう</button>
+        <button class="secondary-btn" id="btnStartPuz" onclick="openPuzzleList()">🧩 つめ道路</button>
+      </div>
+      <details class="more-rules"><summary>📖 くわしい ルール</summary>
+      <ul class="rules">
+        <li>✏️ 道は <b>指を はなさずに なぞった</b>ところだけ つながるよ。たてものを <b>タップ</b>で ドアの向きが かわる。</li>
+        <li>🎨 <b>色ごとに 道を 分ける</b>と まじわらず こみにくい。くっついたら ✂️で 切りはなせる。</li>
+        <li>🟠 道が まじわる <b>オレンジの点</b>では 車が いちど 止まる（⏳）。</li>
+        <li>🛒 しゅうの おわりに ポイントで 道具を えらべるよ。</li>
+        <li>⏸ ピンチに なると <b>自動で 時間が 止まる</b>。そのあいだに なおそう。</li>
+      </ul>
+      </details>
+      <div class="ver" id="verText"></div>
   </div>
 </div>
 
@@ -415,6 +433,7 @@
 <div class="modal-wrap" id="upgradeModal">
   <div class="modal-card">
     <h2 id="upTitle">1しゅう目 クリア！</h2>
+    <button class="peek-btn" onclick="peekMap(true)">👁 マップを 見る（まじわる所 <span id="peekJ">0</span>か所）</button>
     <div class="bonus-line" id="upBonus"></div>
     <p>ポイントで ごほうびを えらんでね。のこった ポイントは 来週に くりこせるよ。</p>
     <div class="pts-line" id="ptsLine"></div>
@@ -422,6 +441,7 @@
     <div class="cart" id="cartLine"></div>
     <div class="row-btns"><button class="secondary-btn" onclick="shopUndo()">↩ ひとつ もどす</button><button class="primary-btn" style="margin-top:8px" onclick="shopDone()">けってい ▶</button></div>
   </div>
+  <div class="peek-bar"><span class="pb-txt">🛒 のこり <b id="peekPts">0</b> ポイント</span><button onclick="peekMap(false)">ごほうびに もどる</button></div>
 </div>
 
 <div class="modal-wrap" id="overModal">
@@ -440,7 +460,7 @@
 'use strict';
 
 /* ===================== バージョンと キャッシュ対策 ===================== */
-const APP_VERSION = '7.15.0';
+const APP_VERSION = '7.16.0';
 (function checkLatest() {
   try {
     if (!/^https?:$/.test(location.protocol) || typeof fetch !== 'function') return;
@@ -478,6 +498,7 @@ const APP_VERSION = '7.15.0';
    v7.14: 🚌バス（3pt・家1けんの 車1台を バスに。4人のせ・速さ0.6倍・道では 1台分）を 追加。
    v7.15: 道具らんを 1行に（マップを 広く）。➡️一方通行・🚥優先道路が なぞって おけない バグを 修正。
           れんしゅうに 5つ・つめ道路に 2もん 追加。
+   v7.16: ごほうび画面で 👁マップを 見られる・つづけるの メッセージを なくす・🛠デバッグ（バージョンを 5回タップ）・はじめの 画面を みじかく。
    v7.13: 🚥優先道路（1ptで2か所・まじわる所の 本線は 止まらず 2台。わき道は 長く 待つ）を 追加。
    ===================================================================== */
 const COLS = 11;
@@ -655,7 +676,6 @@ function placePausePill() {
 function hidePausePill() {
   pillHidden = true;
   updatePausePill();
-  toast('上の 1x を おすと つづけられるよ', true);
 }
 (function setupPillDrag() {
   const el = document.getElementById('pausePill');
@@ -1003,6 +1023,7 @@ function openHelp() {
   modalOpen = true;
   isDragging = false;
   showModal('startModal', true);
+    const md = document.querySelector && document.querySelector('.more-rules'); if (md) md.open = true;
   updateUI();
 }
 
@@ -1395,7 +1416,11 @@ function nextLesson() {
   setupLesson(tut.lesson + 1);
 }
 function endTutorial(finished = false) {
-  if (finished) { try { localStorage.setItem('pocketTransitTutDone', '1'); } catch (e) { /* noop */ } }
+  if (finished) {
+    try { localStorage.setItem('pocketTransitTutDone', '1'); } catch (e) { /* noop */ }
+    document.getElementById('btnStartTut').classList.remove('pulse');
+    document.getElementById('btnPlay').classList.add('pulse');
+  }
   tut = null;
   setPanel('tutPanel', false);
   backToMenu();
@@ -1626,6 +1651,7 @@ function loadPuzzleStars() {
   try { return JSON.parse(localStorage.getItem(PUZZLE_STORE) || '{}') || {}; } catch (e) { return {}; }
 }
 function savePuzzleStars(i, s) {
+  if (debugMode) return;
   const d = loadPuzzleStars();
   if ((d[i] || 0) < s) { d[i] = s; try { localStorage.setItem(PUZZLE_STORE, JSON.stringify(d)); } catch (e) { /* noop */ } }
 }
@@ -1927,6 +1953,11 @@ function setSpeed(s) {
   document.getElementById('btn1x').classList.toggle('active', s === 1);
   document.getElementById('btn2x').classList.toggle('active', s === 2);
   updatePausePill();
+}
+function resumePlay() {
+  setSpeed(1);
+  clearTimeout(toastTimer);
+  document.getElementById('uiToast').classList.remove('show');
 }
 function toggleTheme() {
   document.body.classList.toggle('dark');
@@ -2529,8 +2560,9 @@ function gameOver(b) {
   playTone(180, 0.4, 'sawtooth', 0.12);
   let best = score;
   try {
-    best = Math.max(score, Number(localStorage.getItem('pocketTransitBestV76') || 0));
-    localStorage.setItem('pocketTransitBestV76', String(best));
+    const prev = Number(localStorage.getItem('pocketTransitBestV76') || 0);
+    best = debugMode ? prev : Math.max(score, prev);
+    if (!debugMode) localStorage.setItem('pocketTransitBestV76', String(best));
   } catch (e) { /* noop */ }
   refreshTheory();
   let placed = 0, junctions = 0;
@@ -2547,6 +2579,7 @@ function gameOver(b) {
   document.getElementById('finalScore').textContent = score + ' 台 とどいた！';
   const items = [
     ['がんばった日', dayStr], ['いちばんの記ろく', best + ' 台'],
+    ...(debugMode ? [['🛠 デバッグ', '記録は のこりません']] : []),
     ['🏠 つないだ家', `${housesOn} / ${housesAll.length} けん`], ['🟠 まじわる所の数', junctions + ' か所'],
     ['📐 道のムダのなさ', `${eff}%`], ['🔥 いそがしさ', busy + '%'],
     ['⏸ さいしょの ピンチ', stats.firstPinchScore == null ? 'なし' : stats.firstPinchScore + ' 台'], ['⏸ ピンチの回数', stats.pinches + ' 回']
@@ -2635,6 +2668,8 @@ function renderShop() {
     btn.onclick = () => shopBuy(it.id);
     box.appendChild(btn);
   }
+  let nJ = 0; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (isJunction(c, r)) nJ++;
+  document.getElementById('peekJ').textContent = nJ;
   document.getElementById('cartLine').textContent = shopLog.length ? 'えらんだ もの：' + shopLog.map(id => SHOP.find(x => x.id === id).icon).join(' ') : '';
 }
 function shopBuy(id) {
@@ -2651,7 +2686,15 @@ function shopUndo() {
   it.undo(); shopPts += it.cost;
   renderShop(); updateUI();
 }
+let peeking = false;
+function peekMap(on) {
+  peeking = on;
+  document.getElementById('upgradeModal').classList.toggle('peek', on);
+  document.getElementById('peekPts').textContent = shopPts;
+  if (!on) renderShop();
+}
 function shopDone() {
+  peekMap(false);
   showModal('upgradeModal', false);
   playTone(680, 0.12, 'triangle');
   modalOpen = false;
@@ -2857,6 +2900,14 @@ function drawGame(now) {
     }
   }
 
+  if (peeking) {
+    const pulse = 0.5 + 0.5 * Math.sin(now * 5);
+    ctx.save(); ctx.strokeStyle = `rgba(245, 158, 11, ${0.5 + 0.5 * pulse})`; ctx.lineWidth = Math.max(2, cs * 0.08);
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (isJunction(c, r)) {
+      ctx.beginPath(); ctx.arc((c + 0.5) * cs, (r + 0.5) * cs, cs * (0.4 + 0.08 * pulse), 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
   if (tut && tut.phase === 'observe' && LESSONS[tut.lesson].observe) {
     const pulse = 0.5 + 0.5 * Math.sin(now * 5);
     ctx.save();
@@ -3077,16 +3128,48 @@ function drawGame(now) {
   }
 }
 
+/* ===================== 🛠 デバッグ（アイテム むげん） ===================== */
+// バージョン表示を 2びょう いないに 5かい タップで オン／オフ。記録は のこさない
+let debugMode = false, verTaps = [];
+const DEBUG_KEYS = ['roads', 'bridges', 'roundabouts', 'highways', 'overpasses', 'oneways', 'interchanges', 'prios', 'buses'];
+function verTap() {
+  const now = performance.now();
+  verTaps = verTaps.filter(t => now - t < 2000);
+  verTaps.push(now);
+  if (verTaps.length < 5) return;
+  verTaps = [];
+  debugMode = !debugMode;
+  if (debugMode) debugFill();
+  document.getElementById('hdrVer').classList.toggle('debug', debugMode);
+  document.getElementById('hdrVer').textContent = debugMode ? '🛠DEBUG' : 'v' + APP_VERSION;
+  toast(debugMode ? '🛠 デバッグ：アイテム むげん（記録は のこらないよ）' : 'デバッグ おわり', true);
+  playTone(debugMode ? 900 : 300, 0.12, 'triangle');
+  updateUI();
+}
+function debugFill() {
+  if (!debugMode) return;
+  for (const k of DEBUG_KEYS) if (invN(k) < 99) inv[k] = 99;
+  if (document.getElementById('upgradeModal').classList.contains('show') && shopPts < 99) { shopPts = 99; renderShop(); }
+}
+document.getElementById('hdrVer').addEventListener('click', verTap);
+
 /* ===================== ループ ===================== */
 let lastTS = performance.now();
 function loop(ts) {
   const dt = Math.min(0.1, Math.max(0, (ts - lastTS) / 1000));
   lastTS = ts;
+  if (debugMode) debugFill();
   updateGame(dt);
   drawGame(ts / 1000);
   requestAnimationFrame(loop);
 }
 document.getElementById('verText').textContent = 'バージョン ' + APP_VERSION;
+// はじめての人には れんしゅうを 光らせる
+(function () {
+  let done = false;
+  try { done = !!localStorage.getItem('pocketTransitTutDone'); } catch (e) { /* noop */ }
+  document.getElementById(done ? 'btnPlay' : 'btnStartTut').classList.add('pulse');
+})();
 document.getElementById('hdrVer').textContent = 'v' + APP_VERSION;
 initGame(false);
 requestAnimationFrame(loop);
