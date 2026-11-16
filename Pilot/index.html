@@ -1,1 +1,548 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>そらの管制塔 v0.1</title>
+<style>
+  :root { --bg:#eaf4ff; --panel:#fff; --text:#24313f; --sub:#6b7b8c; --line:#d5dfea; --accent:#2b7de9; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  html, body { width:100%; height:100dvh; overflow:hidden; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif; display:flex; flex-direction:column; }
+  header { height:48px; background:var(--panel); border-bottom:1px solid var(--line); display:flex; align-items:center;
+    justify-content:space-between; padding:0 8px; gap:6px; flex-shrink:0; }
+  .score { display:flex; align-items:baseline; gap:4px; background:rgba(43,125,233,.1); padding:3px 9px; border-radius:14px; }
+  .score b { font-size:19px; color:var(--accent); font-variant-numeric:tabular-nums; }
+  .score span { font-size:11px; font-weight:700; color:var(--sub); }
+  .mid { display:flex; flex-direction:column; align-items:center; line-height:1.1; }
+  .clock { font-size:14px; font-weight:900; font-variant-numeric:tabular-nums; }
+  .hearts { font-size:12px; letter-spacing:-1px; }
+  .ver { font-size:9px; color:var(--sub); }
+  .btns { display:flex; gap:4px; }
+  .btns button { border:1px solid var(--line); background:var(--bg); border-radius:8px; height:30px; padding:0 8px;
+    font-size:12px; font-weight:800; color:var(--text); cursor:pointer; }
+  .btns button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  #stage { flex:1; min-height:0; position:relative; display:flex; align-items:center; justify-content:center; }
+  canvas { display:block; touch-action:none; }
+  .radio { position:absolute; top:6px; left:50%; transform:translateX(-50%); max-width:94%;
+    background:rgba(20,30,45,.82); color:#fff; font-size:12px; font-weight:700; padding:5px 12px; border-radius:14px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; transition:opacity .4s; }
+  .radio.warn { background:rgba(200,30,30,.92); }
+  .radio.hide { opacity:0; }
+  footer { background:var(--panel); border-top:1px solid var(--line); padding:6px 8px 10px; flex-shrink:0; min-height:86px; }
+  .sel { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; margin-bottom:6px; min-height:20px; }
+  .sel .tag { padding:2px 8px; border-radius:8px; color:#fff; font-size:12px; }
+  .sel .st { color:var(--sub); font-weight:700; font-size:12px; }
+  .cmds { display:flex; gap:6px; }
+  .cmds button { flex:1; border:none; border-radius:12px; padding:11px 4px; font-size:15px; font-weight:900; color:#fff;
+    background:var(--accent); cursor:pointer; }
+  .cmds button.sub { background:#94a3b8; }
+  .cmds button.go { background:#10b981; }
+  .cmds button.warn { background:#ef4444; animation:pulse .6s infinite; }
+  .cmds button:disabled { opacity:.35; animation:none; }
+  .cmds .why { flex:1; font-size:12px; color:var(--sub); font-weight:700; align-self:center; text-align:center; }
+  @keyframes pulse { 50% { transform:scale(1.04); } }
+  .modal { position:fixed; inset:0; background:rgba(10,20,35,.6); display:none; align-items:center; justify-content:center; padding:16px; z-index:50; }
+  .modal.show { display:flex; }
+  .card { background:var(--panel); border-radius:18px; padding:20px; width:100%; max-width:370px; text-align:center; max-height:92dvh; overflow-y:auto; }
+  .card h2 { font-size:21px; margin-bottom:8px; }
+  .card p { font-size:13px; color:var(--sub); line-height:1.6; margin-bottom:12px; }
+  .rules { text-align:left; font-size:14px; line-height:1.65; margin:0 0 14px; list-style:none; }
+  .rules li { margin-bottom:5px; }
+  .big { width:100%; padding:13px; border:none; border-radius:12px; background:var(--accent); color:#fff; font-size:16px; font-weight:900; cursor:pointer; }
+  .sec { width:100%; padding:10px; border:2px solid var(--line); border-radius:12px; background:var(--bg); font-size:14px; font-weight:800; margin-top:8px; cursor:pointer; color:var(--text); }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:10px 0 14px; text-align:left; }
+  .stat { background:var(--bg); border-radius:10px; padding:6px 8px; }
+  .stat .k { font-size:10.5px; color:var(--sub); font-weight:700; } .stat .v { font-size:15px; font-weight:900; }
+  .resultbar { position:absolute; left:6px; right:6px; bottom:6px; background:rgba(20,30,45,.88); color:#fff; border-radius:12px;
+    padding:7px 10px; font-size:12px; font-weight:700; display:none; gap:8px; align-items:center; }
+  .resultbar.show { display:flex; } .resultbar div { flex:1; }
+  .resultbar button { border:none; border-radius:8px; padding:6px 10px; font-weight:800; background:var(--accent); color:#fff; }
+</style>
+</head>
+<body>
+<header>
+  <div class="score"><b id="uiScore">0</b><span>びん</span></div>
+  <div class="mid"><div class="clock" id="uiClock">6:00</div><div class="hearts" id="uiHearts"></div></div>
+  <div class="btns">
+    <button id="bPause" onclick="setSpeed(0)">⏸</button>
+    <button id="b1" class="on" onclick="setSpeed(1)">1x</button>
+    <button id="b2" onclick="setSpeed(2)">2x</button>
+    <button onclick="openHelp()">？</button>
+  </div>
+</header>
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div class="radio hide" id="uiRadio"></div>
+  <div class="resultbar" id="resultBar"><div id="rbText"></div><button onclick="showOver()">けっか</button><button onclick="newGame()">もういちど</button></div>
+</div>
+<footer>
+  <div class="sel" id="uiSel"><span class="st">✈️ ひこうきを タップして えらんでね（❗が 出ている ひこうきは 指示を まっているよ）</span></div>
+  <div class="cmds" id="uiCmds"></div>
+</footer>
 
+<div class="modal show" id="mStart">
+  <div class="card">
+    <h2>🗼 そらの管制塔</h2>
+    <ul class="rules">
+      <li>✈️ ひこうきを タップして、<b>着陸・ゲートへ・出発・離陸</b>の 指示を 出そう。</li>
+      <li>🛣️ 滑走路は <b>1本だけ</b>。2機が いっしょに 使うと 大事故！</li>
+      <li>⏳ 指示を 待たせると お客さんが おこるよ（❤️が へる）。</li>
+      <li>⏸ むずかしい ときは 時間を 止めて 考えて いいよ。</li>
+    </ul>
+    <button class="big" onclick="startGame()">▶ 管制 スタート</button>
+    <p style="margin:10px 0 0" id="uiBest"></p>
+    <div class="ver" id="uiVer"></div>
+  </div>
+</div>
+
+<div class="modal" id="mOver">
+  <div class="card">
+    <h2 id="ovTitle">⚠️</h2>
+    <p id="ovReason"></p>
+    <div style="font-size:28px;font-weight:900;color:var(--accent)" id="ovScore"></div>
+    <div class="stats" id="ovStats"></div>
+    <button class="big" onclick="newGame()">もういちど</button>
+    <button class="sec" onclick="viewBoard()">📷 さいごの 空港を 見る</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+const APP_VERSION = '0.1.0';
+/* ============================================================
+   そらの管制塔 — 滑走路1本の 空港を 管制する パズル風ゲーム
+   参考：「ぼくは航空管制官」の 出発／到着の 流れを、子ども向けに 4つの 指示へ 単純化。
+   ============================================================ */
+const W = 360, H = 540;
+const RWY = { y: 330, x1: 70, x2: 340 };       // 滑走路（左から右へ 着陸・離陸）
+const TWY = 400;                                 // 誘導路（すべて 左向きに 流れる）
+const HOLD_X = 50, EXIT_X = 320;                 // 離陸まち位置 ／ 着陸後の 出口
+const GATE_Y = 470;
+const GATES = [150, 190, 230, 270].map(x => ({ x, plane: null }));
+const FIX = { x: 82, y: 95 };                    // 上空の まち（旋回）地点
+const FINAL = [{ x: 30, y: 165 }, { x: 12, y: 260 }, { x: 28, y: 318 }, { x: RWY.x1, y: RWY.y }];
+const SP = { air: 40, final: 38, roll: 72, taxi: 32, climb: 70 };
+const SPACING = 24;
+const PATIENCE = 30;            // 何秒 待つと おこるか
+const UNLOAD = 8;               // ゲートで お客さんを おろす 時間
+const HOUR = 45;                // 1時間 = 45秒
+const MAX_QUEUE = 3;            // 離陸まちに ならべる 数
+const HEARTS = 5;
+const AIRLINES = [
+  { n: 'そら', c: '#2b7de9' }, { n: 'にじ', c: '#e84a5f' }, { n: 'ほし', c: '#f59e0b' },
+  { n: 'かぜ', c: '#10b981' }, { n: 'つき', c: '#8b5cf6' }
+];
+const arrivalInterval = h => Math.max(8.5, 17 - 1.0 * h);
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let scale = 1, dpr = 1;
+let planes = [], nextId = 1, selected = null;
+let t = 0, score = 0, hearts = HEARTS, spawnT = 0, speed = 1;
+let over = false, started = false, crashAt = null, overReason = '';
+let stats = { arr: 0, dep: 0, goAround: 0, angry: 0 };
+
+/* ---------- 音 ---------- */
+let ac = null;
+function tone(f, d = 0.08, type = 'sine', v = 0.07) {
+  try {
+    if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + d);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + d);
+  } catch (e) { /* noop */ }
+}
+
+/* ---------- 画面 ---------- */
+function resize() {
+  const st = document.getElementById('stage');
+  scale = Math.min(st.clientWidth / W, st.clientHeight / H);
+  dpr = window.devicePixelRatio || 1;
+  cv.style.width = W * scale + 'px'; cv.style.height = H * scale + 'px';
+  cv.width = Math.round(W * scale * dpr); cv.height = Math.round(H * scale * dpr);
+  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+
+let radioTimer = null;
+function radio(msg, warn = false) {
+  const el = document.getElementById('uiRadio');
+  el.textContent = msg; el.classList.toggle('warn', warn); el.classList.remove('hide');
+  clearTimeout(radioTimer); radioTimer = setTimeout(() => el.classList.add('hide'), 2600);
+}
+
+/* ---------- ひこうき ---------- */
+function newName() {
+  const a = AIRLINES[Math.floor(Math.random() * AIRLINES.length)];
+  return { name: a.n + (10 + Math.floor(Math.random() * 89)), color: a.c };
+}
+function makePlane(state, x, y) {
+  const nm = newName();
+  const p = { id: nextId++, ...nm, state, x, y, ang: 0, path: [], pi: 0, pat: 1, gate: null, timer: 0,
+    ux: 1, uy: 0, blocked: false, angry: 0, warn: false, holdA: Math.random() * 6.28, since: t };
+  planes.push(p);
+  return p;
+}
+function setPath(p, pts, sp) { p.path = pts.map(q => ({ x: q.x, y: q.y, s: q.s || sp })); p.pi = 0; }
+function pathLeft(p) {
+  let d = 0, x = p.x, y = p.y;
+  for (let i = p.pi; i < p.path.length; i++) { d += Math.hypot(p.path[i].x - x, p.path[i].y - y); x = p.path[i].x; y = p.path[i].y; }
+  return d;
+}
+const onGround = p => ['landing', 'exitWait', 'taxiIn', 'taxiOut', 'holdShort'].includes(p.state);
+const isMain = p => Math.abs(p.y - TWY) < 1 && Math.abs(p.uy) < 0.2;
+
+// 前に ひこうきが いて すすめないか（2機が おたがいを 待つときは ゆずりあいの ルールで 決める）
+function sees(a, b) {
+  const rx = b.x - a.x, ry = b.y - a.y, d = Math.hypot(rx, ry);
+  return d < SPACING && rx * a.ux + ry * a.uy > 4;
+}
+function blockedAhead(p) {
+  for (const o of planes) {
+    if (o === p || !onGround(o)) continue;
+    if (!sees(p, o)) continue;
+    if (sees(o, p)) {                 // おたがいに 待っている
+      const pm = isMain(p), om = isMain(o);
+      if (pm && !om) continue;        // 誘導路の 上の ひこうきが 先
+      if (!pm && !om || pm && om) { if (p.id < o.id) continue; }
+    }
+    return true;
+  }
+  return false;
+}
+function follow(p, dt, ground) {
+  while (dt > 1e-6 && p.pi < p.path.length) {
+    const q = p.path[p.pi], dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy);
+    if (d < 0.01) { p.pi++; continue; }
+    p.ux = dx / d; p.uy = dy / d;
+    if (ground && blockedAhead(p)) { p.blocked = true; return false; }
+    p.blocked = false;
+    const step = Math.min(d, q.s * dt);
+    p.x += p.ux * step; p.y += p.uy * step; p.ang = Math.atan2(p.uy, p.ux);
+    dt -= step / q.s;
+  }
+  return p.pi >= p.path.length;
+}
+
+/* ---------- 滑走路 ---------- */
+function runwayUser(except) {
+  return planes.find(o => o !== except && (
+    (o.state === 'landing' && o.y < RWY.y + 8) ||
+    (o.state === 'takeoff' && o.x < RWY.x2 - 2)));
+}
+function etaThreshold(p) { return p.state === 'final' ? pathLeft(p) / SP.final : Infinity; }
+function nextFinal() { return planes.filter(p => p.state === 'final').sort((a, b) => etaThreshold(a) - etaThreshold(b))[0]; }
+const queueCount = () => planes.filter(p => p.state === 'taxiOut' || p.state === 'holdShort').length;
+const freeGate = () => GATES.filter(g => !g.plane).sort((a, b) => b.x - a.x)[0];
+
+/* ---------- 指示 ---------- */
+function canDo(p) {
+  switch (p.state) {
+    case 'inbound': case 'holding': return { k: 'land', label: '🛬 着陸して よし', cls: 'go' };
+    case 'final': return { k: 'goAround', label: '🔁 着陸 やりなおし', cls: p.warn ? 'warn' : 'sub' };
+    case 'exitWait': return freeGate() ? { k: 'gate', label: '🅿️ ゲートへ', cls: 'go' } : { why: 'ゲートが あいていないよ（出発させて あけよう）' };
+    case 'ready': return queueCount() < MAX_QUEUE ? { k: 'push', label: '🛫 出発（滑走路の 手前へ）', cls: 'go' } : { why: `離陸まちが ${MAX_QUEUE}機で いっぱいだよ` };
+    case 'holdShort': {
+      const u = runwayUser(p);
+      if (u) return { why: `滑走路に ${u.name}が いるよ` };
+      return { k: 'takeoff', label: '🚀 離陸して よし', cls: 'go' };
+    }
+  }
+  return null;
+}
+function command(p, k) {
+  if (!p || over) return;
+  const c = canDo(p);
+  if (!c || c.k !== k) return;
+  if (k === 'land') {
+    p.state = 'final'; p.warn = false;
+    setPath(p, FINAL, SP.final);
+    radio(`🗼 ${p.name}、着陸して よろしい。`); tone(660); tone(880, 0.1);
+  } else if (k === 'goAround') {
+    p.state = 'goAround'; p.warn = false; p.pat = Math.max(0, p.pat - 0.15); stats.goAround++;
+    setPath(p, [{ x: p.x + 30, y: p.y - 40 }, FIX], SP.air);
+    radio(`🗼 ${p.name}、着陸 やりなおし。上空で 待って ください。`); tone(440, 0.15, 'square', 0.05);
+  } else if (k === 'gate') {
+    const g = freeGate(); g.plane = p; p.gate = g; p.state = 'taxiIn';
+    setPath(p, [{ x: EXIT_X, y: TWY }, { x: g.x, y: TWY }, { x: g.x, y: GATE_Y }], SP.taxi);
+    radio(`🗼 ${p.name}、${GATES.indexOf(g) + 1}番ゲートへ どうぞ。`); tone(620);
+  } else if (k === 'push') {
+    p.state = 'taxiOut';
+    setPath(p, [{ x: p.gate.x, y: TWY }, { x: HOLD_X, y: TWY }], SP.taxi);
+    radio(`🗼 ${p.name}、滑走路の 手前まで 進んで ください。`); tone(620);
+  } else if (k === 'takeoff') {
+    p.state = 'takeoff';
+    setPath(p, [{ x: RWY.x1, y: RWY.y, s: SP.taxi }, { x: RWY.x2, y: RWY.y, s: SP.roll + 20 }, { x: W + 40, y: 230, s: SP.climb }], SP.taxi);
+    radio(`🗼 ${p.name}、離陸して よろしい。いってらっしゃい！`); tone(700); tone(990, 0.12);
+  }
+  p.pat = Math.min(1, p.pat + 0.0);
+  if (selected === p && !canDo(p)) selected = null;
+  renderCmds();
+}
+
+/* ---------- 進行 ---------- */
+function crash(a, b) {
+  over = true; crashAt = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  overReason = `${a.name}と ${b.name}が 滑走路で ぶつかりそうに なった！`;
+  tone(160, 0.6, 'sawtooth', 0.12);
+  finish('💥 ニアミス！');
+}
+function update(dt) {
+  if (over || speed === 0 || !started) return;
+  dt *= speed; t += dt;
+
+  spawnT -= dt;
+  if (spawnT <= 0) {
+    spawnT = arrivalInterval(Math.floor(t / HOUR));
+    const p = makePlane('inbound', 40 + Math.random() * 280, -20);
+    setPath(p, [FIX], SP.air);
+    radio(`✈️ ${p.name}「着陸したいです。どうぞ」`);
+  }
+
+  for (const p of planes.slice()) {
+    p.angry = Math.max(0, p.angry - dt);
+    switch (p.state) {
+      case 'inbound': case 'goAround':
+        if (follow(p, dt, false)) { p.state = 'holding'; p.since = t; }
+        break;
+      case 'holding': {
+        p.holdA += dt * 0.9;
+        const slot = planes.filter(o => o.state === 'holding' && o.since < p.since).length;
+        const r = 22 + slot * 13;
+        const tx = FIX.x + Math.cos(p.holdA) * r, ty = FIX.y + Math.sin(p.holdA) * r * 0.55;
+        p.ang = Math.atan2(ty - p.y, tx - p.x); p.x += (tx - p.x) * Math.min(1, dt * 3); p.y += (ty - p.y) * Math.min(1, dt * 3);
+        break;
+      }
+      case 'final': {
+        const done = follow(p, dt, false);
+        const u = runwayUser(p);
+        p.warn = !!u && etaThreshold(p) < 3.2;
+        if (done) {
+          if (u) { crash(p, u); return; }
+          // うしろの 着陸機が 近すぎる？（滑走路の 上で 追いつく）
+          p.state = 'landing'; p.warn = false;
+          setPath(p, [{ x: EXIT_X, y: RWY.y, s: SP.roll }, { x: EXIT_X, y: 385, s: SP.taxi }], SP.roll);
+          tone(500, 0.06);
+        }
+        break;
+      }
+      case 'landing':
+        if (follow(p, dt, true)) { p.state = 'exitWait'; p.since = t; radio(`✈️ ${p.name}「着陸しました。ゲートを ください」`); }
+        break;
+      case 'taxiIn':
+        if (follow(p, dt, true)) { p.state = 'unload'; p.timer = UNLOAD; score++; stats.arr++; tone(880, 0.06); }
+        break;
+      case 'unload':
+        p.timer -= dt;
+        if (p.timer <= 0) {
+          Object.assign(p, newName()); p.state = 'ready'; p.pat = 1; p.since = t;
+          radio(`✈️ ${p.name}「出発の じゅんび OK です」`);
+        }
+        break;
+      case 'taxiOut':
+        if (p.gate && p.y <= TWY + 0.5) { p.gate.plane = null; p.gate = null; }
+        if (follow(p, dt, true)) { p.state = 'holdShort'; p.since = t; radio(`✈️ ${p.name}「離陸の じゅんび OK です」`); }
+        break;
+      case 'takeoff':
+        if (follow(p, dt, false)) { planes.splice(planes.indexOf(p), 1); score++; stats.dep++; if (selected === p) selected = null; }
+        break;
+    }
+    // がまん
+    const waiting = ['holding', 'exitWait', 'ready', 'holdShort'].includes(p.state);
+    const slow = (p.state === 'taxiOut' || p.state === 'taxiIn' || p.state === 'landing') && p.blocked;
+    if (waiting || slow) {
+      p.pat -= dt / PATIENCE * (slow ? 0.5 : 1);
+      if (p.pat <= 0) {
+        p.pat = 1; p.angry = 2.5; hearts--; stats.angry++;
+        radio(`😡 ${p.name}の お客さんが おこっちゃった！`, true); tone(200, 0.3, 'square', 0.08);
+        if (hearts <= 0) { overReason = '待たされた お客さんが おこって、空港の 評判が 0に なった…'; over = true; finish('😢 評判 0'); return; }
+      }
+    }
+  }
+  const w = planes.find(p => p.warn);
+  if (w) { if (!selected || !selected.warn) { selected = w; renderCmds(); } radio(`⚠️ あぶない！ ${w.name}が 着陸しそう。滑走路が つかわれているよ`, true); }
+}
+
+/* ---------- 入力 ---------- */
+function pick(e) {
+  if (!started || over) return;
+  const r = cv.getBoundingClientRect(), pt = e.touches ? e.touches[0] : e;
+  const x = (pt.clientX - r.left) / scale, y = (pt.clientY - r.top) / scale;
+  let best = null, bd = 30;
+  for (const p of planes) { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = p; } }
+  selected = best; if (best) tone(520, 0.04);
+  renderCmds();
+}
+cv.addEventListener('mousedown', pick);
+cv.addEventListener('touchstart', e => { e.preventDefault(); pick(e); }, { passive: false });
+
+const STATE_JA = {
+  inbound: '空港へ むかっている', holding: '上空で 着陸を まっている', final: '着陸に むかっている', goAround: '上空へ もどっている',
+  landing: '着陸した', exitWait: 'ゲートを まっている', taxiIn: 'ゲートへ 走っている', unload: 'お客さんが おりている',
+  ready: '出発を まっている', taxiOut: '滑走路の 手前へ 走っている', holdShort: '離陸を まっている', takeoff: '離陸中'
+};
+function renderCmds() {
+  const sel = document.getElementById('uiSel'), box = document.getElementById('uiCmds');
+  box.innerHTML = '';
+  if (!selected || !planes.includes(selected)) {
+    selected = null;
+    sel.innerHTML = '<span class="st">✈️ ひこうきを タップして えらんでね（❗が 出ている ひこうきは 指示を まっているよ）</span>';
+    return;
+  }
+  const p = selected;
+  let extra = '';
+  if (p.state === 'final') extra = `・滑走路まで あと ${etaThreshold(p).toFixed(0)}秒`;
+  if (p.state === 'unload') extra = `・あと ${Math.ceil(p.timer)}秒`;
+  sel.innerHTML = `<span class="tag" style="background:${p.color}">${p.name}</span><span class="st">${STATE_JA[p.state]}${extra}</span>`;
+  const c = canDo(p);
+  if (!c) { box.innerHTML = '<div class="why">いまは 指示は いらないよ</div>'; return; }
+  if (c.why) { box.innerHTML = `<div class="why">⏳ ${c.why}</div>`; return; }
+  const b = document.createElement('button');
+  b.className = c.cls || ''; b.textContent = c.label;
+  b.onclick = () => command(p, c.k);
+  box.appendChild(b);
+}
+
+/* ---------- 描画 ---------- */
+function draw(now) {
+  // 空と地面
+  const g = ctx.createLinearGradient(0, 0, 0, 290);
+  g.addColorStop(0, '#9fd3ff'); g.addColorStop(1, '#dff1ff');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, 290);
+  ctx.fillStyle = '#b9e3a5'; ctx.fillRect(0, 290, W, H - 290);
+  // 雲
+  ctx.fillStyle = 'rgba(255,255,255,.8)';
+  for (const [cx, cy, s] of [[230, 60, 1], [300, 150, .7], [160, 200, .8]]) {
+    const ox = ((now * 4 * s) % 420) - 30;
+    ctx.beginPath(); ctx.arc((cx + ox) % (W + 60) - 30, cy, 14 * s, 0, 7); ctx.arc((cx + ox) % (W + 60) - 14, cy - 6, 16 * s, 0, 7);
+    ctx.arc((cx + ox) % (W + 60) + 2, cy, 13 * s, 0, 7); ctx.fill();
+  }
+  // まち地点と 着陸コース
+  ctx.save(); ctx.setLineDash([4, 5]); ctx.strokeStyle = 'rgba(43,125,233,.45)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(FIX.x, FIX.y, 30, 17, 0, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(FIX.x, FIX.y); for (const q of FINAL) ctx.lineTo(q.x, q.y); ctx.stroke(); ctx.restore();
+  ctx.fillStyle = 'rgba(43,125,233,.8)'; ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('まち', FIX.x, FIX.y + 3);
+  // 滑走路
+  const busy = runwayUser(null);
+  ctx.fillStyle = '#4b5563'; ctx.fillRect(RWY.x1 - 10, RWY.y - 11, RWY.x2 - RWY.x1 + 20, 22);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.setLineDash([10, 8]);
+  ctx.beginPath(); ctx.moveTo(RWY.x1 + 14, RWY.y); ctx.lineTo(RWY.x2 - 14, RWY.y); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = busy ? '#ef4444' : '#22c55e';
+  for (const x of [RWY.x1 - 6, RWY.x2 + 6]) { ctx.beginPath(); ctx.arc(x, RWY.y - 16, 4, 0, 7); ctx.fill(); }
+  ctx.fillStyle = busy ? '#ef4444' : '#15803d'; ctx.font = '800 11px sans-serif';
+  ctx.fillText(busy ? `滑走路：${busy.name}が 使用中` : '滑走路：あいてる', (RWY.x1 + RWY.x2) / 2, RWY.y - 18);
+  // 誘導路・出口・ゲート
+  ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 12; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(EXIT_X, RWY.y); ctx.lineTo(EXIT_X, TWY); ctx.lineTo(HOLD_X, TWY); ctx.lineTo(RWY.x1, RWY.y); ctx.stroke();
+  for (const gt of GATES) { ctx.beginPath(); ctx.moveTo(gt.x, TWY); ctx.lineTo(gt.x, GATE_Y); ctx.stroke(); }
+  ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
+  ctx.beginPath(); ctx.moveTo(EXIT_X, TWY); ctx.lineTo(HOLD_X, TWY); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#6b7280'; ctx.font = '700 9px sans-serif';
+  ctx.fillText('◀ 誘導路（左へ 一方通行）', 205, TWY - 9);
+  ctx.fillStyle = '#dc2626'; ctx.fillRect(HOLD_X + 6, TWY - 14, 3, 28);
+  ctx.fillStyle = '#7f1d1d'; ctx.fillText('離陸まち', HOLD_X + 20, TWY + 22);
+  ctx.fillStyle = '#e5e7eb'; ctx.fillRect(120, GATE_Y + 14, 180, 40);
+  ctx.fillStyle = '#374151'; ctx.font = '800 12px sans-serif'; ctx.fillText('🏢 ターミナル', 210, GATE_Y + 39);
+  GATES.forEach((gt, i) => {
+    ctx.fillStyle = gt.plane ? '#fca5a5' : '#86efac';
+    ctx.beginPath(); ctx.arc(gt.x, GATE_Y, 13, 0, 7); ctx.fill();
+    ctx.fillStyle = '#374151'; ctx.font = '700 9px sans-serif'; ctx.fillText(String(i + 1), gt.x, GATE_Y + 26);
+  });
+  // ひこうき
+  for (const p of planes) drawPlane(p, now);
+  if (crashAt) { ctx.font = '40px sans-serif'; ctx.fillText('💥', crashAt.x, crashAt.y + 14); }
+}
+function drawPlane(p, now) {
+  const air = ['inbound', 'holding', 'final', 'goAround', 'takeoff'].includes(p.state) && !(p.state === 'takeoff' && p.x < RWY.x2);
+  const s = air ? 1.15 : 0.95;
+  if (air) { ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse(p.x + 6, p.y + 12, 9, 4, 0, 0, 7); ctx.fill(); }
+  if (selected === p) { ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, p.y, 17, 0, 7); ctx.stroke(); }
+  ctx.fillStyle = p.color; ctx.globalAlpha = .85; ctx.beginPath(); ctx.arc(p.x, p.y, 11 * s, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+  ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.ang + Math.PI / 4);
+  ctx.font = `${Math.round(16 * s)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✈️', 0, 1);
+  ctx.restore();
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
+  ctx.font = '800 9px sans-serif'; ctx.fillStyle = '#1f2937'; ctx.fillText(p.name, p.x, p.y + 22);
+  const c = canDo(p);
+  const asking = c && (c.k || c.why) && p.state !== 'final';
+  if (asking) {
+    // がまんゲージ
+    ctx.strokeStyle = p.pat > .5 ? '#22c55e' : p.pat > .25 ? '#f59e0b' : '#ef4444'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 14, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p.pat); ctx.stroke();
+    const bob = Math.sin(now * 6 + p.id) * 2;
+    ctx.font = '13px sans-serif'; ctx.fillText(p.angry > 0 ? '😡' : '❗', p.x + 13, p.y - 12 + bob);
+  }
+  if (p.state === 'final') {
+    ctx.font = '800 10px sans-serif'; ctx.fillStyle = p.warn ? '#dc2626' : '#1d4ed8';
+    ctx.fillText(`あと${etaThreshold(p).toFixed(0)}秒`, p.x, p.y - 15);
+  }
+  if (p.state === 'unload') { ctx.font = '800 9px sans-serif'; ctx.fillStyle = '#374151'; ctx.fillText(`🧳${Math.ceil(p.timer)}`, p.x, p.y - 15); }
+}
+
+/* ---------- UI ---------- */
+function updateUI() {
+  document.getElementById('uiScore').textContent = score;
+  const h = 6 + Math.floor(t / HOUR), m = Math.floor((t % HOUR) / HOUR * 60 / 10) * 10;
+  document.getElementById('uiClock').textContent = `${h}:${String(m).padStart(2, '0')}`;
+  document.getElementById('uiHearts').textContent = '❤️'.repeat(Math.max(0, hearts)) + '🤍'.repeat(HEARTS - Math.max(0, hearts));
+}
+function setSpeed(s) {
+  speed = s;
+  document.getElementById('bPause').classList.toggle('on', s === 0);
+  document.getElementById('b1').classList.toggle('on', s === 1);
+  document.getElementById('b2').classList.toggle('on', s === 2);
+}
+function bestScore() { try { return +localStorage.getItem('skyTowerBest') || 0; } catch (e) { return 0; } }
+function finish(title) {
+  let best = bestScore();
+  if (score > best) { best = score; try { localStorage.setItem('skyTowerBest', String(score)); } catch (e) { /* noop */ } }
+  document.getElementById('ovTitle').textContent = title;
+  document.getElementById('ovReason').textContent = overReason;
+  document.getElementById('ovScore').textContent = `${score} びん`;
+  const items = [['がんばった 時間', document.getElementById('uiClock').textContent + ' まで'], ['いちばんの 記録', best + ' びん'],
+    ['🛬 到着', stats.arr + ' びん'], ['🛫 出発', stats.dep + ' びん'], ['🔁 着陸やりなおし', stats.goAround + ' 回'], ['😡 おこらせた', stats.angry + ' 回']];
+  document.getElementById('ovStats').innerHTML = items.map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  document.getElementById('rbText').textContent = `${score}びん　${overReason}`;
+  setTimeout(() => showOver(), 900);
+  updateUI();
+}
+function showOver() { document.getElementById('resultBar').classList.remove('show'); document.getElementById('mOver').classList.add('show'); }
+function viewBoard() { document.getElementById('mOver').classList.remove('show'); document.getElementById('resultBar').classList.add('show'); }
+function openHelp() { if (!over) { setSpeed(0); document.getElementById('mStart').classList.add('show'); } }
+
+function newGame() {
+  planes = []; nextId = 1; selected = null; t = 0; score = 0; hearts = HEARTS; spawnT = 3;
+  over = false; crashAt = null; overReason = ''; stats = { arr: 0, dep: 0, goAround: 0, angry: 0 };
+  for (const g of GATES) g.plane = null;
+  [[0, 2], [2, 6]].forEach(([gi, tm]) => {
+    const g = GATES[gi], p = makePlane('unload', g.x, GATE_Y); p.timer = tm; p.gate = g; g.plane = p; p.ang = -Math.PI / 2;
+  });
+  document.getElementById('mOver').classList.remove('show');
+  document.getElementById('resultBar').classList.remove('show');
+  started = true; setSpeed(1); renderCmds(); updateUI();
+}
+function startGame() {
+  document.getElementById('mStart').classList.remove('show');
+  if (!started || over) newGame(); else setSpeed(1);
+  tone(660, 0.1, 'triangle');
+}
+
+let last = performance.now(), cmdTick = 0;
+function loop(ts) {
+  const dt = Math.min(0.1, Math.max(0, (ts - last) / 1000)); last = ts;
+  update(dt);
+  cmdTick += dt; if (cmdTick > 0.25) { cmdTick = 0; if (!over) renderCmds(); updateUI(); }
+  draw(ts / 1000);
+  requestAnimationFrame(loop);
+}
+document.getElementById('uiVer').textContent = 'バージョン ' + APP_VERSION;
+document.getElementById('uiBest').textContent = bestScore() ? `いちばんの 記録：${bestScore()} びん` : '';
+resize(); updateUI();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
