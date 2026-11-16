@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Pocket Transit v7.17 - まちの道づくりパズル</title>
+<title>Pocket Transit v7.18 - まちの道づくりパズル</title>
 <style>
   :root {
     --bg-main: #f3efe6; --bg-panel: #ffffff; --text-main: #2c3540;
@@ -331,6 +331,7 @@
     <div class="inv-badges">
       <div class="inv-item" id="invRoads">🛣️<span id="uiRoads">0</span></div>
       <div class="inv-item">🌉<span id="uiBridges">0</span></div>
+      <div class="inv-item">🚇<span id="uiTunnels">0</span></div>
       <div class="inv-item minor" title="ぜんぶの家と🏢をつなぐのに、だいたい これくらいの道がいるよ">📐めやす<span id="uiSteiner">0</span></div>
       <div class="inv-item minor" id="invRho" title="お客さんの多さ。ぜんぶの家を うまく つないだときの 力に くらべて 何％ か">🔥いそがしさ<span id="uiRho">0</span></div>
     </div>
@@ -354,9 +355,6 @@
     </button>
     <button class="tool-btn" id="toolOne" onclick="selectTool('oneway')">
       <span class="tool-icon">➡️</span><span class="tool-title">一方通行</span><span class="tool-cnt" id="uiOnes">0</span>
-    </button>
-    <button class="tool-btn" id="toolHwy" onclick="selectTool('highway')">
-      <span class="tool-icon">🚀</span><span class="tool-title">高速道路</span><span class="tool-cnt" id="uiHwys">0</span>
     </button>
     <button class="tool-btn" id="toolPrio" onclick="selectTool('prio')">
       <span class="tool-icon">🚥</span><span class="tool-title">優先道路</span><span class="tool-cnt" id="uiPrios">0</span>
@@ -457,7 +455,7 @@
 'use strict';
 
 /* ===================== バージョンと キャッシュ対策 ===================== */
-const APP_VERSION = '7.17.0';
+const APP_VERSION = '7.18.0';
 (function checkLatest() {
   try {
     if (!/^https?:$/.test(location.protocol) || typeof fetch !== 'function') return;
@@ -497,6 +495,7 @@ const APP_VERSION = '7.17.0';
           れんしゅうに 5つ・つめ道路に 2もん 追加。
    v7.16: ごほうび画面で 👁マップを 見られる・つづけるの メッセージを なくす・🛠デバッグ（バージョンを 5回タップ）・はじめの 画面を みじかく。
    v7.17: 🚀高速道路と 🔀インターを 統合（3pt・両はしが はじめから インター）。🚌バスは ふつうの 速さで 走り、乗りおりに 時間が かかる 形に。
+   v7.18: 🚀高速道路を はいし。かわりに 🚇トンネル（山の マスに 道を 引ける・ふつうの 道と おなじ ルール）を 追加。
    v7.13: 🚥優先道路（1ptで2か所・まじわる所の 本線は 止まらず 2台。わき道は 長く 待つ）を 追加。
    ===================================================================== */
 const COLS = 11;
@@ -541,7 +540,7 @@ const TOOL_NAMES = {
   draw: '✏️ 道を引く', erase: '🧹 道を消す', cut: '✂️ 切りはなす',
   roundabout: '🔄 ロータリー', overpass: '🌁 立体交差', oneway: '➡️ 一方通行', prio: '🚥 優先道路', bus: '🚌 バス', highway: '🚀 高速道路', inter: '🔀 インター', rotate: '🚪 たてものタップ'
 };
-const TOOL_IDS = { draw: 'toolDraw', erase: 'toolErase', cut: 'toolCut', roundabout: 'toolRound', overpass: 'toolOver', oneway: 'toolOne', prio: 'toolPrio', highway: 'toolHwy', bus: 'toolBus' };
+const TOOL_IDS = { draw: 'toolDraw', erase: 'toolErase', cut: 'toolCut', roundabout: 'toolRound', overpass: 'toolOver', oneway: 'toolOne', prio: 'toolPrio', bus: 'toolBus' };
 const riverRow = c => Math.round(7 + Math.sin(c * 0.55) * 1.5);
 
 const cv = document.getElementById('cv');
@@ -565,7 +564,7 @@ let hasRiver = true;
 let score = 0, week = 1, dayTime = 0, gameSpeed = 1;
 let isGameOver = false, modalOpen = true, failedDest = null, dangerDest = null;
 let currentTool = 'draw';
-let inv = { roads: 0, bridges: 1, roundabouts: 1, highways: 0, overpasses: 0, oneways: 0, interchanges: 0, prios: 0, buses: 0 };
+let inv = { roads: 0, bridges: 1, tunnels: 0, roundabouts: 1, highways: 0, overpasses: 0, oneways: 0, interchanges: 0, prios: 0, buses: 0 };
 let houseCarBonus = 0, destCapBonus = 0, shopPts = 0, shopLog = [];
 let isDragging = false, lastCell = null, downCell = null, dragMoved = false, hwyStart = null, pointerPos = null;
 let spawnTimer = 0, slowTick = 0, alarmTimer = 0, comboCount = 0, comboTimer = 0, comboDay = -1;
@@ -796,7 +795,7 @@ function nearRiver(c, r) {
 }
 
 /* ===================== 理論計算（シュタイナー森・距離） ===================== */
-function terrainBFS(sources, free) {
+function terrainBFS(sources, free, rockOK = false) {
   const N = COLS * ROWS;
   const dist = new Int16Array(N).fill(-1);
   const prev = new Int16Array(N).fill(-1);
@@ -814,7 +813,7 @@ function terrainBFS(sources, free) {
         const nc = c + dc, nr = r + dr;
         if (!inBounds(nc, nr)) continue;
         const g = grid[nr][nc];
-        if (g.rock || g.bld) continue;
+        if (g.bld || (g.rock && !rockOK)) continue;
         const n = nr * COLS + nc;
         const nd = d + (free && free.has(n) ? 0 : 1);
         if (dist[n] !== -1 && dist[n] <= nd) continue;
@@ -883,7 +882,7 @@ function idealDist(h, d) {
   if (distVer !== bldVersion) { distCache.clear(); distVer = bldVersion; }
   const k = h.id + '>' + d.id;
   if (!distCache.has(k)) {
-    const { dist } = terrainBFS([entCell(h)]);
+    const { dist } = terrainBFS([entCell(h)], null, true);   // v7.18: お客さんの量は「トンネルで 山を ぬけた 道」を 基準に（トンネルは 近道の ボーナスに ならない）
     const e = entCell(d);
     const v = dist[e.r * COLS + e.c];
     distCache.set(k, v >= 0 ? v + 2 : manhattan(h, d) + 4);
@@ -940,7 +939,7 @@ function initGame(skipIntro) {
   setPanel('puzBar', false);
   resizeCanvas();
   resetCommon();
-  inv = { roads: 0, bridges: 1, roundabouts: 1, highways: 0, overpasses: 0, oneways: 0, interchanges: 0, prios: 0, buses: 0 };
+  inv = { roads: 0, bridges: 1, tunnels: 2, roundabouts: 1, highways: 0, overpasses: 0, oneways: 0, interchanges: 0, prios: 0, buses: 0 };
   makeGrid(true);
 
   spawnBuilding('house', 0, 2, 3, 1);
@@ -1204,20 +1203,20 @@ const LESSONS = [
     check() { return grid[9][5].roundabout; }
   },
   {
-    title: '🚀 高速道路',
-    tools: ['highway'],
-    text: '⛰山で 道が つながらない！ <b>🚀</b>を えらんで、<b>こっちの 道のはし → むこうの 道のはし</b> の じゅんに タップ。',
-    hint: 'まず 左の 光る マス、つぎに 右の 光る マスを タップしてね。',
-    doneText: 'とんだ！🎉 高速道路は <b>山も 川も とびこえ</b>、両はしの <b>インター</b>から 車が つづけて 走れるよ。',
+    title: '🚇 トンネル',
+    tools: ['draw', 'erase'],
+    text: '⛰山で 道が とぎれているよ！ <b>🚇トンネル</b>が あると、<b>✏️道を引く</b>で 山の マスにも 道が 引けるよ。左の 道から 右の 道まで なぞろう。',
+    hint: '左の 道の はしから 山を とおって 右の 道まで、指を はなさずに なぞってね。',
+    doneText: 'ほれた！🎉 トンネルは <b>ふつうの 道</b>だよ。まじわれば 止まるので、どこに ほるかが 大事。',
     setup() {
       spawnBuilding('house', 0, 1, 9, 1);
       spawnBuilding('dest', 0, 9, 9, 3);
       range(PANEL_ROWS, ROWS - 1).forEach(r => { grid[r][5].rock = true; });
-      lay(row(9, 2, 3));
-      lay(row(9, 7, 8));
-      inv = { roads: 0, bridges: 0, roundabouts: 0, highways: 1 };
+      lay(row(9, 2, 4));
+      lay(row(9, 6, 8));
+      inv = { roads: 1, bridges: 0, tunnels: 1, roundabouts: 0, highways: 0 };
     },
-    targets: () => (highways.length ? [] : hwyStart ? [{ c: 7, r: 9 }] : [{ c: 3, r: 9 }]),
+    targets: () => (grid[9][5].road ? [] : [{ c: 4, r: 9 }, { c: 5, r: 9 }, { c: 6, r: 9 }]),
     check() { return pathOK() && score >= 1; }
   },
   {
@@ -1568,16 +1567,16 @@ const PUZZLES = [
     }
   },
   {
-    icon: '🗼', name: '首都高を つくれ', theme: '🚀 じゃまを とびこえる',
-    tools: ['draw', 'erase', 'highway'], par: 22, goal: 12, time: 26, river: false,
-    story: '東京の <b>首都高速道路</b>は、1964年の 東京オリンピックに 間に合うよう いそいで つくられました。土地を 買う 時間が なかったので、<b>川や 運河の 上</b>などを 通して つくった ところが たくさん あります。',
-    tip: '⛰山の かべを ぐるっと まわる道は 長すぎる！ <b>🚀高速道路</b>で かべを とびこえよう。',
-    why: '遠まわりの道は 行って帰るのに 時間が かかり、たくさん 運べません。<b>じゃまものの 上を まっすぐ とびこえる</b>と、道も 時間も へらせます。',
-    hint: '家の前と 🏢の前に 道を 2マスずつ 引いて、その はしと はしを 🚀で つなごう。',
+    icon: '🚇', name: '山を ぬける トンネル', theme: '🚇 どこを ほるか えらぶ',
+    tools: ['draw', 'erase'], par: 24, goal: 12, time: 28, river: false,
+    story: '日本は 山が とても 多い 国です。だから 道路や 鉄道には <b>トンネル</b>が たくさん あります。たとえば 群馬県と 新潟県の あいだの 山を つらぬく <b>関越トンネル</b>が できて、山を こえて まわる 道より ずっと はやく 行けるように なりました。',
+    tip: '⛰山の かべを ぐるっと まわる道は 長すぎる！ <b>🚇トンネル</b>が 1マスぶん あるよ。<b>どこを ほると いちばん みじかいか</b> 考えよう。',
+    why: '遠まわりの 道は 行って 帰るのに 時間が かかり、たくさん 運べません。山の <b>いちばん うすい 所</b>を ほると、少ない トンネルで 道を みじかく できます。',
+    hint: '家から 🏢まで、山の かべを 1マス ほって まっすぐ 横に 道を 引こう。',
     setup() {
       house(1, 5, 1, 0, 3); dest(9, 5, 3, 0);
       rocksWhere((c, r) => c === 5 && r <= 13);
-      inv = { roads: 30, bridges: 0, roundabouts: 0, highways: 1 };
+      inv = { roads: 30, bridges: 0, tunnels: 1, roundabouts: 0, highways: 0 };
     }
   },
   {
@@ -1952,15 +1951,14 @@ function selectTool(t, force = false) {
   updateToolLocks();
   if (tut || puz) return;
   const hints = {
-    draw: '指をはなさずに なぞると 道がつながるよ（たてものタップでドアが回る）',
+    draw: '指をはなさずに なぞると 道がつながるよ（たてものタップでドアが回る・🚇があれば 山にも 引ける）',
     erase: 'いらない道を なぞって消そう（道は 手もとにもどるよ）',
     cut: 'くっついた道と道の あいだを またぐように なぞってね',
     roundabout: 'オレンジの点（道がまじわる所）を タップしてね',
     overpass: '十字路（上下左右に のびる オレンジの点）を タップ。たて・よこが 止まらず すれちがうよ',
     oneway: 'まっすぐな 道を 進ませたい 向きに なぞってね（タップで 向きが 反対に）',
     prio: 'オレンジの点を 本線の 向きに なぞってね（タップで たて／よこ 入れかえ）',
-    bus: '家を タップすると 車1台が バスに なるよ（4人のせ・乗りおりに 時間が かかる）',
-    highway: 'はじめの場所 → おわりの場所 の じゅんに タップ（両はしは インターに なるよ）'
+    bus: '家を タップすると 車1台が バスに なるよ（4人のせ・乗りおりに 時間が かかる）'
   };
   const el = document.getElementById('uiHint');
   el.textContent = hints[t];
@@ -1976,7 +1974,7 @@ function clearAllRoads() {
   if (tut) { setupLesson(tut.lesson); return; }
   if (puz) { setupPuzzle(puz.idx); return; }
   for (const row of grid) for (const g of row) {
-    if (g.road) { g.road = false; inv.roads++; if (g.bridge) { g.bridge = false; inv.bridges++; } }
+    if (g.road) { g.road = false; inv.roads++; if (g.bridge) { g.bridge = false; inv.bridges++; } if (g.tunnel) { g.tunnel = false; inv.tunnels = invN('tunnels') + 1; } }
     if (g.roundabout) { g.roundabout = false; inv.roundabouts++; }
     if (g.overpass) { g.overpass = false; inv.overpasses++; }
     if (g.oneway >= 0) { g.oneway = -1; inv.oneways = invN('oneways') + 1; }
@@ -2007,8 +2005,12 @@ function applyToolAt(c, r, from = null) {
       }
       return;
     }
-    if (cell.rock) { warn('⛰ 山には 道がつくれないよ（🚀高速道路なら とびこえられる）'); return; }
-    if (cell.river) {
+    if (cell.rock) {
+      if (invN('tunnels') <= 0) { warn('⛰ 山には 🚇トンネルが いるよ（しゅうのおわりの ごほうびで えらべるよ）'); return; }
+      if (inv.roads <= 0) { warn('🛣️ 道が たりないよ'); return; }
+      cell.road = true; cell.tunnel = true; inv.tunnels--; inv.roads--;
+      playTone(300, 0.08, 'triangle');
+    } else if (cell.river) {
       if (inv.bridges <= 0) { warn('🌉 橋が たりないよ'); return; }
       if (inv.roads <= 0) { warn('🛣️ 道が たりないよ'); return; }
       cell.road = true; cell.bridge = true; inv.bridges--; inv.roads--;
@@ -2047,6 +2049,7 @@ function applyToolAt(c, r, from = null) {
       clearLinks(c, r);
       cell.road = false; inv.roads++;
       if (cell.bridge) { cell.bridge = false; inv.bridges++; }
+      if (cell.tunnel) { cell.tunnel = false; inv.tunnels = invN('tunnels') + 1; }
       playTone(280, 0.04);
     } else return;
     markNetChanged(); updateUI();
@@ -2212,7 +2215,7 @@ cv.addEventListener('touchmove', handlePointerMove, { passive: false });
 window.addEventListener('touchend', handlePointerUp);
 window.addEventListener('keydown', e => {
   if (modalOpen || isGameOver) return;
-  const map = { '1': 'draw', '2': 'erase', '3': 'cut', '4': 'roundabout', '5': 'highway' };
+  const map = { '1': 'draw', '2': 'erase', '3': 'cut', '4': 'roundabout', '5': 'oneway' };
   if (map[e.key]) selectTool(map[e.key]);
   if (e.key === ' ') { e.preventDefault(); setSpeed(gameSpeed === 0 ? 1 : 0); }
 });
@@ -2612,6 +2615,8 @@ const SHOP = [
     own: () => inv.roundabouts, act: () => { inv.roundabouts++; }, undo: () => { inv.roundabouts--; } },
   { id: 'bridge', icon: '🌉', name: '橋', cost: 1, desc: '川を わたれる（道3こつき）',
     own: () => inv.bridges, act: () => { inv.bridges++; inv.roads += 3; }, undo: () => { inv.bridges--; inv.roads -= 3; } },
+  { id: 'tunnel', icon: '🚇', name: 'トンネル ×2', cost: 1, desc: '⛰山の マスに 道を 引ける（2マスぶん）。ふつうの 道なので まじわる所の ルールは おなじ',
+    own: () => invN('tunnels'), act: () => { inv.tunnels = invN('tunnels') + 2; }, undo: () => { inv.tunnels -= 2; } },
   { id: 'over', icon: '🌁', name: '立体交差', cost: 1, desc: '十字路で たて・よこが 止まらず すれちがう（曲がれない）',
     own: () => inv.overpasses, act: () => { inv.overpasses++; }, undo: () => { inv.overpasses--; } },
   { id: 'bus', icon: '🚌', name: 'バス', cost: 3, max: () => invN('buses') + buildings.filter(h => h.bus).length < buildings.filter(h => h.type === 'house').length,
@@ -2621,8 +2626,6 @@ const SHOP = [
     own: () => invN('prios'), act: () => { inv.prios = invN('prios') + 2; }, undo: () => { inv.prios -= 2; } },
   { id: 'one', icon: '➡️', name: '一方通行 ×5', cost: 1, desc: 'まっすぐな 道を 一方通行に。少し速く 走れて、その先の まじわる所で 止まらない（かえり道は べつに いるよ）',
     own: () => invN('oneways'), act: () => { inv.oneways = invN('oneways') + 5; }, undo: () => { inv.oneways -= 5; } },
-  { id: 'hwy', icon: '🚀', name: '高速道路', cost: 3, desc: '山も川も とびこえる。両はしは インターつきで、車が 間をあけて つづけて 走れる・止まらない',
-    own: () => inv.highways, act: () => { inv.highways++; }, undo: () => { inv.highways--; } },
   { id: 'car', icon: '🚗', name: '車 +1', cost: 2, max: () => houseCarBonus < 2,
     desc: 'ぜんぶの家の車が 1台ふえる。お客さんも 少し ふえるので、運ぶ よゆうは 少しだけ アップ（道は こみやすく）',
     own: () => 2 + houseCarBonus, ownLabel: '台/家',
@@ -2705,13 +2708,13 @@ function updateUI() {
   bar.classList.toggle('rush', rush || (!!puz && pw < 30));
   document.getElementById('uiRoads').textContent = inv.roads;
   document.getElementById('uiBridges').textContent = inv.bridges;
+  document.getElementById('uiTunnels').textContent = invN('tunnels');
   document.getElementById('uiSteiner').textContent = mini ? '-' : theory.S;
   const rho = rush ? rhoFor(week) * RUSH_FACTOR : rhoFor(week);
   document.getElementById('uiRho').textContent = mini ? '-' : Math.round(rho * 100) + '%';
   document.getElementById('invRho').classList.toggle('hot', !mini && rho >= 1);
   document.getElementById('invRoads').classList.toggle('low', !mini && inv.roads <= 3);
   document.getElementById('uiRounds').textContent = String(invN('roundabouts'));
-  document.getElementById('uiHwys').textContent = String(invN('highways'));
   document.getElementById('uiOvers').textContent = String(invN('overpasses'));
   document.getElementById('uiOnes').textContent = String(invN('oneways'));
   document.getElementById('uiPrios').textContent = String(invN('prios'));
@@ -2721,7 +2724,6 @@ function updateUI() {
   document.getElementById('toolOne').classList.toggle('empty', invN('oneways') <= 0);
   document.getElementById('toolOver').classList.toggle('empty', invN('overpasses') <= 0);
   document.getElementById('toolRound').classList.toggle('empty', invN('roundabouts') <= 0);
-  document.getElementById('toolHwy').classList.toggle('empty', invN('highways') <= 0);
   const pulse1x = !!(tut && L.pinch && !tut.done && gameSpeed === 0 && pathOK());
   document.getElementById('btn1x').classList.toggle('pulse', pulse1x);
   updatePausePill();
@@ -2802,6 +2804,9 @@ function drawGame(now) {
     ctx.lineTo(x + cs * 0.02, y - cs * 0.15); ctx.closePath(); ctx.fill();
   }
 
+  // 🚇 トンネル：山の 上に 道を かさね、両はしに 黒い 入口
+  const tunnelCells = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (grid[r][c].tunnel) tunnelCells.push([c, r]);
   const roadColor = isDark ? '#434d61' : '#57606f';
   const bridgeDeck = isDark ? '#637089' : '#8395a7';
   const segs = [];
@@ -2834,6 +2839,13 @@ function drawGame(now) {
       }
       ctx.stroke();
     }
+  }
+  for (const [c, r] of tunnelCells) {
+    const x = (c + 0.5) * cs, y = (r + 0.5) * cs;
+    ctx.fillStyle = isDark ? '#6b7280' : '#a8a29e';
+    ctx.beginPath(); ctx.arc(x, y, cs * 0.34, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1f2937';
+    ctx.beginPath(); ctx.arc(x, y + cs * 0.05, cs * 0.2, Math.PI, 0); ctx.lineTo(x + cs * 0.2, y + cs * 0.16); ctx.lineTo(x - cs * 0.2, y + cs * 0.16); ctx.closePath(); ctx.fill();
   }
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.45)';
   ctx.lineWidth = Math.max(1, cs * 0.05);
@@ -3107,7 +3119,7 @@ function drawGame(now) {
 /* ===================== 🛠 デバッグ（アイテム むげん） ===================== */
 // バージョン表示を 2びょう いないに 5かい タップで オン／オフ。記録は のこさない
 let debugMode = false, verTaps = [];
-const DEBUG_KEYS = ['roads', 'bridges', 'roundabouts', 'highways', 'overpasses', 'oneways', 'interchanges', 'prios', 'buses'];
+const DEBUG_KEYS = ['roads', 'bridges', 'tunnels', 'roundabouts', 'highways', 'overpasses', 'oneways', 'interchanges', 'prios', 'buses'];
 function verTap() {
   const now = performance.now();
   verTaps = verTaps.filter(t => now - t < 2000);
