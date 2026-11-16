@@ -108,6 +108,23 @@
   @keyframes zap { 0%, 100% { opacity: 0; transform: translateX(-90%) scale(.6); } 40% { opacity: 1; } 70% { opacity: 1; transform: translateX(10%) scale(1.2); } }
   .tag.e1 { background: #ede9fe; color: #6d28d9; } .tag.e2 { background: #fce7f3; color: #be185d; } .tag.e3 { background: #e0f2fe; color: #0369a1; }
   .play.purple { background: #7c3aed; box-shadow: 0 5px 0 #4c1d95; }
+  /* --- 管制塔ゲームの場面：滑走路と 飛行機 --- */
+  .tower { background: linear-gradient(#7dd3fc 0 62%, #86efac 62% 100%); }
+  .tower .cloud { position: absolute; font-size: 30px; opacity: .9; animation: drift linear infinite; }
+  @keyframes drift { from { left: -50px; } to { left: 110%; } }
+  .tower .runway { position: absolute; left: 6%; right: 6%; bottom: 20%; height: 26px; background: #4b5563; border-radius: 4px; }
+  .tower .runway::after { content: ''; position: absolute; left: 6%; right: 6%; top: 50%; height: 3px; margin-top: -1.5px;
+    background: repeating-linear-gradient(90deg, #fff 0 16px, transparent 16px 28px); }
+  .tower .ctl { position: absolute; right: 8%; bottom: 30%; font-size: 40px; }
+  .tower .lamp { position: absolute; right: calc(8% + 16px); bottom: calc(30% + 44px); width: 9px; height: 9px; border-radius: 50%;
+    background: #22c55e; box-shadow: 0 0 8px #22c55e; animation: blink 1.4s steps(1) infinite; }
+  @keyframes blink { 50% { background: #ef4444; box-shadow: 0 0 8px #ef4444; } }
+  .tower .plane { position: absolute; font-size: 32px; animation: land 5s ease-in infinite; }
+  @keyframes land { 0% { left: -12%; bottom: 82%; transform: rotate(10deg); } 60% { left: 30%; bottom: 25%; transform: rotate(5deg); } 100% { left: 78%; bottom: 23%; transform: rotate(0); } }
+  .tower .plane.up { animation: takeoff 5s ease-in infinite; animation-delay: -2.5s; }
+  @keyframes takeoff { 0% { left: 12%; bottom: 23%; transform: rotate(0); } 45% { left: 50%; bottom: 23%; transform: rotate(0); } 100% { left: 110%; bottom: 88%; transform: rotate(-25deg); } }
+  .tag.a1 { background: #e0f2fe; color: #0369a1; } .tag.a2 { background: #fee2e2; color: #b91c1c; } .tag.a3 { background: #dcfce7; color: #15803d; }
+  .play.skyb { background: #0ea5e9; box-shadow: 0 5px 0 #0369a1; }
 
   footer { text-align: center; margin-top: 34px; font-size: 12px; color: #6b21a8; font-weight: 700; line-height: 1.8; }
 
@@ -124,7 +141,7 @@
   <header>
     <span class="badge">🎮 ゲームの ひろば</span>
     <h1><span class="bounce">あ</span><span class="bounce">そ</span><span class="bounce">び</span><span class="bounce">の</span><span class="bounce">広</span><span class="bounce">場</span></h1>
-    <p class="lead">きょうは どっちで あそぶ？ カードを タップしてね！</p>
+    <p class="lead">きょうは どれで あそぶ？ カードを タップしてね！</p>
   </header>
 
   <main class="games">
@@ -177,6 +194,27 @@
         <span class="play purple">あそぶ <span class="arrow">▶</span></span>
       </div>
     </a>
+    <!-- 管制塔ゲーム -->
+    <a class="card" href="Pilot/index.html" aria-label="そらの管制塔 で あそぶ">
+      <div class="scene tower" aria-hidden="true">
+        <span class="cloud" style="top:10%; animation-duration:16s">☁️</span>
+        <span class="cloud" style="top:28%; animation-duration:22s; animation-delay:-9s; font-size:22px">☁️</span>
+        <div class="runway"></div>
+        <span class="ctl">🗼</span><span class="lamp"></span>
+        <span class="plane">✈️</span>
+        <span class="plane up">🛫</span>
+      </div>
+      <div class="body">
+        <h2>🗼 そらの管制塔</h2>
+        <p>管制官に なって ひこうきに 指示を 出そう！ 滑走路は 1本だけ。ぶつからないように じゅんばんを 考えて、空港を まわそう。</p>
+        <div class="tags">
+          <span class="tag a1">✈️ 航空管制</span>
+          <span class="tag a2">⏱️ じゅんばん判断</span>
+          <span class="tag a3">👆 タップで かんたん</span>
+        </div>
+        <span class="play skyb">あそぶ <span class="arrow">▶</span></span>
+      </div>
+    </a>
   </main>
 
   <footer>
@@ -189,9 +227,9 @@
   // 背景に ふわふわ のぼる 飾りを ちらす（動きを へらす設定の 端末では 出さない）
   (function () {
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const items = ['⭐', '🎈', '🚗', '📖', '✨', '🔤', '🌟', '🚌', '💡', '🎉'];
+    const items = ['⭐', '🎈', '🚗', '📖', '✨', '🔤', '🌟', '🚌', '💡', '🎉', '✈️', '🗼'];
     const sky = document.getElementById('sky');
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 18; i++) {
       const s = document.createElement('span');
       s.className = 'float';
       s.textContent = items[i % items.length];
