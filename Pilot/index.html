@@ -4,43 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>そらの管制塔 v0.1</title>
+<title>そらの管制塔 v0.2</title>
 <style>
   :root { --bg:#eaf4ff; --panel:#fff; --text:#24313f; --sub:#6b7b8c; --line:#d5dfea; --accent:#2b7de9; }
   * { box-sizing:border-box; margin:0; padding:0; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
   html, body { width:100%; height:100dvh; overflow:hidden; background:var(--bg); color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif; display:flex; flex-direction:column; }
   header { height:48px; background:var(--panel); border-bottom:1px solid var(--line); display:flex; align-items:center;
-    justify-content:space-between; padding:0 8px; gap:6px; flex-shrink:0; }
+    justify-content:space-between; padding:0 6px; gap:4px; flex-shrink:0; }
   .score { display:flex; align-items:baseline; gap:4px; background:rgba(43,125,233,.1); padding:3px 9px; border-radius:14px; }
   .score b { font-size:19px; color:var(--accent); font-variant-numeric:tabular-nums; }
   .score span { font-size:11px; font-weight:700; color:var(--sub); }
   .mid { display:flex; flex-direction:column; align-items:center; line-height:1.1; }
   .clock { font-size:14px; font-weight:900; font-variant-numeric:tabular-nums; }
   .hearts { font-size:12px; letter-spacing:-1px; }
-  .ver { font-size:9px; color:var(--sub); }
-  .btns { display:flex; gap:4px; }
-  .btns button { border:1px solid var(--line); background:var(--bg); border-radius:8px; height:30px; padding:0 8px;
+  .btns { display:flex; gap:3px; }
+  .btns button { border:1px solid var(--line); background:var(--bg); border-radius:8px; height:30px; padding:0 7px;
     font-size:12px; font-weight:800; color:var(--text); cursor:pointer; }
   .btns button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .btns button.gd.on { background:#f59e0b; border-color:#f59e0b; }
   #stage { flex:1; min-height:0; position:relative; display:flex; align-items:center; justify-content:center; }
   canvas { display:block; touch-action:none; }
-  .radio { position:absolute; top:6px; left:50%; transform:translateX(-50%); max-width:94%;
-    background:rgba(20,30,45,.82); color:#fff; font-size:12px; font-weight:700; padding:5px 12px; border-radius:14px;
+  .radio { position:absolute; top:6px; left:50%; transform:translateX(-50%); max-width:96%;
+    background:rgba(20,30,45,.85); color:#fff; font-size:12px; font-weight:700; padding:5px 12px; border-radius:14px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; transition:opacity .4s; }
   .radio.warn { background:rgba(200,30,30,.92); }
   .radio.hide { opacity:0; }
   footer { background:var(--panel); border-top:1px solid var(--line); padding:6px 8px 10px; flex-shrink:0; min-height:86px; }
-  .sel { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; margin-bottom:6px; min-height:20px; }
+  .sel { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800; margin-bottom:6px; min-height:22px; flex-wrap:wrap; }
   .sel .tag { padding:2px 8px; border-radius:8px; color:#fff; font-size:12px; }
   .sel .st { color:var(--sub); font-weight:700; font-size:12px; }
+  .sel .tip { color:#b45309; font-weight:800; font-size:12.5px; }
   .cmds { display:flex; gap:6px; }
   .cmds button { flex:1; border:none; border-radius:12px; padding:11px 4px; font-size:15px; font-weight:900; color:#fff;
     background:var(--accent); cursor:pointer; }
   .cmds button.sub { background:#94a3b8; }
   .cmds button.go { background:#10b981; }
   .cmds button.warn { background:#ef4444; animation:pulse .6s infinite; }
-  .cmds button:disabled { opacity:.35; animation:none; }
+  .cmds button.hint { box-shadow:0 0 0 3px #facc15; }
   .cmds .why { flex:1; font-size:12px; color:var(--sub); font-weight:700; align-self:center; text-align:center; }
   @keyframes pulse { 50% { transform:scale(1.04); } }
   .modal { position:fixed; inset:0; background:rgba(10,20,35,.6); display:none; align-items:center; justify-content:center; padding:16px; z-index:50; }
@@ -51,10 +52,15 @@
   .rules { text-align:left; font-size:14px; line-height:1.65; margin:0 0 14px; list-style:none; }
   .rules li { margin-bottom:5px; }
   .big { width:100%; padding:13px; border:none; border-radius:12px; background:var(--accent); color:#fff; font-size:16px; font-weight:900; cursor:pointer; }
+  .big.night { background:#4338ca; }
   .sec { width:100%; padding:10px; border:2px solid var(--line); border-radius:12px; background:var(--bg); font-size:14px; font-weight:800; margin-top:8px; cursor:pointer; color:var(--text); }
   .stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:10px 0 14px; text-align:left; }
   .stat { background:var(--bg); border-radius:10px; padding:6px 8px; }
   .stat .k { font-size:10.5px; color:var(--sub); font-weight:700; } .stat .v { font-size:15px; font-weight:900; }
+  .stars { font-size:34px; color:#f59e0b; letter-spacing:4px; }
+  .goals { text-align:left; font-size:13px; font-weight:700; line-height:1.8; margin:6px 0 4px; }
+  .ver { font-size:10px; color:var(--sub); margin-top:8px; }
+  .new { text-align:left; font-size:12.5px; line-height:1.6; background:#fef3c7; border-radius:10px; padding:8px 10px; margin-bottom:12px; }
   .resultbar { position:absolute; left:6px; right:6px; bottom:6px; background:rgba(20,30,45,.88); color:#fff; border-radius:12px;
     padding:7px 10px; font-size:12px; font-weight:700; display:none; gap:8px; align-items:center; }
   .resultbar.show { display:flex; } .resultbar div { flex:1; }
@@ -66,6 +72,7 @@
   <div class="score"><b id="uiScore">0</b><span>びん</span></div>
   <div class="mid"><div class="clock" id="uiClock">6:00</div><div class="hearts" id="uiHearts"></div></div>
   <div class="btns">
+    <button class="gd" id="bGuide" onclick="toggleGuide()">💡</button>
     <button id="bPause" onclick="setSpeed(0)">⏸</button>
     <button id="b1" class="on" onclick="setSpeed(1)">1x</button>
     <button id="b2" onclick="setSpeed(2)">2x</button>
@@ -78,7 +85,7 @@
   <div class="resultbar" id="resultBar"><div id="rbText"></div><button onclick="showOver()">けっか</button><button onclick="newGame()">もういちど</button></div>
 </div>
 <footer>
-  <div class="sel" id="uiSel"><span class="st">✈️ ひこうきを タップして えらんでね（❗が 出ている ひこうきは 指示を まっているよ）</span></div>
+  <div class="sel" id="uiSel"></div>
   <div class="cmds" id="uiCmds"></div>
 </footer>
 
@@ -86,14 +93,26 @@
   <div class="card">
     <h2>🗼 そらの管制塔</h2>
     <ul class="rules">
-      <li>✈️ ひこうきを タップして、<b>着陸・ゲートへ・出発・離陸</b>の 指示を 出そう。</li>
+      <li>✈️ ひこうきを タップして <b>着陸・ゲートへ・出発・離陸</b>の 指示を 出そう。</li>
       <li>🛣️ 滑走路は <b>1本だけ</b>。2機が いっしょに 使うと 大事故！</li>
-      <li>⏳ 指示を 待たせると お客さんが おこるよ（❤️が へる）。</li>
-      <li>⏸ むずかしい ときは 時間を 止めて 考えて いいよ。</li>
+      <li>⏳ 待たせすぎると お客さんが おこるよ（❤️が へる）。</li>
+      <li>🌇 <b>夕方6時まで</b> 空港を まもりきろう！</li>
     </ul>
+    <div class="new">🆕 時間が たつと <b>🛩️プロペラ機</b>（おそい）・<b>🐘ジャンボ機</b>（大きい）・<b>🚨きんきゅう機</b>・<b>⛈️かみなり雲</b>が 出てくるよ。<br>こまったら 上の <b>💡</b>で おすすめの 指示が 見られるよ。</div>
     <button class="big" onclick="startGame()">▶ 管制 スタート</button>
     <p style="margin:10px 0 0" id="uiBest"></p>
     <div class="ver" id="uiVer"></div>
+  </div>
+</div>
+
+<div class="modal" id="mClear">
+  <div class="card">
+    <h2>🌇 1日 おつかれさま！</h2>
+    <div class="stars" id="clStars"></div>
+    <div class="goals" id="clGoals"></div>
+    <div class="stats" id="clStats"></div>
+    <button class="big night" onclick="goNight()">🌙 よるの部へ（どこまで いける？）</button>
+    <button class="sec" onclick="newGame()">もういちど 朝から</button>
   </div>
 </div>
 
@@ -102,6 +121,7 @@
     <h2 id="ovTitle">⚠️</h2>
     <p id="ovReason"></p>
     <div style="font-size:28px;font-weight:900;color:var(--accent)" id="ovScore"></div>
+    <div class="stars" id="ovStars" style="font-size:24px"></div>
     <div class="stats" id="ovStats"></div>
     <button class="big" onclick="newGame()">もういちど</button>
     <button class="sec" onclick="viewBoard()">📷 さいごの 空港を 見る</button>
@@ -110,31 +130,45 @@
 
 <script>
 'use strict';
-const APP_VERSION = '0.1.0';
+const APP_VERSION = '0.2.0';
 /* ============================================================
    そらの管制塔 — 滑走路1本の 空港を 管制する パズル風ゲーム
-   参考：「ぼくは航空管制官」の 出発／到着の 流れを、子ども向けに 4つの 指示へ 単純化。
+   v0.2: 機種3つ（プロペラ・ジェット・ジャンボ）、着陸どうしの 間かく、🚨きんきゅう機、
+         ⛈️かみなり雲（滑走路が しまる）、夕方6時で クリア＋★3つ、よるの部（エンドレス）、💡ガイド
    ============================================================ */
 const W = 360, H = 540;
-const RWY = { y: 330, x1: 70, x2: 340 };       // 滑走路（左から右へ 着陸・離陸）
-const TWY = 400;                                 // 誘導路（すべて 左向きに 流れる）
-const HOLD_X = 50, EXIT_X = 320;                 // 離陸まち位置 ／ 着陸後の 出口
+const RWY = { y: 330, x1: 70, x2: 340 };
+const TWY = 400;
+const HOLD_X = 50, EXIT_X = 320;
 const GATE_Y = 470;
 const GATES = [150, 190, 230, 270].map(x => ({ x, plane: null }));
-const FIX = { x: 82, y: 95 };                    // 上空の まち（旋回）地点
+const FIX = { x: 82, y: 95 };
 const FINAL = [{ x: 30, y: 165 }, { x: 12, y: 260 }, { x: 28, y: 318 }, { x: RWY.x1, y: RWY.y }];
-const SP = { air: 40, final: 38, roll: 72, taxi: 32, climb: 70 };
+const SP = { air: 40, taxi: 32, lineup: 48 };
+const TYPES = {
+  prop:  { ja: 'プロペラ機', mark: '🛩️', final: 29, roll: 60, climb: 55, unload: 6,  pts: 1, size: 0.85,
+           intro: '🆕 🛩️プロペラ機が 来るように なったよ。着陸が おそいので、うしろの ジェット機が 追いつかないように 気をつけて！' },
+  jet:   { ja: 'ジェット機', mark: '',   final: 40, roll: 72, climb: 70, unload: 8,  pts: 1, size: 1.0 },
+  jumbo: { ja: 'ジャンボ機', mark: '🐘', final: 44, roll: 52, climb: 58, unload: 13, pts: 2, size: 1.35,
+           intro: '🆕 🐘ジャンボ機が 来るように なったよ。お客さんが 多いので 2びんぶん！ でも 滑走路も ゲートも 長く 使うよ。' }
+};
 const SPACING = 24;
-const PATIENCE = 30;            // 何秒 待つと おこるか
-const UNLOAD = 8;               // ゲートで お客さんを おろす 時間
-const HOUR = 45;                // 1時間 = 45秒
-const MAX_QUEUE = 3;            // 離陸まちに ならべる 数
+const PATIENCE = 36;
+const HOUR = 40;                  // 1時間 = 40秒
+const DAY_HOURS = 12;             // 6:00 〜 18:00
+const DAY_TARGET = 70;            // ★3 の めやす（びん）
+const MAX_QUEUE = 3;
 const HEARTS = 5;
+const SEP_WARN = 36, SEP_CRASH = 14;
+const EMG_FROM = 3, EMG_FUEL = 40, EMG_RATE = 0.18;
+const STORM_FROM = 4, STORM_WARN = 12, STORM_LEN = 14;
+const stormGap = () => 70 + Math.random() * 40;
+const arrivalInterval = h => (h < DAY_HOURS ? Math.max(ARR_FLOOR, ARR_START - ARR_STEP * h) : Math.max(7, ARR_FLOOR - 0.6 * (h - DAY_HOURS + 1)));
+let ARR_START = 18, ARR_STEP = 0.35, ARR_FLOOR = 14.5;
 const AIRLINES = [
   { n: 'そら', c: '#2b7de9' }, { n: 'にじ', c: '#e84a5f' }, { n: 'ほし', c: '#f59e0b' },
   { n: 'かぜ', c: '#10b981' }, { n: 'つき', c: '#8b5cf6' }
 ];
-const arrivalInterval = h => Math.max(8.5, 17 - 1.0 * h);
 
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
@@ -142,7 +176,11 @@ let scale = 1, dpr = 1;
 let planes = [], nextId = 1, selected = null;
 let t = 0, score = 0, hearts = HEARTS, spawnT = 0, speed = 1;
 let over = false, started = false, crashAt = null, overReason = '';
-let stats = { arr: 0, dep: 0, goAround: 0, angry: 0 };
+let dayDone = false, night = false, dayStars = 0;
+let storm = { phase: 'none', t: 0, next: 15 };
+let seenTypes = new Set(), seenEmg = false;
+let stats;
+let guide = (() => { try { return localStorage.getItem('skyTowerGuide') !== '0'; } catch (e) { return true; } })();
 
 /* ---------- 音 ---------- */
 let ac = null;
@@ -167,11 +205,13 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
-let radioTimer = null;
-function radio(msg, warn = false) {
+let radioTimer = null, radioLock = 0;
+function radio(msg, warn = false, sec = 2.6) {
+  if (performance.now() < radioLock && !warn) return;   // だいじな お知らせを 上書きしない
   const el = document.getElementById('uiRadio');
   el.textContent = msg; el.classList.toggle('warn', warn); el.classList.remove('hide');
-  clearTimeout(radioTimer); radioTimer = setTimeout(() => el.classList.add('hide'), 2600);
+  clearTimeout(radioTimer); radioTimer = setTimeout(() => el.classList.add('hide'), sec * 1000);
+  if (sec > 3) radioLock = performance.now() + sec * 1000;
 }
 
 /* ---------- ひこうき ---------- */
@@ -179,12 +219,18 @@ function newName() {
   const a = AIRLINES[Math.floor(Math.random() * AIRLINES.length)];
   return { name: a.n + (10 + Math.floor(Math.random() * 89)), color: a.c };
 }
-function makePlane(state, x, y) {
-  const nm = newName();
-  const p = { id: nextId++, ...nm, state, x, y, ang: 0, path: [], pi: 0, pat: 1, gate: null, timer: 0,
-    ux: 1, uy: 0, blocked: false, angry: 0, warn: false, holdA: Math.random() * 6.28, since: t };
+function makePlane(state, x, y, type = 'jet') {
+  const p = { id: nextId++, ...newName(), type, tp: TYPES[type], state, x, y, ang: 0, path: [], pi: 0, pat: 1, gate: null,
+    timer: 0, ux: 1, uy: 0, blocked: false, angry: 0, warn: false, rwyWarn: false, sepWarn: false,
+    emg: false, fuel: 0, holdA: Math.random() * 6.28, since: t };
   planes.push(p);
   return p;
+}
+function typeFor(h) {
+  const r = Math.random();
+  if (h < 1) return 'jet';
+  if (h < 3) return r < 0.35 ? 'prop' : 'jet';
+  return r < 0.3 ? 'prop' : r < 0.78 ? 'jet' : 'jumbo';
 }
 function setPath(p, pts, sp) { p.path = pts.map(q => ({ x: q.x, y: q.y, s: q.s || sp })); p.pi = 0; }
 function pathLeft(p) {
@@ -192,10 +238,15 @@ function pathLeft(p) {
   for (let i = p.pi; i < p.path.length; i++) { d += Math.hypot(p.path[i].x - x, p.path[i].y - y); x = p.path[i].x; y = p.path[i].y; }
   return d;
 }
+function finalLenFrom(x, y) {
+  let d = Math.hypot(FINAL[0].x - x, FINAL[0].y - y);
+  for (let i = 1; i < FINAL.length; i++) d += Math.hypot(FINAL[i].x - FINAL[i - 1].x, FINAL[i].y - FINAL[i - 1].y);
+  return d;
+}
+const airborne = p => ['inbound', 'holding', 'final', 'goAround'].includes(p.state);
 const onGround = p => ['landing', 'exitWait', 'taxiIn', 'taxiOut', 'holdShort'].includes(p.state);
 const isMain = p => Math.abs(p.y - TWY) < 1 && Math.abs(p.uy) < 0.2;
 
-// 前に ひこうきが いて すすめないか（2機が おたがいを 待つときは ゆずりあいの ルールで 決める）
 function sees(a, b) {
   const rx = b.x - a.x, ry = b.y - a.y, d = Math.hypot(rx, ry);
   return d < SPACING && rx * a.ux + ry * a.uy > 4;
@@ -204,10 +255,10 @@ function blockedAhead(p) {
   for (const o of planes) {
     if (o === p || !onGround(o)) continue;
     if (!sees(p, o)) continue;
-    if (sees(o, p)) {                 // おたがいに 待っている
+    if (sees(o, p)) {
       const pm = isMain(p), om = isMain(o);
-      if (pm && !om) continue;        // 誘導路の 上の ひこうきが 先
-      if (!pm && !om || pm && om) { if (p.id < o.id) continue; }
+      if (pm && !om) continue;
+      if ((!pm && !om) || (pm && om)) { if (p.id < o.id) continue; }
     }
     return true;
   }
@@ -233,19 +284,35 @@ function runwayUser(except) {
     (o.state === 'landing' && o.y < RWY.y + 8) ||
     (o.state === 'takeoff' && o.x < RWY.x2 - 2)));
 }
-function etaThreshold(p) { return p.state === 'final' ? pathLeft(p) / SP.final : Infinity; }
-function nextFinal() { return planes.filter(p => p.state === 'final').sort((a, b) => etaThreshold(a) - etaThreshold(b))[0]; }
+// 滑走路が あと 何秒で あくか
+function runwayClearIn(u) {
+  if (!u) return 0;
+  if (u.blocked) return Infinity;
+  if (u.state === 'takeoff') {
+    const roll = (RWY.x2 - Math.max(u.x, RWY.x1)) / (u.tp.roll + 20);
+    return u.pi === 0 ? Math.hypot(RWY.x1 - u.x, RWY.y - u.y) / SP.lineup + roll : roll;
+  }
+  if (u.state === 'landing') return Math.max(0, EXIT_X - u.x) / u.tp.roll + 0.4;
+  return 0;
+}
+const takeoffDur = p => Math.hypot(RWY.x1 - HOLD_X, RWY.y - TWY) / SP.lineup + (RWY.x2 - RWY.x1) / (p.tp.roll + 20);
+function etaThreshold(p) { return p.state === 'final' ? pathLeft(p) / p.tp.final : Infinity; }
+const finals = () => planes.filter(p => p.state === 'final');
 const queueCount = () => planes.filter(p => p.state === 'taxiOut' || p.state === 'holdShort').length;
 const freeGate = () => GATES.filter(g => !g.plane).sort((a, b) => b.x - a.x)[0];
 
 /* ---------- 指示 ---------- */
 function canDo(p) {
+  const closed = storm.phase === 'closed';
   switch (p.state) {
-    case 'inbound': case 'holding': return { k: 'land', label: '🛬 着陸して よし', cls: 'go' };
+    case 'inbound': case 'holding':
+      if (closed) return { why: `⛈️ かみなり中は 着陸できないよ（あと${Math.ceil(storm.t)}秒）` };
+      return { k: 'land', label: p.emg ? '🚨 きんきゅう着陸 OK' : '🛬 着陸して よし', cls: p.emg ? 'warn' : 'go' };
     case 'final': return { k: 'goAround', label: '🔁 着陸 やりなおし', cls: p.warn ? 'warn' : 'sub' };
     case 'exitWait': return freeGate() ? { k: 'gate', label: '🅿️ ゲートへ', cls: 'go' } : { why: 'ゲートが あいていないよ（出発させて あけよう）' };
     case 'ready': return queueCount() < MAX_QUEUE ? { k: 'push', label: '🛫 出発（滑走路の 手前へ）', cls: 'go' } : { why: `離陸まちが ${MAX_QUEUE}機で いっぱいだよ` };
     case 'holdShort': {
+      if (closed) return { why: `⛈️ かみなり中は 離陸できないよ（あと${Math.ceil(storm.t)}秒）` };
       const u = runwayUser(p);
       if (u) return { why: `滑走路に ${u.name}が いるよ` };
       return { k: 'takeoff', label: '🚀 離陸して よし', cls: 'go' };
@@ -253,18 +320,21 @@ function canDo(p) {
   }
   return null;
 }
+function goAround(p, msg) {
+  p.state = 'goAround'; p.warn = p.rwyWarn = p.sepWarn = false; p.pat = Math.max(0, p.pat - 0.15); stats.goAround++;
+  setPath(p, [{ x: p.x + 30, y: p.y - 40 }, FIX], SP.air);
+  radio(msg || `🗼 ${p.name}、着陸 やりなおし。上空で 待って ください。`); tone(440, 0.15, 'square', 0.05);
+}
 function command(p, k) {
   if (!p || over) return;
   const c = canDo(p);
   if (!c || c.k !== k) return;
   if (k === 'land') {
     p.state = 'final'; p.warn = false;
-    setPath(p, FINAL, SP.final);
+    setPath(p, FINAL, p.tp.final);
     radio(`🗼 ${p.name}、着陸して よろしい。`); tone(660); tone(880, 0.1);
   } else if (k === 'goAround') {
-    p.state = 'goAround'; p.warn = false; p.pat = Math.max(0, p.pat - 0.15); stats.goAround++;
-    setPath(p, [{ x: p.x + 30, y: p.y - 40 }, FIX], SP.air);
-    radio(`🗼 ${p.name}、着陸 やりなおし。上空で 待って ください。`); tone(440, 0.15, 'square', 0.05);
+    goAround(p);
   } else if (k === 'gate') {
     const g = freeGate(); g.plane = p; p.gate = g; p.state = 'taxiIn';
     setPath(p, [{ x: EXIT_X, y: TWY }, { x: g.x, y: TWY }, { x: g.x, y: GATE_Y }], SP.taxi);
@@ -275,35 +345,113 @@ function command(p, k) {
     radio(`🗼 ${p.name}、滑走路の 手前まで 進んで ください。`); tone(620);
   } else if (k === 'takeoff') {
     p.state = 'takeoff';
-    setPath(p, [{ x: RWY.x1, y: RWY.y, s: SP.taxi }, { x: RWY.x2, y: RWY.y, s: SP.roll + 20 }, { x: W + 40, y: 230, s: SP.climb }], SP.taxi);
+    setPath(p, [{ x: RWY.x1, y: RWY.y, s: SP.lineup }, { x: RWY.x2, y: RWY.y, s: p.tp.roll + 20 }, { x: W + 40, y: 230, s: p.tp.climb }], SP.taxi);
     radio(`🗼 ${p.name}、離陸して よろしい。いってらっしゃい！`); tone(700); tone(990, 0.12);
   }
-  p.pat = Math.min(1, p.pat + 0.0);
   if (selected === p && !canDo(p)) selected = null;
   renderCmds();
 }
 
+/* ---------- 💡 ガイド（おすすめの 指示） ---------- */
+function landSafe(p) {
+  const T = finalLenFrom(p.x, p.y) / p.tp.final;
+  if (storm.phase === 'closed' || (storm.phase === 'warn' && storm.t < T + 4)) return false;
+  // 離陸まちが いれば、前の 着陸と この 着陸の あいだに 離陸の すきま（約10秒）を あける
+  const hs = planes.find(q => q.state === 'holdShort');
+  for (const f of finals()) {
+    const occ = (EXIT_X - RWY.x1) / f.tp.roll + 0.8;                 // 前の 機が 滑走路を つかう 時間
+    if (T < etaThreshold(f) + occ + (hs ? takeoffDur(hs) + 1.2 : 1.5)) return false;
+  }
+  const to = planes.find(q => q.state === 'takeoff' && q.x < RWY.x2);
+  if (to && T < 3) return false;
+  if (planes.filter(q => q.state === 'exitWait' || q.state === 'landing').length >= 2 && !freeGate()) return false;
+  return true;
+}
+function takeoffSafe(p) {
+  const eta = Math.min(Infinity, ...finals().map(etaThreshold));
+  if (eta < takeoffDur(p) + 0.8) return false;
+  if (storm.phase === 'warn' && storm.t < 5.5) return false;
+  return true;
+}
+function suggest() {
+  const ok = (p, k) => { const c = canDo(p); return c && c.k === k; };
+  const w = planes.find(p => p.warn); if (w) return { p: w, k: 'goAround', why: 'このままだと あぶない！' };
+  const em = planes.find(p => p.emg && ok(p, 'land') && landSafe(p)); if (em) return { p: em, k: 'land', why: 'きんきゅう機を さいしょに' };
+  const g = planes.find(p => ok(p, 'gate')); if (g) return { p: g, k: 'gate', why: '出口を あけよう' };
+  const hs = planes.find(p => ok(p, 'takeoff')); if (hs && takeoffSafe(hs)) return { p: hs, k: 'takeoff', why: 'つぎの 着陸まで 時間が ある' };
+  const hold = planes.filter(p => ok(p, 'land') && landSafe(p)).sort((a, b) => (b.emg - a.emg) || (a.pat - b.pat));
+  if (hold.length) return { p: hold[0], k: 'land', why: planes.some(q => q.state === 'holdShort') ? '離陸の すきまを あけて 着陸' : '前の ひこうきと 間が あいている' };
+  const r = planes.filter(p => ok(p, 'push')).sort((a, b) => a.pat - b.pat)[0]; if (r) return { p: r, k: 'push', why: 'ゲートを あけよう' };
+  return null;
+}
+
 /* ---------- 進行 ---------- */
-function crash(a, b) {
+function crash(a, b, why) {
   over = true; crashAt = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-  overReason = `${a.name}と ${b.name}が 滑走路で ぶつかりそうに なった！`;
+  overReason = `${a.name}と ${b.name}が ${why}`;
   tone(160, 0.6, 'sawtooth', 0.12);
   finish('💥 ニアミス！');
+}
+function loseHearts(n, msg) {
+  hearts -= n; radio(msg, true, 3);
+  if (hearts <= 0) { overReason = '空港の 評判が 0に なっちゃった…'; over = true; finish('😢 評判 0'); return true; }
+  return false;
+}
+function spawnArrival(h) {
+  const type = typeFor(h);
+  const p = makePlane('inbound', 40 + Math.random() * 280, -20, type);
+  setPath(p, [FIX], SP.air);
+  if (h >= EMG_FROM && !planes.some(q => q.emg) && Math.random() < EMG_RATE) {
+    p.emg = true; p.fuel = EMG_FUEL; stats.emg++;
+    if (!seenEmg) { seenEmg = true; radio(`🆕 🚨きんきゅう機！ ${p.name}「ぐあいの わるい お客さんが います。すぐ 着陸させて！」 ねんりょうが なくなる 前に おろそう`, true, 6); }
+    else radio(`🚨 ${p.name}「きんきゅうです！ すぐ 着陸させて ください！」`, true);
+    tone(900, 0.12, 'square', 0.06); tone(700, 0.12, 'square', 0.06);
+  } else if (!seenTypes.has(type) && TYPES[type].intro) radio(TYPES[type].intro, false, 6);
+  else radio(`✈️ ${p.name}${p.tp.mark}「着陸したいです。どうぞ」`);
+  seenTypes.add(type);
+}
+function updateStorm(dt, h) {
+  if (h < STORM_FROM) return;
+  if (storm.phase === 'none') {
+    storm.next -= dt;
+    if (storm.next <= 0) {
+      storm.phase = 'warn'; storm.t = STORM_WARN; stats.storms++;
+      radio(stats.storms === 1 ? `🆕 ⛈️ かみなり雲が 来るよ！ ${STORM_WARN}秒後に 滑走路を しめるよ。それまでに 着陸できない ひこうきは 上で 待たせよう`
+                               : `⛈️ かみなり雲が 来るよ！ ${STORM_WARN}秒後に 滑走路を しめるよ`, true, stats.storms === 1 ? 6 : 3);
+      tone(240, 0.3, 'triangle', 0.08);
+    }
+  } else if (storm.phase === 'warn') {
+    storm.t -= dt;
+    if (storm.t <= 0) {
+      storm.phase = 'closed'; storm.t = STORM_LEN;
+      for (const q of finals()) goAround(q, `⛈️ かみなりで ${q.name}は 着陸 やりなおし！`);
+      tone(120, 0.5, 'sawtooth', 0.06);
+    }
+  } else {
+    storm.t -= dt;
+    if (storm.t <= 0) { storm.phase = 'none'; storm.next = stormGap(); radio('☀️ かみなり雲が いなくなったよ。滑走路 再開！'); }
+  }
 }
 function update(dt) {
   if (over || speed === 0 || !started) return;
   dt *= speed; t += dt;
+  const h = Math.floor(t / HOUR);
+  if (!dayDone && t >= DAY_HOURS * HOUR) { dayDone = true; dayClear(); return; }
 
   spawnT -= dt;
-  if (spawnT <= 0) {
-    spawnT = arrivalInterval(Math.floor(t / HOUR));
-    const p = makePlane('inbound', 40 + Math.random() * 280, -20);
-    setPath(p, [FIX], SP.air);
-    radio(`✈️ ${p.name}「着陸したいです。どうぞ」`);
-  }
+  if (spawnT <= 0) { spawnT = arrivalInterval(h) * (0.8 + Math.random() * 0.4); spawnArrival(h); }
+  updateStorm(dt, h);
 
   for (const p of planes.slice()) {
     p.angry = Math.max(0, p.angry - dt);
+    if (p.emg && airborne(p)) {
+      p.fuel -= dt;
+      if (p.fuel <= 0) {
+        planes.splice(planes.indexOf(p), 1); if (selected === p) selected = null; stats.emgLost++;
+        if (loseHearts(2, `🚨 ${p.name}は ねんりょうが なくなりそうで、ほかの 空港へ 行っちゃった…（❤️-2）`)) return;
+        continue;
+      }
+    }
     switch (p.state) {
       case 'inbound': case 'goAround':
         if (follow(p, dt, false)) { p.state = 'holding'; p.since = t; }
@@ -319,12 +467,12 @@ function update(dt) {
       case 'final': {
         const done = follow(p, dt, false);
         const u = runwayUser(p);
-        p.warn = !!u && etaThreshold(p) < 3.2;
+        p.rwyWarn = !!u && etaThreshold(p) < 3.2 && runwayClearIn(u) > etaThreshold(p) - 0.2;
         if (done) {
-          if (u) { crash(p, u); return; }
-          // うしろの 着陸機が 近すぎる？（滑走路の 上で 追いつく）
-          p.state = 'landing'; p.warn = false;
-          setPath(p, [{ x: EXIT_X, y: RWY.y, s: SP.roll }, { x: EXIT_X, y: 385, s: SP.taxi }], SP.roll);
+          if (u) { crash(p, u, '滑走路で ぶつかりそうに なった！'); return; }
+          p.state = 'landing'; p.warn = p.rwyWarn = p.sepWarn = false;
+          if (p.emg) { p.emg = false; score += 2; stats.emgSaved++; radio(`🚑 ${p.name}「たすかりました！ ありがとう！」 ボーナス+2`, false, 3); tone(1040, 0.15, 'triangle'); }
+          setPath(p, [{ x: EXIT_X, y: RWY.y, s: p.tp.roll }, { x: EXIT_X, y: 385, s: SP.taxi }], p.tp.roll);
           tone(500, 0.06);
         }
         break;
@@ -333,37 +481,44 @@ function update(dt) {
         if (follow(p, dt, true)) { p.state = 'exitWait'; p.since = t; radio(`✈️ ${p.name}「着陸しました。ゲートを ください」`); }
         break;
       case 'taxiIn':
-        if (follow(p, dt, true)) { p.state = 'unload'; p.timer = UNLOAD; score++; stats.arr++; tone(880, 0.06); }
+        if (follow(p, dt, true)) { p.state = 'unload'; p.timer = p.tp.unload; score += p.tp.pts; stats.arr++; tone(880, 0.06); }
         break;
       case 'unload':
         p.timer -= dt;
-        if (p.timer <= 0) {
-          Object.assign(p, newName()); p.state = 'ready'; p.pat = 1; p.since = t;
-          radio(`✈️ ${p.name}「出発の じゅんび OK です」`);
-        }
+        if (p.timer <= 0) { Object.assign(p, newName()); p.state = 'ready'; p.pat = 1; p.since = t; radio(`✈️ ${p.name}「出発の じゅんび OK です」`); }
         break;
       case 'taxiOut':
         if (p.gate && p.y <= TWY + 0.5) { p.gate.plane = null; p.gate = null; }
         if (follow(p, dt, true)) { p.state = 'holdShort'; p.since = t; radio(`✈️ ${p.name}「離陸の じゅんび OK です」`); }
         break;
       case 'takeoff':
-        if (follow(p, dt, false)) { planes.splice(planes.indexOf(p), 1); score++; stats.dep++; if (selected === p) selected = null; }
+        if (follow(p, dt, false)) { planes.splice(planes.indexOf(p), 1); score += p.tp.pts; stats.dep++; if (selected === p) selected = null; }
         break;
     }
-    // がまん
     const waiting = ['holding', 'exitWait', 'ready', 'holdShort'].includes(p.state);
     const slow = (p.state === 'taxiOut' || p.state === 'taxiIn' || p.state === 'landing') && p.blocked;
-    if (waiting || slow) {
+    if (!p.emg && (waiting || slow)) {
       p.pat -= dt / PATIENCE * (slow ? 0.5 : 1);
       if (p.pat <= 0) {
-        p.pat = 1; p.angry = 2.5; hearts--; stats.angry++;
-        radio(`😡 ${p.name}の お客さんが おこっちゃった！`, true); tone(200, 0.3, 'square', 0.08);
-        if (hearts <= 0) { overReason = '待たされた お客さんが おこって、空港の 評判が 0に なった…'; over = true; finish('😢 評判 0'); return; }
+        p.pat = 1; p.angry = 2.5; stats.angry++; tone(200, 0.3, 'square', 0.08);
+        if (loseHearts(1, `😡 ${p.name}の お客さんが おこっちゃった！`)) return;
       }
     }
   }
+  // 着陸どうしの 間かく（速い 機が おそい 機に 追いつく）
+  const fs = finals().sort((a, b) => pathLeft(a) - pathLeft(b));
+  for (const q of fs) q.sepWarn = false;
+  for (let i = 1; i < fs.length; i++) {
+    const l = fs[i - 1], f = fs[i], d = Math.hypot(f.x - l.x, f.y - l.y);
+    if (d < SEP_CRASH) { crash(l, f, '空の 上で 近づきすぎて しまった！'); return; }
+    if (d < SEP_WARN) f.sepWarn = true;
+  }
+  for (const q of fs) q.warn = q.rwyWarn || q.sepWarn;
   const w = planes.find(p => p.warn);
-  if (w) { if (!selected || !selected.warn) { selected = w; renderCmds(); } radio(`⚠️ あぶない！ ${w.name}が 着陸しそう。滑走路が つかわれているよ`, true); }
+  if (w) {
+    if (!selected || !selected.warn) { selected = w; renderCmds(); }
+    radio(w.sepWarn ? `⚠️ あぶない！ ${w.name}が 前の ひこうきに 追いつきそう` : `⚠️ あぶない！ ${w.name}が 着陸しそう。滑走路が つかわれているよ`, true);
+  }
 }
 
 /* ---------- 入力 ---------- */
@@ -384,111 +539,177 @@ const STATE_JA = {
   landing: '着陸した', exitWait: 'ゲートを まっている', taxiIn: 'ゲートへ 走っている', unload: 'お客さんが おりている',
   ready: '出発を まっている', taxiOut: '滑走路の 手前へ 走っている', holdShort: '離陸を まっている', takeoff: '離陸中'
 };
+const tagHtml = p => `<span class="tag" style="background:${p.color}">${p.name}${p.tp.mark}</span>`;
 function renderCmds() {
   const sel = document.getElementById('uiSel'), box = document.getElementById('uiCmds');
   box.innerHTML = '';
+  const sg = guide && !over ? suggest() : null;
   if (!selected || !planes.includes(selected)) {
     selected = null;
-    sel.innerHTML = '<span class="st">✈️ ひこうきを タップして えらんでね（❗が 出ている ひこうきは 指示を まっているよ）</span>';
+    if (sg) {
+      const c = canDo(sg.p);
+      sel.innerHTML = `<span class="tip">💡 おすすめ：</span>${tagHtml(sg.p)}<span class="tip">を「${c.label}」</span><span class="st">（${sg.why}）</span>`;
+      const b = document.createElement('button');
+      b.className = 'sub'; b.textContent = `${sg.p.name}を えらぶ`;
+      b.onclick = () => { selected = sg.p; tone(520, 0.04); renderCmds(); };
+      box.appendChild(b);
+    } else {
+      sel.innerHTML = '<span class="st">✈️ ひこうきを タップして えらんでね（❗が 出ている ひこうきは 指示を まっているよ）</span>';
+    }
     return;
   }
   const p = selected;
   let extra = '';
   if (p.state === 'final') extra = `・滑走路まで あと ${etaThreshold(p).toFixed(0)}秒`;
   if (p.state === 'unload') extra = `・あと ${Math.ceil(p.timer)}秒`;
-  sel.innerHTML = `<span class="tag" style="background:${p.color}">${p.name}</span><span class="st">${STATE_JA[p.state]}${extra}</span>`;
+  if (p.emg && airborne(p)) extra += `・ねんりょう あと${Math.ceil(p.fuel)}秒`;
+  sel.innerHTML = `${tagHtml(p)}<span class="st">${p.tp.ja}・${STATE_JA[p.state]}${extra}</span>`;
   const c = canDo(p);
   if (!c) { box.innerHTML = '<div class="why">いまは 指示は いらないよ</div>'; return; }
   if (c.why) { box.innerHTML = `<div class="why">⏳ ${c.why}</div>`; return; }
   const b = document.createElement('button');
-  b.className = c.cls || ''; b.textContent = c.label;
+  b.className = (c.cls || '') + (sg && sg.p === p && sg.k === c.k ? ' hint' : '');
+  b.textContent = c.label;
   b.onclick = () => command(p, c.k);
   box.appendChild(b);
+  if (guide && c.k === 'land' && !landSafe(p)) {
+    const why = document.createElement('div'); why.className = 'why'; why.style.flex = '0.9';
+    why.textContent = storm.phase === 'warn' ? '⛈️ まもなく しまるよ' : '💡 まだ 早いかも';
+    box.appendChild(why);
+  }
+  if (guide && c.k === 'takeoff' && !takeoffSafe(p)) {
+    const why = document.createElement('div'); why.className = 'why'; why.style.flex = '0.9';
+    why.textContent = '💡 着陸機が 近いよ';
+    box.appendChild(why);
+  }
 }
 
 /* ---------- 描画 ---------- */
 function draw(now) {
-  // 空と地面
+  const dusk = night ? 1 : Math.max(0, Math.min(1, (t / HOUR - (DAY_HOURS - 2)) / 2));
   const g = ctx.createLinearGradient(0, 0, 0, 290);
-  g.addColorStop(0, '#9fd3ff'); g.addColorStop(1, '#dff1ff');
+  g.addColorStop(0, night ? '#1e1b4b' : mix('#9fd3ff', '#fb923c', dusk)); g.addColorStop(1, night ? '#3730a3' : mix('#dff1ff', '#fde68a', dusk));
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, 290);
-  ctx.fillStyle = '#b9e3a5'; ctx.fillRect(0, 290, W, H - 290);
-  // 雲
-  ctx.fillStyle = 'rgba(255,255,255,.8)';
+  ctx.fillStyle = night ? '#365314' : '#b9e3a5'; ctx.fillRect(0, 290, W, H - 290);
+  if (night) { ctx.fillStyle = '#fff'; for (let i = 0; i < 24; i++) { ctx.globalAlpha = 0.4 + 0.4 * Math.sin(now * 2 + i); ctx.fillRect((i * 97) % W, (i * 53) % 260, 2, 2); } ctx.globalAlpha = 1; }
+  ctx.fillStyle = night ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.8)';
   for (const [cx, cy, s] of [[230, 60, 1], [300, 150, .7], [160, 200, .8]]) {
     const ox = ((now * 4 * s) % 420) - 30;
     ctx.beginPath(); ctx.arc((cx + ox) % (W + 60) - 30, cy, 14 * s, 0, 7); ctx.arc((cx + ox) % (W + 60) - 14, cy - 6, 16 * s, 0, 7);
     ctx.arc((cx + ox) % (W + 60) + 2, cy, 13 * s, 0, 7); ctx.fill();
   }
-  // まち地点と 着陸コース
-  ctx.save(); ctx.setLineDash([4, 5]); ctx.strokeStyle = 'rgba(43,125,233,.45)'; ctx.lineWidth = 1.5;
+  ctx.save(); ctx.setLineDash([4, 5]); ctx.strokeStyle = 'rgba(43,125,233,.5)'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.ellipse(FIX.x, FIX.y, 30, 17, 0, 0, 7); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(FIX.x, FIX.y); for (const q of FINAL) ctx.lineTo(q.x, q.y); ctx.stroke(); ctx.restore();
-  ctx.fillStyle = 'rgba(43,125,233,.8)'; ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillStyle = night ? '#c7d2fe' : 'rgba(43,125,233,.85)'; ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('まち', FIX.x, FIX.y + 3);
+
   // 滑走路
   const busy = runwayUser(null);
   ctx.fillStyle = '#4b5563'; ctx.fillRect(RWY.x1 - 10, RWY.y - 11, RWY.x2 - RWY.x1 + 20, 22);
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.setLineDash([10, 8]);
   ctx.beginPath(); ctx.moveTo(RWY.x1 + 14, RWY.y); ctx.lineTo(RWY.x2 - 14, RWY.y); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = busy ? '#ef4444' : '#22c55e';
+  if (night) { ctx.fillStyle = '#fde047'; for (let x = RWY.x1 - 6; x <= RWY.x2 + 6; x += 22) { ctx.fillRect(x, RWY.y - 13, 2, 2); ctx.fillRect(x, RWY.y + 11, 2, 2); } }
+  const closed = storm.phase === 'closed';
+  ctx.fillStyle = busy || closed ? '#ef4444' : '#22c55e';
   for (const x of [RWY.x1 - 6, RWY.x2 + 6]) { ctx.beginPath(); ctx.arc(x, RWY.y - 16, 4, 0, 7); ctx.fill(); }
-  ctx.fillStyle = busy ? '#ef4444' : '#15803d'; ctx.font = '800 11px sans-serif';
-  ctx.fillText(busy ? `滑走路：${busy.name}が 使用中` : '滑走路：あいてる', (RWY.x1 + RWY.x2) / 2, RWY.y - 18);
-  // 誘導路・出口・ゲート
+  ctx.font = '800 11px sans-serif';
+  let label, col;
+  if (closed) { label = `⛈️ かみなり中 しめきり（あと${Math.ceil(storm.t)}秒）`; col = '#ef4444'; }
+  else if (storm.phase === 'warn') { label = `⛈️ あと${Math.ceil(storm.t)}秒で しまるよ` + (busy ? `・${busy.name}が 使用中` : ''); col = '#c2410c'; }
+  else if (busy) { label = `滑走路：${busy.name}が 使用中`; col = '#ef4444'; }
+  else { label = '滑走路：あいてる'; col = night ? '#86efac' : '#15803d'; }
+  ctx.fillStyle = col; ctx.fillText(label, (RWY.x1 + RWY.x2) / 2, RWY.y - 18);
+
+  // 誘導路・ゲート
   ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 12; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(EXIT_X, RWY.y); ctx.lineTo(EXIT_X, TWY); ctx.lineTo(HOLD_X, TWY); ctx.lineTo(RWY.x1, RWY.y); ctx.stroke();
   for (const gt of GATES) { ctx.beginPath(); ctx.moveTo(gt.x, TWY); ctx.lineTo(gt.x, GATE_Y); ctx.stroke(); }
   ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
   ctx.beginPath(); ctx.moveTo(EXIT_X, TWY); ctx.lineTo(HOLD_X, TWY); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = '#6b7280'; ctx.font = '700 9px sans-serif';
+  ctx.fillStyle = night ? '#d1d5db' : '#6b7280'; ctx.font = '700 9px sans-serif';
   ctx.fillText('◀ 誘導路（左へ 一方通行）', 205, TWY - 9);
   ctx.fillStyle = '#dc2626'; ctx.fillRect(HOLD_X + 6, TWY - 14, 3, 28);
-  ctx.fillStyle = '#7f1d1d'; ctx.fillText('離陸まち', HOLD_X + 20, TWY + 22);
-  ctx.fillStyle = '#e5e7eb'; ctx.fillRect(120, GATE_Y + 14, 180, 40);
+  ctx.fillStyle = night ? '#fecaca' : '#7f1d1d'; ctx.fillText('離陸まち', HOLD_X + 20, TWY + 22);
+  ctx.fillStyle = night ? '#fef3c7' : '#e5e7eb'; ctx.fillRect(120, GATE_Y + 14, 180, 40);
   ctx.fillStyle = '#374151'; ctx.font = '800 12px sans-serif'; ctx.fillText('🏢 ターミナル', 210, GATE_Y + 39);
   GATES.forEach((gt, i) => {
     ctx.fillStyle = gt.plane ? '#fca5a5' : '#86efac';
     ctx.beginPath(); ctx.arc(gt.x, GATE_Y, 13, 0, 7); ctx.fill();
     ctx.fillStyle = '#374151'; ctx.font = '700 9px sans-serif'; ctx.fillText(String(i + 1), gt.x, GATE_Y + 26);
   });
-  // ひこうき
-  for (const p of planes) drawPlane(p, now);
+
+  // かみなり雲
+  if (storm.phase !== 'none') {
+    const a = closed ? 0.55 : 0.25 * (1 - storm.t / STORM_WARN) + 0.05;
+    ctx.fillStyle = `rgba(55,65,81,${a})`; ctx.fillRect(0, 230, W, 140);
+    ctx.font = closed ? '34px sans-serif' : '24px sans-serif';
+    ctx.fillText('⛈️', 120, 270); ctx.fillText('⛈️', 250, 262);
+    if (closed) {
+      ctx.strokeStyle = 'rgba(191,219,254,.7)'; ctx.lineWidth = 1;
+      for (let i = 0; i < 30; i++) { const x = (i * 37 + now * 140) % W, y = 240 + (i * 29 + now * 220) % 130; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 9); ctx.stroke(); }
+      if (Math.sin(now * 9) > 0.97) { ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(0, 0, W, H); }
+    }
+  }
+
+  const sg = guide && !over ? suggest() : null;
+  for (const p of planes) drawPlane(p, now, sg && sg.p === p);
   if (crashAt) { ctx.font = '40px sans-serif'; ctx.fillText('💥', crashAt.x, crashAt.y + 14); }
 }
-function drawPlane(p, now) {
-  const air = ['inbound', 'holding', 'final', 'goAround', 'takeoff'].includes(p.state) && !(p.state === 'takeoff' && p.x < RWY.x2);
-  const s = air ? 1.15 : 0.95;
-  if (air) { ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse(p.x + 6, p.y + 12, 9, 4, 0, 0, 7); ctx.fill(); }
-  if (selected === p) { ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, p.y, 17, 0, 7); ctx.stroke(); }
+function mix(a, b, k) {
+  const pa = [1, 3, 5].map(i => parseInt(a.substr(i, 2), 16)), pb = [1, 3, 5].map(i => parseInt(b.substr(i, 2), 16));
+  return '#' + pa.map((v, i) => Math.round(v + (pb[i] - v) * k).toString(16).padStart(2, '0')).join('');
+}
+function drawPlane(p, now, hinted) {
+  const air = airborne(p) || (p.state === 'takeoff' && p.x >= RWY.x2);
+  const s = (air ? 1.15 : 0.95) * p.tp.size;
+  if (air) { ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse(p.x + 6, p.y + 12, 9 * s, 4 * s, 0, 0, 7); ctx.fill(); }
+  if (hinted) {
+    ctx.save(); ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5; ctx.setLineDash([4, 3]); ctx.lineDashOffset = -now * 20;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 21 + Math.sin(now * 6) * 2, 0, 7); ctx.stroke(); ctx.restore();
+  }
+  if (selected === p) { ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, p.y, 17 * Math.max(1, s), 0, 7); ctx.stroke(); }
+  if (p.emg && airborne(p)) {
+    ctx.fillStyle = `rgba(239,68,68,${0.25 + 0.2 * Math.sin(now * 8)})`; ctx.beginPath(); ctx.arc(p.x, p.y, 19, 0, 7); ctx.fill();
+  }
   ctx.fillStyle = p.color; ctx.globalAlpha = .85; ctx.beginPath(); ctx.arc(p.x, p.y, 11 * s, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
   ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.ang + Math.PI / 4);
   ctx.font = `${Math.round(16 * s)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✈️', 0, 1);
   ctx.restore();
   ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
-  ctx.font = '800 9px sans-serif'; ctx.fillStyle = '#1f2937'; ctx.fillText(p.name, p.x, p.y + 22);
+  ctx.font = '800 9px sans-serif'; ctx.fillStyle = night && air ? '#fff' : '#1f2937';
+  ctx.fillText(p.name + p.tp.mark, p.x, p.y + 12 * s + 10);
+  if (p.emg && airborne(p)) {
+    const w = 26, k = Math.max(0, p.fuel / EMG_FUEL);
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(p.x - w / 2, p.y - 25, w, 4);
+    ctx.fillStyle = k > 0.4 ? '#f59e0b' : '#ef4444'; ctx.fillRect(p.x - w / 2, p.y - 25, w * k, 4);
+    ctx.font = '12px sans-serif'; ctx.fillText('🚨', p.x - 18, p.y - 18);
+  }
   const c = canDo(p);
   const asking = c && (c.k || c.why) && p.state !== 'final';
-  if (asking) {
-    // がまんゲージ
+  if (asking && !p.emg) {
     ctx.strokeStyle = p.pat > .5 ? '#22c55e' : p.pat > .25 ? '#f59e0b' : '#ef4444'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(p.x, p.y, 14, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p.pat); ctx.stroke();
+    ctx.beginPath(); ctx.arc(p.x, p.y, 14 * Math.max(1, s), -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p.pat); ctx.stroke();
     const bob = Math.sin(now * 6 + p.id) * 2;
-    ctx.font = '13px sans-serif'; ctx.fillText(p.angry > 0 ? '😡' : '❗', p.x + 13, p.y - 12 + bob);
+    ctx.font = '13px sans-serif'; ctx.fillText(p.angry > 0 ? '😡' : '❗', p.x + 13 * Math.max(1, s), p.y - 12 + bob);
   }
   if (p.state === 'final') {
-    ctx.font = '800 10px sans-serif'; ctx.fillStyle = p.warn ? '#dc2626' : '#1d4ed8';
-    ctx.fillText(`あと${etaThreshold(p).toFixed(0)}秒`, p.x, p.y - 15);
+    ctx.font = '800 10px sans-serif'; ctx.fillStyle = p.warn ? '#dc2626' : night ? '#bfdbfe' : '#1d4ed8';
+    ctx.fillText(p.sepWarn ? 'ちかい！' : `あと${etaThreshold(p).toFixed(0)}秒`, p.x, p.y - 15 * Math.max(1, s));
   }
   if (p.state === 'unload') { ctx.font = '800 9px sans-serif'; ctx.fillStyle = '#374151'; ctx.fillText(`🧳${Math.ceil(p.timer)}`, p.x, p.y - 15); }
 }
 
 /* ---------- UI ---------- */
+function clockText() {
+  const h = 6 + Math.floor(t / HOUR), m = Math.floor((t % HOUR) / HOUR * 60 / 10) * 10;
+  return `${h}:${String(m).padStart(2, '0')}`;
+}
 function updateUI() {
   document.getElementById('uiScore').textContent = score;
-  const h = 6 + Math.floor(t / HOUR), m = Math.floor((t % HOUR) / HOUR * 60 / 10) * 10;
-  document.getElementById('uiClock').textContent = `${h}:${String(m).padStart(2, '0')}`;
-  document.getElementById('uiHearts').textContent = '❤️'.repeat(Math.max(0, hearts)) + '🤍'.repeat(HEARTS - Math.max(0, hearts));
+  document.getElementById('uiClock').textContent = (night ? '🌙' : '') + clockText();
+  document.getElementById('uiHearts').textContent = '❤️'.repeat(Math.max(0, hearts)) + '🤍'.repeat(Math.max(0, HEARTS - Math.max(0, hearts)));
+  document.getElementById('bGuide').classList.toggle('on', guide);
 }
 function setSpeed(s) {
   speed = s;
@@ -496,16 +717,50 @@ function setSpeed(s) {
   document.getElementById('b1').classList.toggle('on', s === 1);
   document.getElementById('b2').classList.toggle('on', s === 2);
 }
+function toggleGuide() {
+  guide = !guide;
+  try { localStorage.setItem('skyTowerGuide', guide ? '1' : '0'); } catch (e) { /* noop */ }
+  radio(guide ? '💡 ガイド オン：おすすめの 指示が 出るよ' : '💡 ガイド オフ：自分で 考えて みよう！');
+  renderCmds(); updateUI();
+}
 function bestScore() { try { return +localStorage.getItem('skyTowerBest') || 0; } catch (e) { return 0; } }
-function finish(title) {
+function bestStars() { try { return +localStorage.getItem('skyTowerStars') || 0; } catch (e) { return 0; } }
+const starStr = n => '★'.repeat(n) + '☆'.repeat(3 - n);
+function statItems(best) {
+  return [['がんばった 時間', clockText() + ' まで'], ['いちばんの 記録', best + ' びん'],
+    ['🛬 到着 ／ 🛫 出発', `${stats.arr} ／ ${stats.dep}`], ['🔁 着陸やりなおし', stats.goAround + ' 回'],
+    ['🚨 きんきゅう機', `${stats.emgSaved} / ${stats.emg} 機 たすけた`], ['😡 おこらせた', stats.angry + ' 回']]
+    .map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+}
+function saveBest() {
   let best = bestScore();
   if (score > best) { best = score; try { localStorage.setItem('skyTowerBest', String(score)); } catch (e) { /* noop */ } }
+  return best;
+}
+function dayClear() {
+  setSpeed(0);
+  const g = [[true, '夕方6時まで まもった'], [hearts >= 3, '❤️を 3つ以上 のこした'], [score >= DAY_TARGET, `${DAY_TARGET}びん 以上 はこんだ（${score}びん）`]];
+  dayStars = g.filter(x => x[0]).length;
+  if (dayStars > bestStars()) { try { localStorage.setItem('skyTowerStars', String(dayStars)); } catch (e) { /* noop */ } }
+  const best = saveBest();
+  document.getElementById('clStars').textContent = starStr(dayStars);
+  document.getElementById('clGoals').innerHTML = g.map(([ok, s]) => (ok ? '✅ ' : '⬜ ') + s).join('<br>');
+  document.getElementById('clStats').innerHTML = statItems(best);
+  document.getElementById('mClear').classList.add('show');
+  tone(523, 0.14, 'triangle'); tone(659, 0.14, 'triangle'); tone(784, 0.2, 'triangle');
+}
+function goNight() {
+  document.getElementById('mClear').classList.remove('show');
+  night = true; setSpeed(1);
+  radio('🌙 よるの部 スタート！ ひこうきが どんどん ふえるよ。どこまで いけるかな？', false, 4);
+}
+function finish(title) {
+  const best = saveBest();
   document.getElementById('ovTitle').textContent = title;
   document.getElementById('ovReason').textContent = overReason;
   document.getElementById('ovScore').textContent = `${score} びん`;
-  const items = [['がんばった 時間', document.getElementById('uiClock').textContent + ' まで'], ['いちばんの 記録', best + ' びん'],
-    ['🛬 到着', stats.arr + ' びん'], ['🛫 出発', stats.dep + ' びん'], ['🔁 着陸やりなおし', stats.goAround + ' 回'], ['😡 おこらせた', stats.angry + ' 回']];
-  document.getElementById('ovStats').innerHTML = items.map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  document.getElementById('ovStars').textContent = dayDone ? `きょうの ひょうか ${starStr(dayStars)}` : '';
+  document.getElementById('ovStats').innerHTML = statItems(best);
   document.getElementById('rbText').textContent = `${score}びん　${overReason}`;
   setTimeout(() => showOver(), 900);
   updateUI();
@@ -516,12 +771,14 @@ function openHelp() { if (!over) { setSpeed(0); document.getElementById('mStart'
 
 function newGame() {
   planes = []; nextId = 1; selected = null; t = 0; score = 0; hearts = HEARTS; spawnT = 3;
-  over = false; crashAt = null; overReason = ''; stats = { arr: 0, dep: 0, goAround: 0, angry: 0 };
+  over = false; crashAt = null; overReason = ''; dayDone = false; night = false; dayStars = 0;
+  storm = { phase: 'none', t: 0, next: 15 }; seenTypes = new Set(['jet']); seenEmg = false;
+  stats = { arr: 0, dep: 0, goAround: 0, angry: 0, emg: 0, emgSaved: 0, emgLost: 0, storms: 0 };
   for (const g of GATES) g.plane = null;
   [[0, 2], [2, 6]].forEach(([gi, tm]) => {
     const g = GATES[gi], p = makePlane('unload', g.x, GATE_Y); p.timer = tm; p.gate = g; g.plane = p; p.ang = -Math.PI / 2;
   });
-  document.getElementById('mOver').classList.remove('show');
+  ['mOver', 'mClear'].forEach(id => document.getElementById(id).classList.remove('show'));
   document.getElementById('resultBar').classList.remove('show');
   started = true; setSpeed(1); renderCmds(); updateUI();
 }
@@ -535,12 +792,13 @@ let last = performance.now(), cmdTick = 0;
 function loop(ts) {
   const dt = Math.min(0.1, Math.max(0, (ts - last) / 1000)); last = ts;
   update(dt);
-  cmdTick += dt; if (cmdTick > 0.25) { cmdTick = 0; if (!over) renderCmds(); updateUI(); }
+  cmdTick += dt; if (cmdTick > 0.25) { cmdTick = 0; if (!over && started) renderCmds(); updateUI(); }
   draw(ts / 1000);
   requestAnimationFrame(loop);
 }
 document.getElementById('uiVer').textContent = 'バージョン ' + APP_VERSION;
-document.getElementById('uiBest').textContent = bestScore() ? `いちばんの 記録：${bestScore()} びん` : '';
+{ const b = bestScore(), s = bestStars(); document.getElementById('uiBest').textContent = b ? `いちばんの 記録：${b} びん　${starStr(s)}` : ''; }
+stats = { arr: 0, dep: 0, goAround: 0, angry: 0, emg: 0, emgSaved: 0, emgLost: 0, storms: 0 };
 resize(); updateUI();
 requestAnimationFrame(loop);
 </script>
