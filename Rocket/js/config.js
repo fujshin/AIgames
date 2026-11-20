@@ -1,7 +1,7 @@
 // 全体設定。数値の調整はここだけで行う
 window.RL = window.RL || {};
 RL.CFG = {
-  COLS: 5, ROWS: 7, VERSION: 'v0.6.1',
+  COLS: 5, ROWS: 7, VERSION: 'v0.6.2',
   PHYS: {
     G: 10,
     THRUST: 188,      // エンジン1つの力
@@ -17,7 +17,7 @@ RL.CFG = {
     TIME_STRETCH: 1.3, // 全体をゆっくりにする（高さは変わらない）
     DT: 0.02, MAX_T: 60
   },
-  PLAY: { MAX_SEC: 30 },   // 再生は実時間。これより長いときだけ早送り
+  PLAY: { MAX_SEC: 30, COAST_SEC: 4, FF_MIN: 3 },   // 燃えている間は実時間。燃料が なくなったら 早送り（のこりを約4秒・最低3倍）
   SPEED_SCALE: 40, SPEED_MAX: 12000,
   // 高さの目印（上ほど間かくが広い）。🌌 は くうきの おわり（ATMO_H）と同じ高さ
   ZONES: [

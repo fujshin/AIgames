@@ -14,7 +14,7 @@ RL.Tutorial = (function () {
   const STEPS = [
     // ---- 0 そうさ
     { say: ['ロケットラボへ ようこそ！', 'いっしょに ロケットを つくって、うちゅうを めざそう！', 'わからなく なったら、この みみの ボタンを おしてね。 もういちど おはなし するよ。'],
-      icon: ['🚀'], preset: [], hl: { el: 'tutEar' }, wait: { type: 'speech' } },
+      icon: ['🚀'], preset: [], wait: { type: 'speech' } },
     { say: ['うえに ならんでいるのが、ロケットの ぶひん だよ。', 'まどを タップして えらんでみよう。'],
       icon: ['win'], allow: ['win'], deselect: true, hl: { pal: 'win' }, wait: { type: 'select', part: 'win' } },
     { say: ['いいね！ つぎは、したの マスを タップしてね。 ぶひんが おけるよ。'],
@@ -125,8 +125,9 @@ RL.Tutorial = (function () {
     $('tutIcon').innerHTML = iconHTML(step.icon); $('tutBubble').style.display = 'flex';
     setTimeout(placeHand, 50);
     if (step.wait.type === 'grid' && step.wait.test(an())) met = true;   // はじめから できていたら
-    talk(step.say, () => { spoken = true; if (step.wait.type === 'speech') met = true; proceed(); });
+    talk(step.say, afterSpeech);
   }
+  function afterSpeech() { if (!step) return; spoken = true; if (step.wait.type === 'speech') met = true; proceed(); }
   function complete(data) {
     if (!active || met) return;
     met = true; metData = data; canLaunch = false; $('launch').classList.add('off'); placeHand();
@@ -155,7 +156,8 @@ RL.Tutorial = (function () {
   RL.on('result', s => { if (step && step.wait.type === 'result') complete(s); });
   RL.on('rendered', () => setTimeout(placeHand, 0));
   addEventListener('resize', () => setTimeout(placeHand, 50));
-  document.getElementById('tutEar').addEventListener('click', () => { if (active && step) talk(step.say, () => { spoken = true; proceed(); }); });
+  // みみボタン：話しなおしても、おわったら ふつうと同じように 次へ すすむ
+  document.getElementById('tutEar').addEventListener('click', () => { if (active && step && !(met && spoken)) talk(step.say, afterSpeech); });
 
   function start() { active = true; finished = false; results = []; B().resetRecords(); go(0); }
   function hideUI() { $('tutBubble').style.display = 'none'; clearHL(); B().highlightCell(null); $('launch').classList.remove('off'); $('clear').classList.remove('off'); }

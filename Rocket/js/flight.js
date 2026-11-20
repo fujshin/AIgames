@@ -93,8 +93,12 @@ RL.Flight = (function () {
     const px = H / 180, L = 150, Y = hh => px * L * Math.log(1 + Math.max(0, hh) / L);
     const ground = H * 0.82, startY = ground - 10 - lowest * cs, room = startY - H * 0.3;
     const pre = 2100, PL = RL.CFG.PLAY;
-    const speed = Math.max(1, s.tTotal / PL.MAX_SEC), toSim = r => r * speed;
-    const flightMs = s.tTotal / speed * 1000 + 600;
+    // 燃えている間は実時間（長すぎるときだけ早める）。燃料が なくなったら 早送り
+    const tb = Math.min(s.tTotal, (s.tBurnEnd || 0) + 0.3), sp1 = Math.max(1, tb / PL.MAX_SEC), r1 = tb / sp1;
+    const coast = s.tTotal - tb, sp2 = coast > 0.5 ? Math.max(PL.FF_MIN, coast / PL.COAST_SEC) : 1;
+    const toSim = r => r < r1 ? r * sp1 : tb + (r - r1) * sp2;
+    const flightMs = (r1 + coast / sp2) * 1000 + 600;
+    let ffOn = false;
     const VK = RL.CFG.SPEED_SCALE * (s.k || 1);
     const stars = Array.from({ length: 140 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.8 + 0.3 }));
     const smoke = []; let t0 = null, sepDone = {}, saidSep = false, saidHeavy = false, sepFlash = 0, saidSpace = false;
@@ -162,6 +166,16 @@ RL.Flight = (function () {
         g.fillStyle = `rgba(235,235,235,${p.l * 0.6})`; g.beginPath(); g.arc(p.x, p.y, (1.3 - p.l) * 18, 0, 7); g.fill(); }
       // メーター
       drawMeters(g, W, H, Math.max(0, vNow) * VK, h, stNow, RL.Builder.state.best, u);
+      // 早送り中の しるし
+      const rNow = (el - pre) / 1000;
+      if (el > pre && sp2 > 1 && rNow >= r1) {
+        if (!ffOn) { ffOn = true; [600, 900, 1200].forEach((f, i) => setTimeout(() => A.tone(f, 0.08, 'triangle', 0.12), i * 70)); RL.emit('fastforward'); }
+        g.save(); g.globalAlpha = 0.65 + 0.35 * Math.sin(el / 120); g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillStyle = 'rgba(0,0,30,.55)'; g.beginPath(); g.arc(W / 2, 70 * u + 40, 46 * u, 0, 7); g.fill();
+        g.fillStyle = '#fff'; g.font = `${52 * u}px sans-serif`; g.fillText('⏩', W / 2, 62 * u + 40);
+        g.font = `bold ${22 * u}px "Courier New",monospace`; g.fillStyle = '#ffd54a'; g.fillText('×' + Math.round(sp2), W / 2, 98 * u + 40);
+        g.restore();
+      }
       if (sepFlash > 0) { g.fillStyle = `rgba(255,255,255,${sepFlash / 60})`; g.fillRect(0, 0, W, H); sepFlash--; }
       if (a.fuel > 0) {
         const gx = 14 * u, gw = 34 * u, gh = 150 * u, gy2 = H - 230 * u - gh;
