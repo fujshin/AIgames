@@ -2,16 +2,16 @@
 html,body{margin:0;height:100%;background:#0b1640;font-family:system-ui,"Hiragino Sans",sans-serif;color:#fff;overflow:hidden}
 button{font:inherit;color:inherit;padding:0}
 #app{display:flex;flex-direction:column;height:100%;max-width:760px;margin:0 auto;padding:8px;gap:8px}
-#palette{display:flex;gap:6px;justify-content:center}
-.pal{flex:1;max-width:110px;aspect-ratio:1;border-radius:16px;border:4px solid transparent;background:#24357a;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 5px 0 #121b45;transition:transform .1s,opacity .2s;min-width:48px}
-.pal svg{width:72%;height:72%;flex:none}
-.pal.sel{border-color:#ffd54a;background:#34489a;transform:translateY(-4px) scale(1.05)}
+#palette{display:flex;gap:5px;justify-content:center}
+.pal{flex:1;max-width:92px;aspect-ratio:1;border-radius:14px;border:3px solid transparent;background:#24357a;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 0 #121b45;transition:transform .1s,opacity .2s;min-width:0}
+.pal svg{width:74%;height:74%;flex:none}
+.pal.sel{border-color:#ffd54a;background:#34489a;transform:translateY(-3px) scale(1.05)}
 .pal.off{opacity:.25;filter:grayscale(1)}
 .pal.hint,.hl{animation:pulse .5s infinite alternate}
 @keyframes pulse{to{transform:scale(1.12);box-shadow:0 0 26px #ffd54a}}
 #mid{flex:1;display:flex;gap:8px;min-height:0}
-#ladder{width:56px;position:relative;background:linear-gradient(#000 0%,#1a0f4a 35%,#3a6fd8 75%,#8fd3ff 100%);border-radius:14px}
+#ladder{width:56px;flex:none;position:relative;background:linear-gradient(#000 0%,#1a0f4a 35%,#3a6fd8 75%,#8fd3ff 100%);border-radius:14px}
 .zone{position:absolute;left:0;right:0;text-align:center;font-size:24px;transform:translateY(50%)}
 .atmo{position:absolute;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,#9fd8ff 0 6px,transparent 6px 10px)}
 .flag{position:absolute;left:-4px;font-size:22px;transform:translateY(50%)}
@@ -21,14 +21,16 @@ button{font:inherit;color:inherit;padding:0}
 .cell{position:relative;outline:1px dashed rgba(255,255,255,.16);outline-offset:-3px;cursor:pointer}
 .cell svg{position:absolute;inset:0;width:100%;height:100%;animation:drop .18s ease-out}
 .cell.hl{outline:4px solid #ffd54a;outline-offset:-4px;border-radius:8px}
+.cell.loose svg{opacity:.35;filter:grayscale(.6)}
+.cell.flash{outline:4px solid #5aff7a;outline-offset:-4px;border-radius:8px}
 @keyframes drop{from{transform:translateY(-35%) scale(.85)}to{transform:none}}
 #pad{width:100%;height:16px;background:repeating-linear-gradient(45deg,#ffcc00 0 14px,#333 14px 28px);border-radius:4px;margin-top:4px}
 #bottom{display:flex;gap:10px;justify-content:center;align-items:center}
-#launch{flex:1;max-width:340px;height:88px;border-radius:44px;border:none;background:linear-gradient(#ff5a5a,#c81e1e);box-shadow:0 8px 0 #7a0d0d;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#launch{flex:1;max-width:340px;height:80px;border-radius:40px;border:none;background:linear-gradient(#ff5a5a,#c81e1e);box-shadow:0 8px 0 #7a0d0d;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #launch svg{height:70%}
 #launch:active{transform:translateY(6px);box-shadow:0 2px 0 #7a0d0d}
 #launch.off{opacity:.3}
-.small{width:64px;height:64px;border-radius:32px;border:none;background:#3a4a8a;box-shadow:0 6px 0 #1d2550;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
+.small{width:60px;height:60px;border-radius:30px;border:none;background:#3a4a8a;box-shadow:0 6px 0 #1d2550;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
 .small svg{width:55%;height:55%}
 .small.off{opacity:.3}
 #fly{position:fixed;inset:0;display:none;background:#000;overflow:hidden}
@@ -37,8 +39,7 @@ button{font:inherit;color:inherit;padding:0}
 #flyRocket .p{position:absolute}
 #flyRocket .p svg{width:100%;height:100%;display:block}
 #flyRocket .flame{position:absolute;display:none;transform-origin:50% 0;animation:flick .08s infinite alternate}
-#flyRocket.burn .flame:not(.bflame){display:block}
-#flyRocket.boost .bflame{display:block;animation-duration:.05s}
+#flyRocket .flame[data-kind="b"]{animation-duration:.05s}
 @keyframes flick{from{transform:scaleY(.8)}to{transform:scaleY(1.15)}}
 #flyRocket .face{transform-origin:50% 50%;animation:wave .5s infinite alternate}
 @keyframes wave{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
@@ -53,9 +54,8 @@ button{font:inherit;color:inherit;padding:0}
 #again{width:180px;height:90px;border-radius:45px;border:none;background:linear-gradient(#5ad66b,#1f9a32);box-shadow:0 8px 0 #0d5a1b;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #again svg{height:65%}
 #ver{position:fixed;right:6px;bottom:2px;font-size:10px;opacity:.35;z-index:20}
-/* チュートリアル */
+/* チュートリアル：ふきだしは 左の はしごの上に たてに おく */
 #tutBubble{pointer-events:none;position:fixed;display:none;flex-direction:column;align-items:center;gap:8px;background:#fff;color:#223;border-radius:20px;padding:8px 6px;box-shadow:0 6px 0 rgba(0,0,0,.25);z-index:10;width:64px;overflow:hidden}
-
 #tutIcon{display:flex;flex-direction:column;gap:4px;align-items:center}
 #tutIcon svg{width:46px;height:46px}
 #tutIcon .em{font-size:36px;line-height:46px}
@@ -64,6 +64,7 @@ button{font:inherit;color:inherit;padding:0}
 #tutBubble.talk #tutEar{animation:pulse .4s infinite alternate}
 #tutHand{position:fixed;display:none;font-size:56px;z-index:11;pointer-events:none;animation:tap .7s infinite;filter:drop-shadow(0 3px 2px rgba(0,0,0,.5))}
 @keyframes tap{0%,100%{transform:translate(-30%,0)}50%{transform:translate(-30%,14px)}}
+body.flying #tutBubble,body.flying #tutHand{display:none!important}
 /* タイトル */
 #title{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;background:radial-gradient(ellipse at bottom,#2c4a9a,#0b1640 70%);z-index:30}
 #titleRocket svg{height:200px}
@@ -72,4 +73,4 @@ button{font:inherit;color:inherit;padding:0}
 #titleBtns svg{width:75%;height:75%}
 #btnTut{background:linear-gradient(#ffd54a,#e8a400)}
 #btnFree{background:linear-gradient(#ff5a5a,#c81e1e)}
-body.flying #tutBubble,body.flying #tutHand{display:none!important}
+@media (max-width:420px){.small{width:52px;height:52px}#launch{height:70px}#ladder{width:46px}.zone{font-size:20px}}

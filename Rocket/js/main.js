@@ -48,12 +48,12 @@
   $('again').addEventListener('click', () => { if (RL.Tutorial.active) return; closeResult(); A.tone(660, 0.08); });
   $('btnFree').addEventListener('click', startFree);
   $('btnTut').addEventListener('click', () => { $('title').style.display = 'none'; RL.Tutorial.start(); });
-  // バージョン表示を3回タップ：見本のロケット
+  // バージョン表示を3回タップ：見本のロケット（2段式）
   let vt = 0; $('ver').addEventListener('click', () => {
     if (++vt < 3) return; vt = 0;
     const R = RL.CFG.ROWS, g = Array.from({ length: R }, () => Array(RL.CFG.COLS).fill(null)), b = R - 1;
-    g[b][2] = 'engine'; for (let r = b - 1; r >= 1; r--) g[r][2] = 'tank'; g[0][2] = 'nose';
-    for (let r = b; r >= b - 3; r--) { g[r][1] = 'booster'; g[r][3] = 'booster'; } g[b][0] = 'fin'; g[b][4] = 'fin';
+    ['engine', 'tank', 'tank', 'tank', 'ring', 'vengine', 'tank', 'nose'].forEach((k, i) => g[b - i][2] = k);
+    for (let r = b; r >= b - 4; r--) { g[r][1] = 'booster'; g[r][3] = 'booster'; } g[b][0] = 'fin'; g[b][4] = 'fin';
     B.setGrid(g);
   });
   B.init();

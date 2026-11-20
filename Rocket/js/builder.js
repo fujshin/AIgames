@@ -23,15 +23,18 @@ RL.Builder = (function () {
     const g = $('grid'), cs = cellSize(), C = RL.CFG.COLS, R = RL.CFG.ROWS;
     g.style.gridTemplateColumns = `repeat(${C},${cs}px)`; g.innerHTML = '';
     const map = {}; RL.layout(grid).forEach(q => map[q.r + ',' + q.c] = q);
+    const SR = RL.stageRows(grid);
     for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
       const d = document.createElement('div'); d.className = 'cell'; d.style.width = d.style.height = cs + 'px';
       d.dataset.r = r; d.dataset.c = c;
+      if (SR.n > 1) d.style.background = RL.CFG.STAGE_COLORS[SR.of(r) % RL.CFG.STAGE_COLORS.length];   // 段ごとの 色の帯
       if (hlCells.some(h => h[0] === r && h[1] === c)) d.classList.add('hl');
-      const q = map[r + ',' + c]; if (q) d.innerHTML = RL.drawPart(q.k, q.ctx);
+      const q = map[r + ',' + c]; if (q) { d.innerHTML = RL.drawPart(q.k, q.ctx); if (q.ctx.loose) d.classList.add('loose'); }
       d.addEventListener('click', () => tap(r, c)); g.appendChild(d);
     }
     RL.emit('rendered');
   }
+  function buzz() { RL.Audio.tone(150, 0.2, 'square', 0.1); }
   // レゴのように下からつむ。タップでけすと上がおちてくる
   function tap(r, c) {
     if (gridLocked) return;
@@ -42,7 +45,17 @@ RL.Builder = (function () {
     } else {
       if (allowed && !allowed.includes(sel)) return;
       let t = -1; for (let i = RL.CFG.ROWS - 1; i >= 0; i--) if (!grid[i][c]) { t = i; break; }
-      if (t < 0) { RL.Audio.tone(150, 0.2, 'square', 0.1); return; }
+      if (t < 0) { buzz(); return; }
+      // ブースターは 胴体の すぐ となりにだけ つけられる
+      if (sel === 'booster') {
+        const B = cc => cc >= 0 && cc < RL.CFG.COLS && RL.BODY[grid[t][cc]];
+        if (!B(c - 1) && !B(c + 1)) {
+          buzz(); const near = document.querySelectorAll(`.cell[data-r="${t}"]`);
+          near.forEach(e => { if (RL.BODY[grid[t][+e.dataset.c]]) { e.classList.add('flash'); setTimeout(() => e.classList.remove('flash'), 900); } });
+          if (!(RL.Tutorial && RL.Tutorial.active)) RL.Audio.say('ブースターは、どうたいの となりに つけてね。');
+          RL.emit('booster-reject'); return;
+        }
+      }
       grid[t][c] = sel; RL.Audio.tone(520 + Math.random() * 200, 0.09, 'triangle'); action = 'place';
     }
     render(); RL.emit('change', { action, grid });
