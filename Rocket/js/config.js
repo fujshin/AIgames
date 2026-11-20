@@ -20,7 +20,7 @@ RL.CFG = {
     TIME_STRETCH: 1.3, DT: 0.02, MAX_T: 120
   },
   PLAY: { MAX_SEC: 30, COAST_SEC: 4, FF_MIN: 3 },   // 燃えている間は実時間。燃料が なくなったら 早送り
-  VOICE_RATE: 1.2,
+  VOICE_RATE: 1.6,
   SPEED_SCALE: 40, SPEED_MAX: 20000,
   ZONES: [
     { h: 0,     icon: '🏠', sky: '#8fd3ff' },
