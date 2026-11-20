@@ -1,7 +1,7 @@
 // 全体設定。数値の調整はここだけで行う
 window.RL = window.RL || {};
 RL.CFG = {
-  COLS: 5, ROWS: 7, VERSION: 'v0.6',
+  COLS: 5, ROWS: 7, VERSION: 'v0.6.1',
   PHYS: {
     G: 10,
     THRUST: 188,      // エンジン1つの力
@@ -12,7 +12,8 @@ RL.CFG = {
     TILT_NOFIN: 0.5, TILT_ASYM: 0.5, TILT_GROW: 0.15,
     ATMO_H: 300,      // くうきの おわり。ここまで だんだん うすくなり、上は くうきなし
     // 固体ロケットブースター（縦につながった1本ごと）
-    BOOST_THRUST: 130, BOOST_FUEL: 0.7, BOOST_BURN: 0.45, BOOST_DRAG: 0.4,
+    BOOST_THRUST: 110, BOOST_FUEL: 0.7, BOOST_BURN: 0.45, BOOST_DRAG: 0.15,
+    BOOST_SEG_POW: 0.5, // 長いブースターほど 力が強く、長く もえる（力も燃える時間も √長さ 倍）
     TIME_STRETCH: 1.3, // 全体をゆっくりにする（高さは変わらない）
     DT: 0.02, MAX_T: 60
   },

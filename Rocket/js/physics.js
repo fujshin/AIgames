@@ -39,7 +39,7 @@ RL.simulate = function (a) {
   const P = RL.CFG.PHYS, n = a.n, k = P.TIME_STRETCH || 1, k2 = k * k, G = P.G / k2, DT = P.DT;
   if (!n.engine && !a.stacks.length) return { lift: false, h: 0, reason: 'noEngine', samples: [] };
   const cdBase = P.DRAG * Math.max(1, a.cols) * (1 - (1 - P.NOSE_DRAG) * a.noseCover);
-  const Tc = P.THRUST * n.engine / k2, Tb1 = P.BOOST_THRUST / k2;
+  const Tc = P.THRUST * n.engine / k2, TbOf = seg => P.BOOST_THRUST * Math.pow(seg, P.BOOST_SEG_POW || 0) / k2;
   const st = a.stacks.map(s => ({ id: s.id, c: s.c, r0: s.r0, r1: s.r1, seg: s.seg, fins: s.fins, fuel: s.seg * P.BOOST_FUEL, sepT: null, sepH: null }));
   let fuel = a.fuel, dry = a.dry;
   const mass = () => dry + fuel + st.reduce((z, s) => z + (s.sepT === null ? s.fuel : 0), 0);
@@ -48,8 +48,8 @@ RL.simulate = function (a) {
     f.n = f.L + f.R + f.M; return f; };
   const tiltTarget = f => (f.n === 0 ? P.TILT_NOFIN : 0.08 * Math.abs(f.L - f.R) / f.n) + Math.min(0.4, a.asym * P.TILT_ASYM / (1 + f.n));
   let tilt = tiltTarget(finsNow());
-  const twr0 = (Tc + Tb1 * st.length) * Math.cos(tilt) / (mass() * G);
-  if (twr0 <= 1) return { lift: false, h: 0, reason: 'heavy', twr0, samples: [] };
+  const twr0 = (Tc + st.reduce((z, s) => z + TbOf(s.seg), 0)) * Math.cos(tilt) / (mass() * G);
+  let liftT = null;   // じめんを はなれた時間（重すぎるときは 燃料がへって かるくなるまで まつ）
 
   let v = 0, h = 0, x = 0, t = 0, tBurnEnd = 0, vMax = 0, tAtmo = null;
   const samples = [];
@@ -61,22 +61,24 @@ RL.simulate = function (a) {
     let thrustB = 0, boost = false;
     st.forEach(s => {
       if (s.sepT !== null) return;
-      if (s.fuel > 0) { s.fuel = Math.max(0, s.fuel - P.BOOST_BURN / k * DT); thrustB += Tb1; boost = true; }
+      if (s.fuel > 0) { s.fuel = Math.max(0, s.fuel - P.BOOST_BURN * Math.pow(s.seg, P.BOOST_SEG_POW || 0) / k * DT); thrustB += TbOf(s.seg); boost = true; }
       if (s.fuel <= 0) { s.sepT = t; s.sepH = h; dry -= s.seg * P.MASS.booster + s.fins.length * P.MASS.fin; }
     });
     if (burnC || boost) tBurnEnd = t;
     const m = Math.max(0.1, mass()), f = finsNow(), dir = Math.sign(f.L - f.R) || 1;
-    tilt = Math.min(1.2, tilt + tiltTarget(f) * P.TILT_GROW / k * rho * DT);   // ぐらぐらが ふえるのは くうきの中だけ
+    if (h > 0) tilt = Math.min(1.2, tilt + tiltTarget(f) * P.TILT_GROW / k * rho * DT);   // ぐらぐらが ふえるのは とんでいて くうきの中だけ
     const cdNow = (cdBase + P.DRAG * P.BOOST_DRAG * st.filter(s => s.sepT === null).length) * rho;
-    const acc = ((burnC ? Tc : 0) + thrustB) * Math.cos(tilt) / m - G - cdNow * v * Math.abs(v) / m;
+    const thrust = (burnC ? Tc : 0) + thrustB;
+    let acc = thrust * Math.cos(tilt) / m - G - cdNow * v * Math.abs(v) / m;
+    if (h <= 0 && v <= 0 && acc < 0) acc = 0;            // じめんの上では しずまない
     v += acc * DT; h += v * DT; t += DT; vMax = Math.max(vMax, v);
+    if (h <= 0 && v <= 0) { h = 0; v = 0; } else if (liftT === null) liftT = t;
     x += Math.sin(tilt) * dir * Math.max(0, v) * DT * 0.3;
-    samples.push({ t, h: Math.max(0, h), v, acc, rho, burn: burnC, boost, fuel: a.fuel ? fuel / a.fuel : 0, tilt: tilt * dir, x });
+    samples.push({ t, h: Math.max(0, h), v, acc, rho, burn: burnC, boost, thrust: thrust * k2, weight: m * G * k2, fuel: a.fuel ? fuel / a.fuel : 0, tilt: tilt * dir, x });
     if (!burnC && !boost && v <= 0) break;
-    if (h < 0) { h = 0; break; }
   }
   const top = Math.max(0, ...samples.map(s => s.h));
-  return { lift: top >= 5, h: top, twr0, tBurnEnd, tTotal: t, tAtmo, vMax, k, samples,
+  return { lift: top >= 5, h: top, reason: top >= 5 ? null : 'heavy', liftT, twr0, tBurnEnd, tTotal: t, tAtmo, vMax, k, samples,
     seps: st.map(s => ({ id: s.id, c: s.c, r0: s.r0, r1: s.r1, t: s.sepT, h: s.sepH })) };
 };
 
