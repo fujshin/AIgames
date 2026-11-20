@@ -40,7 +40,7 @@ RL.Tutorial = (function () {
     { say: ['はっしゃ してみよう！'], icon: ['engine', 'tank'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
       after: () => ['さっきより たかく とんだね！ ねんりょうが あると、エンジンが ながく もえるんだ。', 'でも ロケットが かたむいて、ぐらぐら してたの、きづいた？'] },
     { say: ['きいろい はねを、エンジンの りょうがわに つけよう。', 'はねが あると、くうきの なかで まっすぐ とべるよ。'],
-      icon: ['fin', 'engine', 'fin'], allow: ['fin'], deselect: true, hl: { cell: [6, 1] }, wait: { type: 'grid', test: a => a.coreFin.L >= 1 && a.coreFin.R >= 1 } },
+      icon: ['fin', 'engine', 'fin'], allow: ['fin'], deselect: true, hl: { cols: [1, 3] }, wait: { type: 'grid', test: a => a.coreFin.L >= 1 && a.coreFin.R >= 1 } },
     { say: ['はっしゃ！'], icon: ['fin', 'engine', 'fin'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
       after: s => [s.h > (last(2) ? last(2).h : 0) ? 'まっすぐ とんで、もっと たかく なったね！' : 'まっすぐ とんだね！'] },
     { say: ['さいごは、あかい さきっぽ。 いちばん うえに のせてね。', 'とがっていると、くうきを きりさいて、はやく とべるよ。'],
@@ -58,7 +58,7 @@ RL.Tutorial = (function () {
     { say: ['はっしゃ！ でだしを よく みてね。'], icon: ['🐢'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
       after: s => ['でだしが、とっても ゆっくり だったね。', s.h > (last(2) ? last(2).h : 0) * 1.15 ? 'たかくは なったけど、ねんりょうが おおいほど、ロケットは おもく なるんだ。' : 'あまり たかく ならなかったね。 ねんりょうが おおいと、そのぶん おもく なるんだ。'] },
     { say: ['もっと つんじゃおう！ はねの うえに、タンクを ひとつずつ おいてね。 りょうがわ だよ。'],
-      icon: ['tank', 'tank'], allow: ['tank'], deselect: true, hl: { cell: [5, 1] }, wait: { type: 'grid', test: a => a.n.tank >= 8 } },
+      icon: ['tank', 'tank'], allow: ['tank'], deselect: true, hl: { cols: [1, 3] }, wait: { type: 'grid', test: a => a.n.tank >= 8 } },
     { say: ['はっしゃ！ オレンジの やじるしと、あおい やじるしを みててね。'], icon: ['🏋️'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
       after: s => ['オレンジは エンジンが おす ちから。 あおは ロケットの おもさ だよ。',
         s.lift ? 'さいしょは あおの ほうが ながくて、うごけなかったね。 ねんりょうが もえて かるく なったら、やっと とびはじめた！' : 'あおの ほうが ずっと ながくて、さいごまで うごけなかった！',
@@ -72,14 +72,14 @@ RL.Tutorial = (function () {
     // ---- 4 ブースターと だん
     { say: ['こんどは、しろくて ほそい ブースター。', 'つよい ちからで いっきに もえる、とくべつな ロケットだよ。 ながく つむほど、つよく、ながく もえるよ。', 'はねの うえに、ブースターを ふたつずつ つもう。 りょうがわ だよ。'],
       icon: ['booster', 'booster'], preset: [[], ['fin'], ['engine', ...T(5), 'nose'], ['fin'], []], allow: ['booster'], deselect: true,
-      hl: { cell: [5, 1] }, wait: { type: 'grid', test: a => a.stacks.length >= 2 && a.stacks.every(s => s.seg >= 2) } },
+      hl: { cols: [1, 3] }, wait: { type: 'grid', test: a => a.stacks.length >= 2 && a.stacks.every(s => s.seg >= 2) } },
     { say: ['はっしゃ！ ブースターが どうなるか、みててね。'], icon: ['booster', '👀'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
       after: () => ['ブースターは もえつきると、かってに はずれたね！ オレンジの やじるしが みじかく なって、あおい やじるしも みじかく なったよ。', 'からっぽの いれものを すてると、かるく なって、もっと たかく いけるんだ。', 'これが、ロケットを だんに わける ひみつ だよ。'] },
     { say: ['ところで、はねは くうきの なかで まっすぐ とぶための もの。', 'てんせんの うえは、くうきの ない うちゅう。 うちゅうでは、はねは ただの おもりに なっちゃうんだ。'],
       icon: ['fin', '🌌', '🪨'], allow: [], wait: { type: 'speech' } },
     { say: ['それなら、はねを ブースターに つけて、いっしょに すてちゃおう！', 'ブースターを ながく したよ。 そとがわに はねを つけてね。'],
       icon: ['fin', 'booster'], preset: [[], BS(4), ['engine', ...T(5), 'nose'], BS(4), []], allow: ['fin'], deselect: true,
-      hl: { cell: [6, 0] }, wait: { type: 'grid', test: a => a.boosterFins >= 2 && a.stacks.every(s => s.fins.length >= 1) } },
+      hl: { cols: [0, 4] }, wait: { type: 'grid', test: a => a.boosterFins >= 2 && a.stacks.every(s => s.fins.length >= 1) } },
     { say: ['はっしゃ！ くうきが なくなる ころに、はねも いっしょに はずれるよ。'], icon: ['fin', '👋'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
       after: s => [s.h > (last(2) ? last(2).h : 0) ? 'いらなく なった はねも すてたら、さっきより たかく とべたね！' : 'はねも いっしょに すてられたね！'] },
     // ---- おわり
@@ -92,9 +92,24 @@ RL.Tutorial = (function () {
   function toGrid(cols) { const R = RL.CFG.ROWS, g = Array.from({ length: R }, () => Array(RL.CFG.COLS).fill(null)); cols.forEach((s, c) => s.forEach((k, j) => g[R - 1 - j][c] = k)); return g; }
   function iconHTML(list) { return (list || []).map(k => RL.PART_ORDER.includes(k) ? RL.paletteIcon(k) : `<span class="em">${k}</span>`).join(''); }
 
+  function placeBubble() {
+    const l = document.getElementById('ladder').getBoundingClientRect(), bb = $('tutBubble');
+    bb.style.left = (l.left + 2) + 'px'; bb.style.top = (l.top + 4) + 'px'; bb.style.maxHeight = (l.height - 8) + 'px';
+  }
   function clearHL() { document.querySelectorAll('.hl').forEach(e => { if (!e.classList.contains('cell')) e.classList.remove('hl'); }); $('tutHand').style.display = 'none'; }
+  function colCells() {
+    const g = B().grid, R = RL.CFG.ROWS, part = (step.allow || [])[0];
+    return step.hl.cols.map(c => { let r = -1; for (let i = R - 1; i >= 0; i--) if (!g[i][c]) { r = i; break; }
+      return { c, r, n: g.reduce((z, row) => z + (row[c] === part ? 1 : 0), 0) }; }).filter(x => x.r >= 0);
+  }
+  function updateHL() {
+    if (!step || !step.hl) { B().highlightCell(null); return; }
+    if (step.hl.cols) B().highlightCell(met ? null : colCells().map(x => [x.r, x.c]));
+    else B().highlightCell(step.hl.cell && !met ? step.hl.cell : null);
+  }
   function target() {
     const h = step && step.hl; if (!h) return null;
+    if (h.cols) { const cs = colCells(); if (!cs.length) return null; const m = cs.reduce((a, b) => b.n < a.n ? b : a); return document.querySelector(`.cell[data-r="${m.r}"][data-c="${m.c}"]`); }
     if (h.pal) return document.querySelector(`.pal[data-k="${h.pal}"]`);
     if (h.cell) return document.querySelector(`.cell[data-r="${h.cell[0]}"][data-c="${h.cell[1]}"]`);
     if (h.el) return $(h.el);
@@ -119,10 +134,10 @@ RL.Tutorial = (function () {
     if (step.preset) B().setGrid(toGrid(step.preset));
     B().setAllowed(step.allow || []); if (step.deselect) B().select(null);
     B().lockGrid(!(step.allow && step.allow.length));
-    B().highlightCell(step.hl && step.hl.cell ? step.hl.cell : null);
+    updateHL();
     canLaunch = ['result', 'launchFail'].includes(step.wait.type); canClear = step.wait.type === 'clear';
     $('launch').classList.toggle('off', !canLaunch); $('clear').classList.toggle('off', !canClear);
-    $('tutIcon').innerHTML = iconHTML(step.icon); $('tutBubble').style.display = 'flex';
+    $('tutIcon').innerHTML = iconHTML(step.icon); $('tutBubble').style.display = 'flex'; placeBubble();
     setTimeout(placeHand, 50);
     if (step.wait.type === 'grid' && step.wait.test(an())) met = true;   // はじめから できていたら
     talk(step.say, afterSpeech);
@@ -131,7 +146,8 @@ RL.Tutorial = (function () {
   function complete(data) {
     if (!active || met) return;
     met = true; metData = data; canLaunch = false; $('launch').classList.add('off'); placeHand();
-    B().highlightCell(null);
+    if (['result', 'launchFail'].includes(step.wait.type)) { spoken = true; token++; $('tutBubble').classList.remove('talk'); }
+    updateHL();
     if (step.wait.type === 'result') results.push(data);
     proceed();
   }
@@ -148,14 +164,14 @@ RL.Tutorial = (function () {
   RL.on('select', k => { if (step && step.wait.type === 'select' && k === step.wait.part) complete(); });
   RL.on('change', d => {
     if (!step) return;
-    if (step.wait.type === 'grid' && step.wait.test(an())) complete();
+    if (step.wait.type === 'grid') { if (step.wait.test(an())) complete(); else updateHL(); }
     if (step.wait.type === 'remove' && d.action === 'remove') complete();
     if (step.wait.type === 'clear' && d.action === 'clear') complete();
   });
   RL.on('launch-fail', r => { if (step && step.wait.type === 'launchFail') complete(r); });
   RL.on('result', s => { if (step && step.wait.type === 'result') complete(s); });
   RL.on('rendered', () => setTimeout(placeHand, 0));
-  addEventListener('resize', () => setTimeout(placeHand, 50));
+  addEventListener('resize', () => setTimeout(() => { placeHand(); if (active) placeBubble(); }, 50));
   // みみボタン：話しなおしても、おわったら ふつうと同じように 次へ すすむ
   document.getElementById('tutEar').addEventListener('click', () => { if (active && step && !(met && spoken)) talk(step.say, afterSpeech); });
 

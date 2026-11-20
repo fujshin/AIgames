@@ -22,11 +22,11 @@ RL.Audio = (function () {
   let talkId = 0;
   function say(t, cb, opt = {}) {
     const id = ++talkId, done = () => { if (id === talkId && cb) { const f = cb; cb = null; f(); } };
-    const est = 900 + t.length * 170;           // 声が使えないときの目安時間
+    const est = (900 + t.length * 170) / RL.CFG.VOICE_RATE;           // 声が使えないときの目安時間
     if (muted || !window.speechSynthesis) { setTimeout(done, muted ? est * 0.6 : est); return; }
     try {
       if (opt.interrupt !== false) speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(t); u.lang = 'ja-JP'; u.rate = opt.rate || 0.95; u.pitch = 1.15;
+      const u = new SpeechSynthesisUtterance(t); u.lang = 'ja-JP'; u.rate = opt.rate || RL.CFG.VOICE_RATE; u.pitch = 1.15;
       if (jaVoice) u.voice = jaVoice;
       u.onend = done; u.onerror = done; speechSynthesis.speak(u);
       setTimeout(done, est * 2.5);              // 終わりが来ないブラウザ対策

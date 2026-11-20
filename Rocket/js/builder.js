@@ -1,7 +1,7 @@
 // くみたて画面
 RL.Builder = (function () {
   const $ = id => document.getElementById(id);
-  let grid, sel = 'engine', allowed = null, gridLocked = false, hlCell = null;
+  let grid, sel = 'engine', allowed = null, gridLocked = false, hlCells = [];
   const S = { best: 0, last: null };
   const empty = () => Array.from({ length: RL.CFG.ROWS }, () => Array(RL.CFG.COLS).fill(null));
 
@@ -26,7 +26,7 @@ RL.Builder = (function () {
     for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
       const d = document.createElement('div'); d.className = 'cell'; d.style.width = d.style.height = cs + 'px';
       d.dataset.r = r; d.dataset.c = c;
-      if (hlCell && hlCell[0] === r && hlCell[1] === c) d.classList.add('hl');
+      if (hlCells.some(h => h[0] === r && h[1] === c)) d.classList.add('hl');
       const q = map[r + ',' + c]; if (q) d.innerHTML = RL.drawPart(q.k, q.ctx);
       d.addEventListener('click', () => tap(r, c)); g.appendChild(d);
     }
@@ -66,7 +66,7 @@ RL.Builder = (function () {
     setAllowed(list) { allowed = list; if (allowed && !allowed.includes(sel)) sel = allowed[0]; palette(); },
     select(k) { sel = k; palette(); },
     lockGrid(b) { gridLocked = b; },
-    highlightCell(rc) { hlCell = rc; render(); },
+    highlightCell(rc) { hlCells = !rc ? [] : Array.isArray(rc[0]) ? rc : [rc]; render(); },
     resetRecords() { S.best = 0; S.last = null; ladder(); }
   };
 })();
