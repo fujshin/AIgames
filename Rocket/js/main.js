@@ -22,7 +22,7 @@
   }
   function result(s) {
     const S = B.state, z = RL.zoneOf(s.h), Z = RL.CFG.ZONES, newBest = s.lift && s.h > S.best;
-    $('resIcon').textContent = s.lift ? Z[z].icon : (s.reason === 'heavy' ? '🏋️' : '😅');
+    $('resIcon').innerHTML = s.lift ? RL.zoneHTML(z, 'big') : (s.reason === 'heavy' ? '🏋️' : '😅');
     $('resStars').textContent = s.lift ? '⭐'.repeat(z) + (newBest && S.best > 0 ? ' 🏆' : '') : '💨';
     $('resInfo').innerHTML = s.lift ? `<span class="h">⬆${Math.round(s.h)}</span><span>🚀${Math.round(s.shownVmax || 0)}</span>` : '';
     if (s.lift) {

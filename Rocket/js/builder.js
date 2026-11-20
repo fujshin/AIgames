@@ -64,7 +64,7 @@ RL.Builder = (function () {
     const l = $('ladder'); l.innerHTML = '';
     const pos = h => (RL.hPos(h) * 92 + 3) + '%';
     const at = document.createElement('div'); at.className = 'atmo'; at.style.bottom = pos(RL.CFG.PHYS.ATMO_H); l.appendChild(at);
-    RL.CFG.ZONES.forEach(z => { const d = document.createElement('div'); d.className = 'zone'; d.style.bottom = pos(z.h); d.textContent = z.icon; l.appendChild(d); });
+    RL.CFG.ZONES.forEach((z, i) => { const d = document.createElement('div'); d.className = 'zone'; d.style.bottom = pos(z.h); d.innerHTML = RL.zoneHTML(i); l.appendChild(d); });
     if (S.last !== null) { const f = document.createElement('div'); f.className = 'flag'; f.textContent = '🚩'; f.style.bottom = pos(S.last); l.appendChild(f); }
     if (S.best > 0) { const f = document.createElement('div'); f.className = 'flag best'; f.textContent = '🏆'; f.style.bottom = pos(S.best); l.appendChild(f); }
   }

@@ -63,7 +63,8 @@ RL.Flight = (function () {
     g.textBaseline = 'alphabetic'; g.textAlign = 'center';
     g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(mx - 4, top, 8, bot - top);
     g.strokeStyle = '#9fd8ff'; g.lineWidth = 2; g.setLineDash([4, 3]); g.beginPath(); g.moveTo(mx - 14, yOf(RL.CFG.PHYS.ATMO_H)); g.lineTo(mx + 14, yOf(RL.CFG.PHYS.ATMO_H)); g.stroke(); g.setLineDash([]);
-    g.font = `${20 * u}px sans-serif`; g.fillStyle = '#fff'; RL.CFG.ZONES.forEach(z => g.fillText(z.icon, mx - 20 * u, yOf(z.h) + 7 * u));
+    g.font = `${20 * u}px sans-serif`; g.fillStyle = '#fff';
+    RL.CFG.ZONES.forEach((z, i) => { const y = yOf(z.h), s = 26 * u; if (RL.zoneReady(i)) g.drawImage(RL.zoneImg[i], mx - 20 * u - s / 2, y - s / 2, s, s); else g.fillText(z.icon, mx - 20 * u, y + 7 * u); });
     g.font = `${26 * u}px sans-serif`; g.fillText('🚀', mx, yOf(h) + 9 * u);
     if (best) g.fillText('🏆', mx + 2, yOf(best) + 9 * u);
     g.restore();
@@ -131,7 +132,8 @@ RL.Flight = (function () {
       if (ay > -10 && ay < H + 10) { g.strokeStyle = 'rgba(160,220,255,.8)'; g.lineWidth = 4; g.setLineDash([16, 12]); g.beginPath(); g.moveTo(0, ay); g.lineTo(W, ay); g.stroke(); g.setLineDash([]); }
       if (!saidSpace && s.tAtmo != null && stNow >= s.tAtmo) { saidSpace = true; [784, 1175].forEach((f, i) => setTimeout(() => A.tone(f, 0.3, 'sine', 0.15), i * 150)); RL.emit('space'); }
       g.textAlign = 'center'; g.font = `${54 * u}px sans-serif`;
-      RL.CFG.ZONES.forEach((z, i) => { if (!z.h) return; const y = gy - Y(z.h); if (y > -60 && y < H + 60) g.fillText(z.icon, W * (i % 2 ? 0.2 : 0.78), y); });
+      RL.CFG.ZONES.forEach((z, i) => { if (!z.h) return; const y = gy - Y(z.h), x = W * (i % 2 ? 0.2 : 0.78), s = 110 * u;   // 場所の絵
+        if (y > -s && y < H + s) { if (RL.zoneReady(i)) g.drawImage(RL.zoneImg[i], x - s / 2, y - s / 2, s, s); else g.fillText(z.icon, x, y); } });
       if (gy < H + 50) { g.fillStyle = '#3c8f3c'; g.fillRect(0, gy, W, H); g.fillStyle = '#ffcc00'; g.fillRect(W / 2 - RW / 2 - 20, gy - 10, RW + 40, 10); }
       // ロケット
       const ry = startY - Math.min(Y(h), room);

@@ -2,13 +2,11 @@
 // 1ステップ ＝ { say:[話すこと], icon:[絵], preset:列の配置（左から、下→上）, allow:[使える部品],
 //               hl:どこを光らせるか（pal / cell:[行,列] / cols:{列:その列に ほしい数}（つぎに おく マスを ずっと光らせる）/ el:ボタンのid）,
 //               wait:{type, ...}, after:(結果)=>[話すこと] }
-// cols のとき：えらんだ部品が ちがえば パレットを指し、えらんでいれば つぎに おく マスを指す。
-//              数が たりた列は 光らせない（はねを1つ置いても、同じ列の 1つ上に ガイドが にげない）
 // wait.type: speech / select / grid（test が みたされたら）/ remove / clear / launchFail / result
 RL.Tutorial = (function () {
   const $ = id => document.getElementById(id), A = RL.Audio, B = () => RL.Builder;
   const T = n => Array(n).fill('tank'), BS = n => Array(n).fill('booster');
-  const RB = RL.CFG.ROWS - 1;
+  const RB = RL.CFG.ROWS - 1;                     // いちばん下の行
   const an = () => RL.analyze(B().grid);
   const inStage = (a, i, k) => a.cells.filter(q => q.k === k && q.stage === i && !q.ctx.loose).length;
   let results = [];
@@ -51,7 +49,7 @@ RL.Tutorial = (function () {
       icon: ['nose'], allow: ['nose'], deselect: true, hl: { cols: { 2: 1 } }, wait: { type: 'grid', test: a => a.noseCover > 0 } },
     { say: ['はっしゃ！'], icon: ['nose', 'tank', 'engine'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
       after: s => [s.h >= RL.CFG.PHYS.ATMO_H ? 'すごい！ てんせんを こえて、うちゅうに でたよ！' : 'もうすこしで うちゅう だね！', 'これで、りっぱな ロケットの かんせいだ！'] },
-    // ---- 3 ねんりょうを ふやす（数ではなく、ひかる マスで つむ ばしょを ずっと しめす）
+    // ---- 3 ねんりょうを ふやす
     { say: ['つぎは、ねんりょうを ふやすと どうなるか、しらべよう。', 'ひかっている ところに、タンクを つんでいこう。 ひかりが きえるまで だよ。'],
       icon: ['tank', 'tank', 'tank'], preset: [[], ['fin'], ['engine', 'tank'], ['fin'], []], allow: ['tank'], deselect: true, hl: { cols: { 2: 3 } },
       wait: { type: 'grid', test: a => a.n.tank >= 3 } },
@@ -116,7 +114,7 @@ RL.Tutorial = (function () {
   function toGrid(cols) { const R = RL.CFG.ROWS, g = Array.from({ length: R }, () => Array(RL.CFG.COLS).fill(null)); cols.forEach((s, c) => s.forEach((k, j) => g[R - 1 - j][c] = k)); return g; }
   function iconHTML(list) { return (list || []).map(k => RL.PART_ORDER.includes(k) ? RL.paletteIcon(k) : `<span class="em">${k}</span>`).join(''); }
 
-  // つぎに おく マス：数が たりていない 列の、いちばん下の あき
+  // つぎに おく マス：数が たりていない 列の、いちばん下の あき（たりた列は 光らせない＝ガイドが 上へ にげない）
   function colCells() {
     const g = B().grid, R = RL.CFG.ROWS, part = (step.allow || [])[0], want = step.hl.cols, out = [];
     Object.keys(want).forEach(k => {
@@ -130,7 +128,7 @@ RL.Tutorial = (function () {
   const needPal = () => step && step.hl && step.hl.cols && (step.allow || [])[0] && B().selected !== step.allow[0];
   function updateHL() {
     if (!step || !step.hl || met) { B().highlightCell(null); return; }
-    if (step.hl.cols) B().highlightCell(colCells().map(x => [x.r, x.c]));   // えらぶ前から つむ ばしょは ずっと 光らせる
+    if (step.hl.cols) B().highlightCell(colCells().map(x => [x.r, x.c]));   // えらぶ前から つむ ばしょを ずっと 光らせる
     else B().highlightCell(step.hl.cell || null);
   }
   function placeBubble() {
@@ -142,8 +140,7 @@ RL.Tutorial = (function () {
     const h = step && step.hl; if (!h) return null;
     if (h.cols) {
       if (needPal()) return document.querySelector(`.pal[data-k="${step.allow[0]}"]`);   // まず 部品を えらばせる
-      const cs = colCells(); if (!cs.length) return null;
-      const m = cs.reduce((a, b) => b.have < a.have ? b : a);
+      const cs = colCells(); if (!cs.length) return null; const m = cs.reduce((a, b) => b.have < a.have ? b : a);
       return document.querySelector(`.cell[data-r="${m.r}"][data-c="${m.c}"]`);
     }
     if (h.pal) return document.querySelector(`.pal[data-k="${h.pal}"]`);
@@ -182,6 +179,7 @@ RL.Tutorial = (function () {
   function complete(data) {
     if (!active || met) return;
     met = true; metData = data; canLaunch = false; $('launch').classList.add('off'); placeHand();
+    // 発射の声が 説明を とめるので、発射した時点で「話しおわった」とみなす
     if (['result', 'launchFail'].includes(step.wait.type)) { spoken = true; token++; $('tutBubble').classList.remove('talk'); }
     updateHL();
     if (step.wait.type === 'result') results.push(data);
@@ -207,6 +205,7 @@ RL.Tutorial = (function () {
   RL.on('result', s => { if (step && step.wait.type === 'result') complete(s); });
   RL.on('rendered', () => setTimeout(placeHand, 0));
   addEventListener('resize', () => setTimeout(() => { placeHand(); if (active) placeBubble(); }, 50));
+  // みみボタン：話しなおしても、おわったら 次へ すすむ
   $('tutEar').addEventListener('click', () => { if (active && step && !(met && spoken)) talk(step.say, afterSpeech); });
 
   function start() { active = true; results = []; B().resetRecords(); go(0); }

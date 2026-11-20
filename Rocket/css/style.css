@@ -13,6 +13,8 @@ button{font:inherit;color:inherit;padding:0}
 #mid{flex:1;display:flex;gap:8px;min-height:0}
 #ladder{width:56px;flex:none;position:relative;background:linear-gradient(#000 0%,#1a0f4a 35%,#3a6fd8 75%,#8fd3ff 100%);border-radius:14px}
 .zone{position:absolute;left:0;right:0;text-align:center;font-size:24px;transform:translateY(50%)}
+.zone .zimg{width:84%;height:auto;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+#resIcon .zimg.big{width:170px;height:170px;object-fit:contain}
 .atmo{position:absolute;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,#9fd8ff 0 6px,transparent 6px 10px)}
 .flag{position:absolute;left:-4px;font-size:22px;transform:translateY(50%)}
 .flag.best{left:auto;right:-6px}
