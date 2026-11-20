@@ -18,7 +18,7 @@ RL.CFG = {
     DT: 0.02, MAX_T: 60
   },
   PLAY: { MAX_SEC: 30, COAST_SEC: 4, FF_MIN: 3 },   // 燃えている間は実時間。燃料が なくなったら 早送り（のこりを約4秒・最低3倍）
-  VOICE_RATE: 1.70,   // 声の はやさ（1＝ふつう）
+  VOICE_RATE: 1.50,   // 声の はやさ（1＝ふつう）
   SPEED_SCALE: 40, SPEED_MAX: 12000,
   // 高さの目印（上ほど間かくが広い）。🌌 は くうきの おわり（ATMO_H）と同じ高さ
   ZONES: [
