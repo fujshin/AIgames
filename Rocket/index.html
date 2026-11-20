@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ロケット ラボ</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <div id="palette"></div>
+  <div id="mid">
+    <div id="ladder"></div>
+    <div id="stage"><div id="grid"></div><div id="pad"></div></div>
+  </div>
+  <div id="bottom">
+    <button class="small" id="clear" aria-label="ぜんぶけす"></button>
+    <button id="launch" aria-label="はっしゃ"></button>
+    <button class="small" id="mute" aria-label="おと"></button>
+  </div>
+</div>
+<div id="fly"><canvas id="cv"></canvas><div id="flyRocket"></div><div id="count"></div></div>
+<div id="result"><div id="resIcon"></div><div id="resStars"></div><div id="resInfo"></div><button id="again" aria-label="もういっかい"></button></div>
+<div id="ver">Rocket Lab v0.5</div>
+<!-- 読み込み順に意味がある（RL という1つの入れ物に順番に足していく） -->
+<script src="js/config.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/parts.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/builder.js"></script>
+<script src="js/flight.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

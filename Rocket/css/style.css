@@ -1,0 +1,54 @@
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#0b1640;font-family:system-ui,"Hiragino Sans",sans-serif;color:#fff;overflow:hidden}
+button{font:inherit;color:inherit;padding:0}
+#app{display:flex;flex-direction:column;height:100%;max-width:760px;margin:0 auto;padding:8px;gap:8px}
+#palette{display:flex;gap:8px;justify-content:center}
+.pal{flex:1;max-width:120px;aspect-ratio:1;border-radius:18px;border:4px solid transparent;background:#24357a;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 5px 0 #121b45;transition:transform .1s;min-width:56px}
+.pal svg{width:72%;height:72%;flex:none}
+.pal.sel{border-color:#ffd54a;background:#34489a;transform:translateY(-4px) scale(1.05)}
+.pal.hint{animation:pulse .5s infinite alternate}
+@keyframes pulse{to{transform:scale(1.15);box-shadow:0 0 26px #ffd54a}}
+#mid{flex:1;display:flex;gap:8px;min-height:0}
+#ladder{width:56px;position:relative;background:linear-gradient(#000 0%,#1a0f4a 35%,#3a6fd8 75%,#8fd3ff 100%);border-radius:14px}
+.zone{position:absolute;left:0;right:0;text-align:center;font-size:24px;transform:translateY(50%)}
+.flag{position:absolute;left:-4px;font-size:22px;transform:translateY(50%)}
+.flag.best{left:auto;right:-6px}
+#stage{flex:1;position:relative;background:radial-gradient(ellipse at bottom,#2c4a9a,#0b1640 70%);border-radius:18px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:8px}
+#grid{display:grid;gap:0}
+.cell{position:relative;outline:1px dashed rgba(255,255,255,.16);outline-offset:-3px;cursor:pointer}
+.cell svg{position:absolute;inset:0;width:100%;height:100%;animation:drop .18s ease-out}
+@keyframes drop{from{transform:translateY(-35%) scale(.85)}to{transform:none}}
+#pad{width:100%;height:16px;background:repeating-linear-gradient(45deg,#ffcc00 0 14px,#333 14px 28px);border-radius:4px;margin-top:4px}
+#bottom{display:flex;gap:10px;justify-content:center;align-items:center}
+#launch{flex:1;max-width:360px;height:88px;border-radius:44px;border:none;background:linear-gradient(#ff5a5a,#c81e1e);box-shadow:0 8px 0 #7a0d0d;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#launch svg{height:70%}
+#launch:active{transform:translateY(6px);box-shadow:0 2px 0 #7a0d0d}
+.small{width:72px;height:72px;border-radius:36px;border:none;background:#3a4a8a;box-shadow:0 6px 0 #1d2550;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.small svg{width:55%;height:55%}
+#fly{position:fixed;inset:0;display:none;background:#000;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%}
+#flyRocket{position:absolute;left:0;top:0;will-change:transform}
+#flyRocket .p{position:absolute}
+#flyRocket .p svg{width:100%;height:100%;display:block}
+#flyRocket .flame{position:absolute;display:none;transform-origin:50% 0;animation:flick .08s infinite alternate}
+#flyRocket.burn .flame{display:block}
+@keyframes flick{from{transform:scaleY(.8)}to{transform:scaleY(1.15)}}
+#flyRocket .face{transform-origin:50% 50%;animation:wave .5s infinite alternate}
+@keyframes wave{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
+#count{position:absolute;left:0;right:0;top:22%;text-align:center;font-size:130px;font-weight:900;text-shadow:0 4px 0 rgba(0,0,0,.3)}
+#result{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(0,0,30,.78)}
+#resIcon{font-size:120px;animation:pop .5s}
+#resStars{font-size:44px;letter-spacing:4px;min-height:52px}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+#again{width:180px;height:90px;border-radius:45px;border:none;background:linear-gradient(#5ad66b,#1f9a32);box-shadow:0 8px 0 #0d5a1b;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#again svg{height:65%}
+#ver{position:fixed;right:6px;bottom:2px;font-size:10px;opacity:.35}
+
+#flyRocket .bflame{animation-duration:.05s}
+#flyRocket.boost .bflame{display:block}
+#flyRocket:not(.boost) .bflame{display:none!important}
+#flyRocket .bst{transition:none}
+#resInfo{display:flex;gap:18px;font:bold 34px "Courier New",monospace}
+#resInfo span{background:#071a0b;padding:6px 14px;border-radius:10px;color:#5aff7a}
+#resInfo span.h{color:#fff;background:rgba(255,255,255,.12)}
