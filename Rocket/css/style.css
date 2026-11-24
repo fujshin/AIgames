@@ -103,3 +103,10 @@ body.tutorial #btnAbort{display:none}
 #cfNo{background:linear-gradient(#ff5a5a,#c81e1e)}
 #resInfo{flex-wrap:wrap;justify-content:center;font-size:28px}
 @media (max-width:420px){.small{width:46px;height:46px}#fctl button{width:60px;height:60px}#launch{height:70px}#ladder{width:46px}.zone{font-size:20px}}
+/* v0.8.2 地図の ズーム（左上・中止ボタンの下。地図のときだけ 出る） */
+#zctl{position:absolute;left:10px;top:86px;display:none;flex-direction:column;gap:12px;z-index:3}
+#zctl button{width:64px;height:64px;border-radius:32px;border:3px solid #fff;background:rgba(40,60,130,.85);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+#zctl button svg{width:72%;height:72%;pointer-events:none}
+#zctl button.off{opacity:.3}
+#fly.orbit #cv{touch-action:none}
+@media (max-width:420px){#zctl button{width:54px;height:54px}}
