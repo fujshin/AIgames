@@ -95,7 +95,16 @@ RL.Predict = (function () {
       segs.push({ pts: shift(tm.pts, ms), kind, moon: true });
       res.enc = { t: tE, x: ms.x, y: ms.y, el: tm.el, peAlt: tm.el.rp - M.R, hitPt: tm.end.type === 'hit' ? tm.pts[tm.pts.length - 1] : null };
       if (tm.end.type === 'exit') res.enc.fate = fateAfter(tm.end.st, tm.end.t, M, E);
-    } else if (b === M && tr.end.type === 'exit') res.fate = fateAfter(tr.end.st, tr.end.t, M, E);
+    } else if (b === M && tr.end.type === 'exit') {
+      res.fate = fateAfter(tr.end.st, tr.end.t, M, E);
+      // v0.13：月から はなれた あとの 線（地球から 見た）。くうきに 入る なら かえれる（home）
+      const f = res.fate, ms = SP.bodyState(M, tr.end.t), s = tr.end.st, ge = { x: s.x + ms.x, y: s.y + ms.y, vx: s.vx + ms.vx, vy: s.vy + ms.vy };
+      const tg = trace(ge, E, tr.end.t, 160, 200), home = homeEl(tg.el, E);
+      segs.push({ pts: tg.pts, kind: home ? 'home' : f.kind === 'hit' ? 'hit' : f.kind === 'escape' ? 'escape' : 'orbit', after: true });
+      if (home) { res.home = true; f.kind = 'home'; }
+    }
+    // v0.13：月に 着陸した あと 地球に もどって くうきに 入る 線
+    if (b === E && sim.moonLanded && kind === 'hit' && homeEl(tr.el, E)) { segs[0].kind = 'home'; kind = 'home'; res.home = true; }
     res.kind = kind;
     return res;
   }
@@ -127,5 +136,14 @@ RL.Predict = (function () {
     const e = tr.end.st, rr = Math.hypot(e.x, e.y), eu = [e.x / rr, e.y / rr];
     return { vDown: Math.max(0, -(e.vx * eu[0] + e.vy * eu[1])), vSide: Math.abs(e.vx * -eu[1] + e.vy * eu[0]), t: tr.end.t - sim.t };
   }
-  return { fromSim, trace, moonNear, touchdown };
+  // v0.13：くうきに 入る（近い ところが くうきの 中、地面より 上も ふくむ）
+  function homeEl(el, E) { return el && el.rp < E.R + E.atmo && el.e < 1.2; }
+  // v0.13：月から見た 状態 st から、月を はなれて 地球の くうきに 入るか
+  function homeFrom(st, t, W) {
+    const M = W.moon, E = W.earth, tr = trace(st, M, t, 80);
+    if (tr.end.type !== 'exit') return false;
+    const ms = SP.bodyState(M, tr.end.t), s = tr.end.st, el = SP.toElements(s.x + ms.x, s.y + ms.y, s.vx + ms.vx, s.vy + ms.vy, E.mu, tr.end.t);
+    return homeEl(el, E);
+  }
+  return { fromSim, trace, moonNear, touchdown, homeFrom };
 })();

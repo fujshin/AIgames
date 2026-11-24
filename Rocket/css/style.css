@@ -189,3 +189,12 @@ body.tutorial #btnRew{display:none}
 #btnChute.torn{background:rgba(120,40,40,.85)}
 #btnChute.hint{animation:pulse .5s infinite alternate}
 @media (max-width:420px){#palette{flex-wrap:wrap}.pal{flex:0 0 calc(20% - 5px)}#scrollBtns button{width:34px;height:48px}}
+/* v0.13 ✂️ 切りはなし（2回 おし）・🚩 旗・月面の ボタン */
+#btnSep,#btnFlag{font-size:34px;line-height:1}
+#btnSep.arm{background:rgba(220,150,0,.95)!important;animation:pulse .3s infinite alternate}
+#btnFlag{background:rgba(40,120,200,.85)}
+#btnEng.hint,#btnSep.hint,#btnFlag.hint{animation:pulse .5s infinite alternate}
+#fctl2{position:absolute;right:96px;bottom:150px;display:none;flex-direction:column-reverse;gap:14px;z-index:3}
+#fly.orbit #fctl2{display:flex}
+#fctl2 button{width:72px;height:72px;border-radius:36px;border:3px solid #fff;background:rgba(40,60,130,.85);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+@media (max-width:420px){#fctl2{right:80px}#fctl2 button{width:60px;height:60px;font-size:28px}}

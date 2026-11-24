@@ -27,11 +27,12 @@ const cfgs = {
 function dvLeft(s) { let dv = 0; const S = s.stages; for (let i = S.length - 1; i >= s.si; i--) {
   const st = S[i]; if (!(st.eng + st.veng)) continue; const ve = (st.eng * P.THRUST + st.veng * P.VTHRUST) / (st.eng * P.BURN + st.veng * P.VBURN * (RL.CFG.ORBIT.VAC_VBURN_K || 1));
   const above = S.slice(i + 1).reduce((z, x) => z + x.dry + x.fuel, 0); dv += ve * Math.log((above + st.dry + st.fuel) / (above + st.dry)); } return dv; }
-function pilot(cols, wait, log) {
+function pilot(cols, wait, log, keep) {
   const s = RL.Orbit.create(RL.analyze(toGrid(cols)), { profile: 'side', autoEnd: true });
   let ph = 0, cut = null; const info = {};
   const L = (...a) => log && console.log(' ', Math.round(s.t), ...a);
   while (!s.done && s.t < 120000) {
+    if (s.surface) { if (keep) break; s.endSurface(); break; }   // v0.13：月面で まつ ＝ ここで おわり（keep：つづける）
     s.moonNear = s.isPowered() && s.inSpace && s.body.id === 'earth' && ph === 2 && RL.Predict.moonNear(s, SL.LOOK_MOON);
     s.advance(s.isPowered() ? 0.02 : Math.max(0.02, Math.min(s.autoWarp(), 200) * 0.05));
     const el = s.elements(); if (!el) continue;

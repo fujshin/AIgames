@@ -40,6 +40,7 @@
     const n = rowsOf(mode), p = SV.cur, blank = () => Array.from({ length: n }, () => Array(RL.CFG.COLS).fill(null));
     let g = null;
     if (p && validGrid(p[gridKey()], n)) g = clone(p[gridKey()]);
+    else if (p && mode === 'orbit' && Array.isArray(p.gridOrbit) && p.gridOrbit.length < n && validGrid(p.gridOrbit, p.gridOrbit.length)) g = [...blank().slice(0, n - p.gridOrbit.length), ...clone(p.gridOrbit)];   // v0.13：14行 → 18行（上に 足す）
     else if (p && mode === 'orbit' && validGrid(p.grid, RL.CFG.ROWS_FREE)) g = [...blank().slice(0, n - RL.CFG.ROWS_FREE), ...clone(p.grid)];   // 9行の 組み立てを 下に つめて つかう
     g = g ? RL.migrateLegs(g) : blank();   // 前の セーブの「胴体の よこの 脚」は エンジンへ
     B.setRows(n, g);
@@ -218,7 +219,11 @@
         say += ' えいせいは、これからも ずっと まわりつづけるよ。';
         info.push(`<span>▼${pe}</span>`, `<span class="h">▲${ap}</span>`); break; }
       case 'escape': icon = '🚀'; stars = 5; say = 'ちきゅうの じゅうりょくから だっしゅつ したよ！'; medals.push('escape'); info.push(`<span>🚀${Math.round(d.maxV)}</span>`); break;
-      case 'landed': if (d.body === 'earth') {   // v0.12 地球に 着陸
+      case 'landed': if (d.body === 'earth' && d.returned) {   // v0.13 月から かえってきた
+        icon = '\u{1FAA8}'; stars = d.hard ? 4 : 5; say = 'おかえりなさい！ つきから ちきゅうに かえってきたよ！ つきの いしを もちかえった！';
+        medals.push('moonRock', 'moonLand', d.chute ? 'chuteLand' : 'earthLand');
+        info.push(`<span>\u2B07${(d.vDown || 0).toFixed(1)}</span>`, `<span class="h">${Math.round(d.maxG || 0)}G</span>`); break;
+      } else if (d.body === 'earth') {   // v0.12 地球に 着陸
         icon = d.chute ? '\u{1FA82}' : '\u{1F3E0}'; stars = d.hard ? 4 : 5;
         say = d.chute ? 'パラシュートで ちきゅうに ちゃくりく！ ふんわり おりられたね！' : 'ちきゅうに ちゃくりく！ エンジンで ゆっくり おりられたね！';
         if (d.hard) say = 'ちきゅうに ちゃくりく！ ちょっと あぶなかったけど、やったね！';
@@ -236,6 +241,10 @@
       case 'heavy': icon = '🏋️'; say = 'おもくて あがらなかった！'; break;
       default: icon = '⏱️'; say = 'じかん ぎれ！';
     }
+    // v0.13：月面に のこした もの（✂️ した 段＝着陸機、🚩）。月面で おわった ときの 着陸機は 上で のこしている
+    if (sim.surfAng != null && !(d.type === 'landed' && d.body === 'moon')) {
+      if (sim.leftStages && sim.leftStages.length) { SV.addObj({ kind: 'lander', ang: sim.surfAng, abs: W0 + sim.t }); objAdded = true; } }
+    if (sim.flagPlanted) { SV.addObj({ kind: 'flag', ang: sim.surfAng, abs: W0 + sim.t }); objAdded = true; medals.push('moonFlag'); }
     SV.advanceClock(sim.t); SV.update(p => { p.flights = (p.flights || 0) + 1; });
     lastRec = { clock: sim.t, obj: objAdded };
     // v0.11 ⏪ の 回数で 星を へらす（さいてい 1）。⏪ は 落ちた・ぶつかった・にげた・時間ぎれ のとき
@@ -306,6 +315,10 @@
     const big = R >= 14, core = big ? ['engine', 'tank', 'tank', 'tank', 'tank', 'ring', 'vengine+leg', 'tank', 'tank', 'tank', 'win+chute', 'nose'] : ['engine', 'tank', 'tank', 'tank', 'ring', 'vengine+leg', 'tank', 'tank', 'nose'];
     core.forEach((k, i) => g[b - i][2] = k);
     for (let r = b; r >= b - (big ? 5 : 4); r--) { g[r][1] = 'booster'; g[r][3] = 'booster'; } g[b][0] = 'fin'; g[b][4] = 'fin';
+    // v0.13：うちゅうモード（18行）は 月往還 できる 見本（3段3列。tools/return_check.js で 確かめた）
+    if (R >= 18) { g.forEach(r => r.fill(null)); const T = n => Array(n).fill('tank'), side = ['engine', ...T(4), 'ring', 'vengine', ...T(2)];
+      [['booster', 'booster', 'booster', 'booster', 'fin'], side, ['engine', ...T(4), 'ring', 'vengine', ...T(2), 'ring', 'vengine+leg', ...T(3), 'win+chute'], side, ['booster', 'booster', 'booster', 'booster', 'fin']]
+        .forEach((col, c) => col.forEach((k, i) => { g[b - i][c] = k; })); }
     B.setGrid(g); RL.emit('change', { action: 'sample', grid: g });
   });
   B.init();
