@@ -1,13 +1,13 @@
 // 全体設定。数値の調整はここだけで行う
 window.RL = window.RL || {};
 RL.CFG = {
-  COLS: 5, ROWS: 9, VERSION: 'v0.10',
+  COLS: 5, ROWS: 9, VERSION: 'v0.11',
   PHYS: {
     G: 10,
     THRUST: 188,      // 地上用エンジン1つの力
     VTHRUST: 120,     // 宇宙用エンジン1つの力（くうきの外で）
     VAIR: 0.3,        // 宇宙用エンジンは くうきの中では この割合の力しか出ない
-    MASS: { engine: 1, vengine: 0.6, tank: 0.26, win: 0.22, nose: 0.11, fin: 0.15, booster: 0.2, ring: 0.3 }, // 燃料ぬきの重さ
+    MASS: { engine: 1, vengine: 0.6, tank: 0.26, win: 0.22, nose: 0.11, fin: 0.15, booster: 0.2, ring: 0.3, leg: 0.06 }, // 燃料ぬきの重さ
     FUEL_ENGINE: 0.6, FUEL_TANK: 2.3,
     BURN: 0.93,       // 地上用エンジン1つが使う燃料
     VBURN: 0.45,      // 宇宙用エンジン1つが使う燃料（ながもち）
@@ -45,10 +45,17 @@ RL.CFG = {
     SITE: Math.PI / 2, // 発射場の位置（rad。π/2 = 地図の上）。地球は 反時計まわり（北極の上から見た向き）なので、東＝地図の左
     SUB_DT: 0.02,      // エンジンを使う間・くうきの中の 計算のきざみ
     WARP_MAX: 3000,    // 早送りの上限
-    SLOW: { DV: 60, DV_NEAR: 6, LOOK: 20, MIN: 0.05, DV_MOON: 0.2, MIN_MOON: 0.002, LOOK_MOON: 10 },   // v0.8.2：うちゅうで 燃やす間の スローモーション（実時間1秒に ふえる速さ。NEAR＝軌道の種類が かわる 手前。v0.10 MOON＝あと LOOK_MOON 足すと 月と であう 手前）
+    SLOW: { DV: 60, DV_NEAR: 6, LOOK: 20, MIN: 0.05, DV_MOON: 0.2, MIN_MOON: 0.002, LOOK_MOON: 10 },   // v0.8.2：うちゅうで 燃やす間の スローモーション（実時間1秒に ふえる速さ。NEAR＝軌道の種類が かわる 手前）
     ORBIT_DONE: 1.2,   // 燃料が もう ないとき：安定した軌道を この周回ぶん まわったら おしまい
     IDLE_TURNS: 12,    // v0.8.3：燃料が のこっていても、エンジンを つかわずに この周回ぶん まわったら おしまい（ずっと おわらない のを ふせぐ）
     MOON_WAIT: 4,      // v0.8.3：燃料が もう ないとき、月まで とどく軌道は 月と であうのを この周回ぶん まつ
+    // v0.11 月着陸：下むき V_DOWN・よこ V_SIDE 以下で 着陸（HARD_K 倍までは「あぶなかった」）。着陸脚で LEG_K 倍
+    //   NEAR：月の 地面ちかく（エンジンを 月の重力の TWR 倍まで しぼる・ちかくの画面・着陸メーター）
+    //   V_HOVER：うしろへ で この速さより おそく なったら 真上に 浮く（ホバー）。SOFT：🦵 の 勲章
+    LAND: { V_DOWN: 4, V_SIDE: 3, HARD_K: 1.5, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 2000, TWR: 3,
+            V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5 },
+    VAC_VBURN_K: 0.7,  // v0.11：うちゅうモードだけ、宇宙用エンジンは くうきの外で 燃料の へりが この割合（燃費が よい）。月着陸に 燃料が とどくように
+    CHECKPOINT: { STAR_PENALTY: [0, 1, 1, 2] },   // ⏪ の 回数（0,1,2,3回〜）で へらす 星
     TURN_START: 20,    // この高さから かたむけ はじめる
     PITCH_RATE: 15,    // v0.8.2：自動で かたむける速さの上限（度／秒）。切りはなしで 急に 真上へ もどらない
     PROFILES: {        // 自動で かたむける（pitch：地平線からの角度。turnH までに そこまで倒す）

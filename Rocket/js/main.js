@@ -4,7 +4,7 @@
   const $ = id => document.getElementById(id), A = RL.Audio, B = RL.Builder, SV = RL.Save, SC = RL.CFG.SAVE;
   const NAMES = ['じめん', 'くも', 'ひこうき', 'うちゅう', 'じんこうえいせい', 'つき', 'すいせい', 'どせい'];
   $('launch').innerHTML = RL.ICON.rocket; $('clear').innerHTML = RL.ICON.trash; $('home').innerHTML = RL.ICON.home;
-  $('mute').innerHTML = RL.ICON.soundOn; $('again').innerHTML = RL.ICON.again; $('tutEar').innerHTML = RL.ICON.ear;
+  $('mute').innerHTML = RL.ICON.soundOn; $('again').innerHTML = RL.ICON.again; $('resRew').innerHTML = RL.ICON.rewind; $('tutEar').innerHTML = RL.ICON.ear;
   $('btnTut').innerHTML = RL.ICON.learn; $('btnFree').innerHTML = RL.ICON.play; $('titleRocket').innerHTML = RL.ICON.rocket;
   $('btnOrbit').innerHTML = RL.ICON.orbit; $('btnMap').innerHTML = RL.ICON.map; $('btnDone').innerHTML = RL.ICON.flag;
   $('cfYes').innerHTML = RL.ICON.ok; $('cfNo').innerHTML = RL.ICON.ng; $('pkClose').innerHTML = RL.ICON.ng; $('mdClose').innerHTML = RL.ICON.ng;
@@ -120,7 +120,7 @@
     const p = SV.cur; if (!p) return;
     $('medGrid').innerHTML = RL.MEDALS.map(m => `<div class="medal${p.medals[m.key] ? ' got' : ''}">${MEDAL_SVG(m.icon, !!p.medals[m.key])}</div>`).join('');
     const c = RL.World.counts(p);
-    $('wCount').innerHTML = `<span>🛰️×${c.sats}</span><span>🚩×${c.flags}</span>`;
+    $('wCount').innerHTML = `<span>🛰️×${c.sats}</span><span>🚩×${c.flags}</span>` + (c.landers ? `<span>🚀×${c.landers}</span>` : '');
     $('medals').style.display = 'flex'; A.tone(660, 0.06);
     A.say(`くんしょうは ${medalCount(p)}こ。` + (c.sats ? ` えいせいが ${c.sats}こ、うちゅうを まわっているよ。` : ''));
     drawWorld(p);
@@ -133,7 +133,7 @@
     const cv = $('worldCv'), g = cv.getContext('2d'), dpr = devicePixelRatio || 1, SP = RL.Space, Wb = SP.makeBodies(), E = Wb.earth, M = Wb.moon;
     const size = cv.clientWidth || 260; cv.width = size * dpr; cv.height = size * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
     const items = p.world.objs.map(o => ({ o, pts: o.kind === 'sat' ? RL.World.orbitPts(o, 72) : null }));
-    const far = items.some(it => it.o.body === 'moon' || it.o.kind === 'flag' || (it.o.el && it.o.el.ra > M.orbitR * 0.5));
+    const far = items.some(it => it.o.body === 'moon' || it.o.kind === 'flag' || it.o.kind === 'lander' || (it.o.el && it.o.el.ra > M.orbitR * 0.5));
     let rMax = E.R * 1.6; items.forEach(it => { if (it.o.kind === 'sat' && it.o.body === 'earth') rMax = Math.max(rMax, Math.min(it.o.el.ra, E.soi) * 1.15); });
     if (far) rMax = Math.max(rMax, (M.orbitR + M.soi) * 1.05);
     const sc = size / 2 / rMax, X = x => size / 2 + x * sc, Y = y => size / 2 - y * sc, t0 = performance.now();
@@ -148,6 +148,8 @@
       const P = (q, moonish) => moonish ? [X(ms.x) + q[0] * sc * mk, Y(ms.y) - q[1] * sc * mk] : [X(q[0]), Y(q[1])];
       items.forEach(it => {
         const o = it.o;
+        if (o.kind === 'lander') { g.font = '14px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';   // v0.11 着陸した ロケット
+          g.fillText('\u{1F680}', X(ms.x) + Math.cos(o.ang) * (mR + 7), Y(ms.y) - Math.sin(o.ang) * (mR + 7)); return; }
         if (o.kind === 'flag') { g.font = '14px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
           g.fillText('🚩', X(ms.x) + Math.cos(o.ang) * (mR + 7), Y(ms.y) - Math.sin(o.ang) * (mR + 7)); return; }
         const mo = o.body === 'moon';
@@ -171,16 +173,24 @@
       RL.emit('launch-fail', 'noEngine'); return;
     }
     RL.emit('launch', s);
-    if (mode === 'orbit') { RL.Flight2D.run(a, profile, sim => result2d(sim), aborted); return; }
+    if (mode === 'orbit') { lastA = a; lastProf = profile; RL.Flight2D.run(a, profile, sim => result2d(sim), aborted); return; }
     RL.Flight.run(a, s, () => result(s), aborted);
   }
   // 中止：結果は出さず、組み立てたロケットのまま もどる（うちゅうモードは ワールドの 時計だけ すすむ）
+  // v0.11 ⏪：結果画面から 最後に おぼえた ところへ もどって つづける（さっきの 結果で ふえた ものは もどす）
+  let lastA = null, lastProf = 'side', lastRec = null;
+  $('resRew').addEventListener('click', () => {
+    const lr = RL.Flight2D.lastRun; if (!lr || !lr.cp || !lastA) return;
+    if (lastRec) SV.update(p => { p.world.clock -= lastRec.clock; p.flights = Math.max(0, (p.flights || 1) - 1); if (lastRec.obj) p.world.objs.pop(); });
+    lastRec = null; closeResult(); A.tone(660, 0.08);
+    RL.Flight2D.run(lastA, lastProf, sim => result2d(sim), aborted, lr);
+  });
   function aborted(sim) { if (sim && sim.t) SV.advanceClock(sim.t); A.say('ちゅうし！ つくりなおそう。'); RL.emit('abort'); }
   // ---- うちゅうモードの結果 ----
   function result2d(sim) {
     const d = sim.done, info = [], medals = [];
     let icon = '😅', stars = 0, say = '';
-    const alt = Math.round(d.maxAlt || 0), W0 = sim.worldStart || 0;
+    const alt = Math.round(d.maxAlt || 0), W0 = sim.worldStart || 0; let objAdded = false;
     if (alt >= RL.CFG.ORBIT.ATMO_H) medals.push('space');
     switch (d.type) {
       case 'ground': icon = '🎯'; stars = alt > 3000 ? 2 : alt > 300 ? 1 : 0;
@@ -193,16 +203,30 @@
         else if (d.cls === 'high') { icon = '🛰️'; stars = 4; say = 'たかい きどうを まわったよ！'; medals.push('orbit', 'high'); }
         else { icon = '🛰️'; stars = 3; say = 'ちきゅうを まわったよ！ じんこうえいせい だ！'; medals.push('orbit'); }
         // ワールドに のこす：衛星（軌道要素を しまう）
-        SV.addObj({ kind: 'sat', body: d.body, cls: d.body === 'moon' ? 'moonOrbit' : d.cls, el: RL.World.pack(el), t: sim.t, abs: W0 + sim.t });
+        objAdded = true; SV.addObj({ kind: 'sat', body: d.body, cls: d.body === 'moon' ? 'moonOrbit' : d.cls, el: RL.World.pack(el), t: sim.t, abs: W0 + sim.t });
         say += ' えいせいは、これからも ずっと まわりつづけるよ。';
         info.push(`<span>▼${pe}</span>`, `<span class="h">▲${ap}</span>`); break; }
       case 'escape': icon = '🚀'; stars = 5; say = 'ちきゅうの じゅうりょくから だっしゅつ したよ！'; medals.push('escape'); info.push(`<span>🚀${Math.round(d.maxV)}</span>`); break;
+      case 'landed': {   // v0.11 月着陸
+        icon = '\u{1F9D1}\u200D\u{1F680}'; stars = d.hard ? 4 : 5;
+        say = d.hard ? 'つきに ちゃくりく！ ちょっと あぶなかったけど、やったね！' : 'つきに ちゃくりく！ やったね！ うちゅうひこうしが つきに たったよ！';
+        medals.push('moonLand'); if (d.soft) { medals.push('softLeg'); say += ' あしで ふんわり おりられたね。'; }
+        SV.addObj({ kind: 'lander', ang: d.ang, abs: W0 + sim.t }); objAdded = true;
+        info.push(`<span>\u2B07${(d.vDown || 0).toFixed(1)}</span>`); break; }
       case 'hit': icon = '🌙'; stars = 5; say = 'つきに とうちゃく！ でも、ドーンと ぶつかっちゃった。 つきに はたを たてたよ。'; medals.push('moonFlag');
-        SV.addObj({ kind: 'flag', ang: Math.atan2(sim.y, sim.x), abs: W0 + sim.t }); break;
+        if (d.vDown != null) { say += ' はやさ ' + Math.round(d.vDown) + '。' + (d.vDown < 40 ? 'もうすこし ゆっくり おりれば ちゃくりく できるよ！' : 'つきの ちかくで うしろむきに エンジンを つかうと、ゆっくり おりられるよ。'); }
+        SV.addObj({ kind: 'flag', ang: Math.atan2(sim.y, sim.x), abs: W0 + sim.t }); objAdded = true; break;
       case 'heavy': icon = '🏋️'; say = 'おもくて あがらなかった！'; break;
       default: icon = '⏱️'; say = 'じかん ぎれ！';
     }
     SV.advanceClock(sim.t); SV.update(p => { p.flights = (p.flights || 0) + 1; });
+    lastRec = { clock: sim.t, obj: objAdded };
+    // v0.11 ⏪ の 回数で 星を へらす（さいてい 1）。⏪ は 落ちた・ぶつかった・にげた・時間ぎれ のとき
+    const rw = sim.rewinds || 0, pen = RL.CFG.ORBIT.CHECKPOINT.STAR_PENALTY;
+    if (stars && rw) stars = Math.max(1, stars - pen[Math.min(rw, pen.length - 1)]);
+    const lr = RL.Flight2D.lastRun, canRew = !!(lr && lr.cp) && ['ground', 'hit', 'escape', 'timeout'].includes(d.type);
+    $('resRew').style.display = canRew ? 'flex' : 'none';
+    if (canRew) say += ' ⏪ を おすと、さっきの ところから やりなおせるよ。';
     if (RL.World.counts(SV.cur).sats >= SC.FLEET) medals.push('fleet');
     if (d.type !== 'heavy') info.push(`<span>🚀${Math.round(d.maxV || 0)}</span>`);
     $('resIcon').textContent = icon; $('resStars').textContent = stars ? '⭐'.repeat(stars) : '💨';
@@ -213,6 +237,7 @@
     RL.emit('result2d', sim);
   }
   function result(s) {
+    $('resRew').style.display = 'none';
     const S = B.state, z = RL.zoneOf(s.h), Z = RL.CFG.ZONES, newBest = s.lift && s.h > S.best;
     $('resIcon').textContent = s.lift ? Z[z].icon : (s.reason === 'heavy' ? '🏋️' : '😅');
     $('resStars').textContent = s.lift ? '⭐'.repeat(z) + (newBest && S.best > 0 ? ' 🏆' : '') : '💨';
@@ -260,8 +285,10 @@
   let vt = 0; $('ver').addEventListener('click', () => {
     if (++vt < 3) return; vt = 0;
     const R = RL.CFG.ROWS, g = Array.from({ length: R }, () => Array(RL.CFG.COLS).fill(null)), b = R - 1;
-    ['engine', 'tank', 'tank', 'tank', 'ring', 'vengine', 'tank', 'nose'].forEach((k, i) => g[b - i][2] = k);
+    // v0.11：月に 着陸 できる 見本（2段＋ブースター5＋着陸脚。tools/landing_check.js で 確かめた）
+    ['engine', 'tank', 'tank', 'tank', 'ring', 'vengine', 'tank', 'tank', 'nose'].forEach((k, i) => g[b - i][2] = k);
     for (let r = b; r >= b - 4; r--) { g[r][1] = 'booster'; g[r][3] = 'booster'; } g[b][0] = 'fin'; g[b][4] = 'fin';
+    g[b - 5][1] = 'leg'; g[b - 5][3] = 'leg';
     B.setGrid(g); RL.emit('change', { action: 'sample', grid: g });
   });
   B.init();

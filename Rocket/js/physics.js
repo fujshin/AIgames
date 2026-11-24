@@ -6,8 +6,8 @@
 //  - くうき（ATMO_H まで、上ほどうすい）：空気のじゃま と はねの効果は くうきの中だけ
 RL.analyze = function (grid) {
   const cfg = RL.CFG, P = cfg.PHYS, cells = RL.layout(grid), SR = RL.stageRows(grid);
-  const n = { engine: 0, vengine: 0, tank: 0, fin: 0, win: 0, nose: 0, booster: 0, ring: 0 };
-  const stages = Array.from({ length: SR.n }, (_, i) => ({ i, dry: 0, fuel: 0, eng: 0, veng: 0, coreFin: { L: 0, R: 0, M: 0 } }));
+  const n = { engine: 0, vengine: 0, tank: 0, fin: 0, win: 0, nose: 0, booster: 0, ring: 0, leg: 0 };
+  const stages = Array.from({ length: SR.n }, (_, i) => ({ i, dry: 0, fuel: 0, eng: 0, veng: 0, legL: 0, legR: 0, coreFin: { L: 0, R: 0, M: 0 } }));
   let mx = 0, total = 0;
   const stacks = [], stackAt = {};
   for (let c = 0; c < cfg.COLS; c++) {
@@ -32,6 +32,7 @@ RL.analyze = function (grid) {
     }
     const S = stages[q.stage]; S.dry += P.MASS[q.k]; S.fuel += fuel;
     if (q.k === 'engine') S.eng++; if (q.k === 'vengine') S.veng++;
+    if (q.k === 'leg') { if (q.ctx.side === 'left') S.legL++; else S.legR++; }   // v0.11 着陸脚（その段に つく。空気の じゃまは なし）
   });
   // 段ごとの 空気のじゃま（のこっている段の 胴体の列の数と 先っぽ）
   const drag = stages.map((_, s) => {

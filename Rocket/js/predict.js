@@ -6,6 +6,7 @@
 RL.Predict = (function () {
   const SP = RL.Space, TAU = Math.PI * 2;
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+
   // 近点からの 時間（だ円は 周回ぶんも つなげて 単調にする）
   function tOfNu(el, nu) {
     if (el.e < 1) { const w = wrap(nu); return SP.timeFromPeri(el, w) + (nu - w) / el.n; }
@@ -28,6 +29,7 @@ RL.Predict = (function () {
     }
     return out;
   }
+
   // 1つの重力圏の中を たどる
   //  返す: { pts:[[x,y]], el, end:{ type:'hit'|'exit'|'enc'|'loop', t, st } }
   function trace(st, body, t0, N) {
@@ -69,6 +71,7 @@ RL.Predict = (function () {
     }
     return { pts: samp.map(s => [s.x, s.y]), el, end };
   }
+
   // sim（physics2d）から 予測をつくる
   function fromSim(sim) {
     if (!sim || !sim.lifted) return null;
@@ -113,5 +116,21 @@ RL.Predict = (function () {
     }
     return false;
   }
-  return { fromSim, trace, moonNear };
+  // v0.11：いま エンジンを とめたら、月の 地面に つく ときの 下むき・よこの 速さ（つかない なら null）
+  function touchdown(sim) {
+    const M = sim.bodies.moon; if (!sim.lifted || sim.body !== M) return null;
+    const r = Math.hypot(sim.x, sim.y), ux = sim.x / r, uy = sim.y / r, vr = sim.vx * ux + sim.vy * uy, vt = sim.vx * -uy + sim.vy * ux;
+    const g = M.mu / (r * r), h = r - M.R;
+    if (h < M.R * 0.2) {   // 地面ちかく：重力は 一定と みなす（速くて かんたん）
+      const vd = Math.sqrt(Math.max(0, vr * vr + 2 * g * h));
+      // よこに はやく まわれる（月を まわる 速さ）なら 地面に つかない
+      if (vt * vt / r > g * 0.98 && vr >= -0.5) return null;
+      return { vDown: vd, vSide: Math.abs(vt), t: (vr + vd) / g };
+    }
+    const tr = trace(sim, M, sim.t, 120);
+    if (tr.end.type !== 'hit') return null;
+    const e = tr.end.st, rr = Math.hypot(e.x, e.y), eu = [e.x / rr, e.y / rr];
+    return { vDown: Math.max(0, -(e.vx * eu[0] + e.vy * eu[1])), vSide: Math.abs(e.vx * -eu[1] + e.vy * eu[0]), t: tr.end.t - sim.t };
+  }
+  return { fromSim, trace, moonNear, touchdown };
 })();

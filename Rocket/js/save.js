@@ -15,7 +15,9 @@ RL.MEDALS = [
   { key: 'moonOrbit', icon: '🌕' },   // 月を まわる
   { key: 'moonFlag',  icon: '🚩' },   // 月に とうちゃく
   { key: 'escape',    icon: '🌠' },   // ちきゅうから だっしゅつ
-  { key: 'fleet',     icon: '🌐' }    // 衛星を SAVE.FLEET こ
+  { key: 'fleet',     icon: '🌐' },   // 衛星を SAVE.FLEET こ
+  { key: 'moonLand',  icon: '\u{1F9D1}\u200D\u{1F680}' },   // v0.11 月に 着陸
+  { key: 'softLeg',   icon: '\u{1F9B5}' }    // v0.11 着陸脚で ふんわり（下むき SOFT 以下）
 ];
 RL.Save = (function () {
   const C = RL.CFG.SAVE;
@@ -57,6 +59,6 @@ RL.World = (function () {
   const posAt = (o, abs) => SP.stateAt(o.el, localT(o, abs));
   // 軌道 1しゅうぶんの 点（天体から 見た）
   function orbitPts(o, n) { n = n || 96; const out = []; for (let i = 0; i <= n; i++) { const s = SP.stateAtNu(o.el, TAU * i / n); out.push([s.x, s.y]); } return out; }
-  function counts(p) { const objs = (p && p.world.objs) || []; return { sats: objs.filter(o => o.kind === 'sat').length, flags: objs.filter(o => o.kind === 'flag').length }; }
+  function counts(p) { const objs = (p && p.world.objs) || []; return { sats: objs.filter(o => o.kind === 'sat').length, flags: objs.filter(o => o.kind === 'flag').length, landers: objs.filter(o => o.kind === 'lander').length }; }
   return { pack, posAt, orbitPts, counts, localT };
 })();

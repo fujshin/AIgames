@@ -7,8 +7,9 @@
 //  - v0.8.2：地図の ズーム（＋／－ボタン・ピンチ・ホイール）。画面の外の 月／地球は はしに 🌙 の しるし
 //  - v0.8.3：上の まんなかの「このまま とぶと どうなるか」の しるしは やめた。予測の線の 色で わかるため
 //  - v0.8.4：地図のときは 右上に ロケットの 小窓。ちかくの画面の 小さな地図は 軌道ぜんたいが 入る 大きさ
-//  - v0.10：向きボタン（前へ／うしろへ＝ブレーキ）。くうきの外で つかえる。月で うしろへ ふかすと 月を まわれる
 //  - v0.9：まえに うちあげた 衛星（うすい 線と 小さな 衛星）と 月の 🚩 を 地図に 出す（js/save.js の ワールド）
+//  - v0.10：向きボタン（前へ／うしろへ＝ブレーキ）。くうきの外で つかえる。月で うしろへ ふかすと 月を まわれる
+//  - v0.11：月着陸（月の ちかくの画面・着陸メーター・着陸脚・ホバー）と ⏪ ここからやり直し
 RL.Flight2D = (function () {
   const $ = id => document.getElementById(id), SP = RL.Space, TAU = Math.PI * 2;
   const STAGE_NAME = ['だいいち', 'だいに', 'だいさん', 'だいよん', 'だいご'], IGN_NAME = ['', 'にだんめ', 'さんだんめ', 'よんだんめ', 'ごだんめ'];
@@ -19,11 +20,6 @@ RL.Flight2D = (function () {
   const SEG_COL = { hit: '#ff9a3d', orbit: '#5aff7a', escape: '#d58bff', moonPass: '#7fd3ff', moonOrbit: '#5aff7a', moonHit: '#ff9a3d' };
   const FATE_ICON = { escape: '🚀', orbit: '🔄', hit: '💥' };
   const predict = sim => RL.Predict.fromSim(sim);
-  // ---- 向きボタンの絵（v0.10）：上の 白い 点線の やじるし＝すすむ向き。下の ロケットが おなじ向き（前へ）／はんたい向き（うしろへ・ブレーキ）
-  const DICON = {
-    pro: '<svg viewBox="0 0 100 100"><path d="M10 22 H72" stroke="#fff" stroke-width="7" stroke-dasharray="10 7" stroke-linecap="round"/><path d="M70 10 L92 22 L70 34Z" fill="#fff"/><g><path d="M14 66 L4 58 L4 74Z M14 66 L4 74" fill="#ffb02e"/><path d="M2 56 Q-6 66 2 76 L14 66Z" fill="#ffb02e"/><path d="M16 56 H64 Q86 56 94 66 Q86 76 64 76 H16Z" fill="#fff" stroke="#2b3245" stroke-width="4" stroke-linejoin="round"/><path d="M74 58 Q88 60 94 66 Q88 72 74 74Z" fill="#e5383b"/><path d="M22 56 L14 44 H30 L36 56Z M22 76 L14 88 H30 L36 76Z" fill="#ffd54a" stroke="#2b3245" stroke-width="3" stroke-linejoin="round"/><circle cx="54" cy="66" r="5" fill="#4fb3ff" stroke="#2b3245" stroke-width="2"/></g></svg>',
-    retro: '<svg viewBox="0 0 100 100"><path d="M10 22 H72" stroke="#fff" stroke-width="7" stroke-dasharray="10 7" stroke-linecap="round"/><path d="M70 10 L92 22 L70 34Z" fill="#fff"/><g transform="translate(100 0) scale(-1 1)"><path d="M14 66 L4 58 L4 74Z M14 66 L4 74" fill="#ffb02e"/><path d="M2 56 Q-6 66 2 76 L14 66Z" fill="#ffb02e"/><path d="M16 56 H64 Q86 56 94 66 Q86 76 64 76 H16Z" fill="#fff" stroke="#2b3245" stroke-width="4" stroke-linejoin="round"/><path d="M74 58 Q88 60 94 66 Q88 72 74 74Z" fill="#e5383b"/><path d="M22 56 L14 44 H30 L36 56Z M22 76 L14 88 H30 L36 76Z" fill="#ffd54a" stroke="#2b3245" stroke-width="3" stroke-linejoin="round"/><circle cx="54" cy="66" r="5" fill="#4fb3ff" stroke="#2b3245" stroke-width="2"/></g></svg>'
-  };
   // ---- ズームの ボタンの絵（v0.8.2） ----
   const ZICON = {
     zin: '<svg viewBox="0 0 100 100"><circle cx="42" cy="42" r="26" fill="none" stroke="#fff" stroke-width="9"/><path d="M62 62 L86 86" stroke="#fff" stroke-width="12" stroke-linecap="round"/><path d="M30 42 H54 M42 30 V54" stroke="#ffd54a" stroke-width="8" stroke-linecap="round"/></svg>',
@@ -94,6 +90,8 @@ RL.Flight2D = (function () {
       const abs = WD.W0 + sim.t;
       WD.items.forEach(it => {
         const o = it.o;
+        if (o.kind === 'lander') { if (mR < 6) return; const fx = ms.x + Math.cos(o.ang) * M.R * 1.12, fy = ms.y + Math.sin(o.ang) * M.R * 1.12;   // v0.11 着陸した ロケット
+          g.font = `${small ? 10 : Math.min(22, Math.max(12, mR * 0.35))}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('\u{1F680}', X(fx), Y(fy)); return; }
         if (o.kind === 'flag') { if (mR < 6) return; const fx = ms.x + Math.cos(o.ang) * M.R * 1.12, fy = ms.y + Math.sin(o.ang) * M.R * 1.12;
           g.font = `${small ? 10 : Math.min(22, Math.max(12, mR * 0.35))}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🚩', X(fx), Y(fy)); return; }
         const off = o.body === 'moon' ? ms : { x: 0, y: 0 };
@@ -148,7 +146,7 @@ RL.Flight2D = (function () {
     const r = Math.hypot(sim.x, sim.y), ux = sim.x / r, uy = sim.y / r;
     let dx, dy;
     const vp = sim.visPt != null ? sim.visPt : sim.point;   // v0.10：見た目の 向き（なめらかに まわる）
-    if (sim.isPowered() || !sim.lifted || sim.dir !== 'auto') { dx = Math.cos(vp) * -uy + Math.sin(vp) * ux; dy = Math.cos(vp) * ux + Math.sin(vp) * uy; }
+    if (sim.isPowered() || !sim.lifted || sim.near) { dx = Math.cos(vp) * -uy + Math.sin(vp) * ux; dy = Math.cos(vp) * ux + Math.sin(vp) * uy; }
     else { dx = sim.vx; dy = sim.vy; }
     drawShip(g, px, py, -Math.atan2(dy, dx), sim.isPowered() && sim.lifted, small ? 0.7 : V.u * 1.2);
     // 画面の外の 月・地球（v0.8.2）
@@ -197,6 +195,24 @@ RL.Flight2D = (function () {
     if (slow) { g.fillStyle = '#7fd3ff'; g.fillText('🐢×1/' + Math.max(2, Math.round(1 / warp)), bx - 8 * u, 78 * u); }   // v0.8.2：スローモーション
     g.restore();
   }
+  // ---- v0.11 着陸メーター（燃料メーターの となり）：いま エンジンを とめたら 地面に つく 速さ（▶）と、いまの 下むきの 速さ（白い 線）
+  //   みどり＝着陸できる／きいろ＝あぶない／赤＝ぶつかる。着陸脚が あると みどりが ひろい
+  function drawLandMeter(g, H, sim, u) {
+    const LD = RL.CFG.ORBIT.LAND, l = sim.legs(), ok = LD.V_DOWN * (l.n ? LD.LEG_K : 1), hard = ok * LD.HARD_K, MAX = hard * 2;
+    const gx = 54 * u, gw = 26 * u, gh = 130 * u, gy = H * 0.42, Yv = v => gy + gh * Math.min(1, Math.max(0, v) / MAX);   // 上が 0（おそい）
+    g.save();
+    [[0, ok, '#3bd65a'], [ok, hard, '#ffd54a'], [hard, MAX, '#ff4d4d']].forEach(([a, b, c]) => { g.fillStyle = c; g.fillRect(gx, Yv(a), gw, Yv(b) - Yv(a)); });
+    g.strokeStyle = '#fff'; g.lineWidth = 3; g.strokeRect(gx, gy, gw, gh);
+    const r = Math.hypot(sim.x, sim.y), vd = Math.max(0, -(sim.vx * sim.x + sim.vy * sim.y) / r);
+    g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.moveTo(gx - 4 * u, Yv(vd)); g.lineTo(gx + gw + 4 * u, Yv(vd)); g.stroke();
+    const td = RL.Predict.touchdown(sim);
+    if (td) { const y = Yv(td.vDown); g.fillStyle = '#fff'; g.strokeStyle = '#2b3245'; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(gx + gw + 2 * u, y); g.lineTo(gx + gw + 16 * u, y - 9 * u); g.lineTo(gx + gw + 16 * u, y + 9 * u); g.closePath(); g.fill(); g.stroke(); }
+    g.font = `${22 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillStyle = '#fff';
+    g.fillText(l.n ? '\u{1F9B5}' : '\u2B07', gx + gw / 2, gy - 8);
+    g.restore();
+    return td;
+  }
   // ---- 中止ボタン（長おし） ----
   function holdButton(el, ms, fn) {
     let t0 = null, rq = null; const ring = el.querySelector('.ring');
@@ -209,6 +225,10 @@ RL.Flight2D = (function () {
   let abortCb = null;
   $('btnAbort').insertAdjacentHTML('beforeend', RL.ICON.hand);
   holdButton($('btnAbort'), 900, () => { if (abortCb) abortCb(); else RL.Flight.abort(); });
+  // v0.11 ⏪ ここからやり直し（長おし）
+  let rewCb = null, lastRun = null;
+  $('btnRew').insertAdjacentHTML('beforeend', RL.ICON.rewind);
+  holdButton($('btnRew'), 700, () => { if (rewCb) rewCb(); });
   // ---- ズーム（v0.8.2）：自動の大きさに かける倍率（log）。＋で ちかく、－で とおく ----
   const ZSTEP = Math.log(2.5), Z_IN = -2 * ZSTEP, Z_OUT = 4 * ZSTEP;
   const Z = { log: 0, on: false, pins: new Map(), pinD: 0 };
@@ -224,13 +244,14 @@ RL.Flight2D = (function () {
       const d = dist(); if (d > 0 && Z.pinD > 0) zoomBy(Math.log(Z.pinD / d)); Z.pinD = d; });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => cv.addEventListener(n, e => { Z.pins.delete(e.pointerId); Z.pinD = dist(); }));
   }
-  function run(a, profile, onDone, onAbort) {
+  // resume（v0.11）：{ cp, trail, rewinds } ＝ 結果画面の ⏪ から つづける
+  function run(a, profile, onDone, onAbort, resume) {
     const fly = $('fly'), cv = $('cv'), g = cv.getContext('2d'), A = RL.Audio, dpr = devicePixelRatio || 1;
     fly.style.display = 'block'; fly.classList.add('orbit'); document.body.classList.add('flying');
     const W = innerWidth, H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
     const u = Math.max(0.5, Math.min(1, Math.min(W, H * 0.75) / 700));
     $('count').style.fontSize = (130 * u) + 'px';
-    const sim = RL.Orbit.create(a, { profile }), O = RL.CFG.ORBIT, E = sim.bodies.earth;
+    const sim = RL.Orbit.create(a, { profile }), O = RL.CFG.ORBIT, E = sim.bodies.earth, LD = O.LAND;
     // v0.9 ワールド：この 飛行が はじまった ときの ワールドの 時計と、まえに のこした もの
     const pf = RL.Save && RL.Save.cur, WD = pf ? { W0: pf.world.clock, items: pf.world.objs.map(o => ({ o, pts: o.kind === 'sat' ? RL.World.orbitPts(o) : null })) } : null;
     sim.worldStart = WD ? WD.W0 : 0;
@@ -244,29 +265,47 @@ RL.Flight2D = (function () {
     const V = { r: E.R * 1.6, ra: E.R * 1.6, cx: 0, cy: 0, u, stars: Array.from({ length: 160 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + 0.6 })) };
     const trail = []; const smoke = [];
     const sepReal = {}, stageReal = {};
-    let prCache = null, prAt = 0, prKind = null, saidEnc = false, saidPeri = true;
+    let prCache = null, prAt = 0, prKind = null, saidEnc = false;
     let t0 = null, prev = null, warp = 1, view = 'auto', sepFlash = 0, saidSep = false, ended = null, endAt = 0, saidOrbit = false, saidSlow = false;
-    const pre = 2100;
+    const pre = resume ? 0 : 2100;
+    // v0.10／v0.11 の おしえ（いちど だけ）
+    let saidPeri = true, saidNear = false, saidHover = false, warnAt = 0, saidLand = false;
+    // v0.11 ここからやり直し
+    let lastCp = resume ? resume.cp : null, rewinds = resume ? resume.rewinds + 1 : 0;
+    if (resume) { sim.restore(resume.cp.snap); resume.trail.slice(0, resume.cp.trailLen).forEach(p => trail.push(p)); }
+    sim.rewinds = rewinds;
+    const saveCp = tag => { if (!sim.lifted || sim.done) return; lastCp = { snap: sim.snapshot(), trailLen: trail.length, tag }; };
     Z.log = 0; Z.pins.clear();
     // ボタン（v0.8.3：🏁 は visibility で 出し入れ ＝ ほかの ボタンが うごかない）
-    const bEng = $('btnEng'), bMap = $('btnMap'), bDone = $('btnDone'), zctl = $('zctl');
+    const bEng = $('btnEng'), bMap = $('btnMap'), bDone = $('btnDone'), zctl = $('zctl'), bDir = $('btnDir'), bRew = $('btnRew');
     let engShown = null;
     const engUI = () => { const ok = sim.liquidLeft() && !sim.done; bEng.classList.toggle('off', !ok); if (engShown !== sim.engineOn) { engShown = sim.engineOn; bEng.innerHTML = sim.engineOn ? RL.ICON.engStop : RL.ICON.engGo; } bEng.classList.toggle('on', sim.engineOn); };
+    bEng.onclick = () => { RL._engClick = (RL._engClick || 0) + 1; if (!sim.lifted || !sim.liquidLeft() || sim.done) { A.tone(150, 0.15, 'square', 0.08); return; }
+      if (!sim.engineOn && sim.canDir()) saveCp('eng');   // v0.11：うちゅうで つける 直前を おぼえる
+      sim.setEngine(!sim.engineOn); engUI(); };
     // ---- v0.10 向きボタン：前へ ⇄ うしろへ（くうきの外だけ。いつも 同じ場所。つかえない ときは かくす） ----
-    const bDir = $('btnDir'); let dirShown = null;
-    const dirUI = () => {
-      const ok = sim.canDir() && sim.liquidLeft();
-      bDir.style.visibility = ok ? 'visible' : 'hidden';
-      const d = sim.dir === 'retro' ? 'retro' : 'pro';
-      if (dirShown !== d) { dirShown = d; bDir.innerHTML = DICON[d]; bDir.classList.toggle('retro', d === 'retro'); }
+    let dirShown = null;
+    const dirUI = () => { const ok = sim.canDir() && sim.liquidLeft() && !ended; bDir.style.visibility = ok ? 'visible' : 'hidden';
+      const d = sim.dir === 'retro' ? 'retro' : 'pro'; if (dirShown !== d) { dirShown = d; bDir.innerHTML = d === 'retro' ? RL.ICON.dirRetro : RL.ICON.dirPro; bDir.classList.toggle('retro', d === 'retro'); } };
+    bDir.onclick = () => { if (bDir.style.visibility === 'hidden') return; sim.setDir(sim.dir === 'retro' ? 'pro' : 'retro'); dirUI(); };
+    bDir.style.visibility = 'hidden';
+    // ---- v0.11 ⏪：最後に おぼえた ところへ もどる ----
+    function syncParts() {   // 段・ブースターの 見た目を いまの sim に あわせる
+      const now = performance.now();
+      Object.keys(stageReal).forEach(i => { if (+i >= sim.si) delete stageReal[i]; });
+      for (let i = 0; i < sim.si; i++) if (!stageReal[i]) stageReal[i] = now - 10000;
+      sim.stacks.forEach(st => { if (st.sepT === null) delete sepReal[st.id]; else if (!st.withStage && !sepReal[st.id]) sepReal[st.id] = now - 10000; });
+      rocket.querySelectorAll('.p').forEach(b => { b.style.transform = ''; b.style.opacity = ''; });
+      rocket.classList.toggle('legsOut', !!sim.legsOut);
+    }
+    rewCb = () => {
+      if (!lastCp || ended) return;
+      sim.restore(lastCp.snap); trail.length = Math.min(trail.length, lastCp.trailLen); prCache = null; prKind = null;
+      rewinds++; sim.rewinds = rewinds; saidPeri = lastCp.tag !== 'soi'; saidHover = false; warnAt = 0;
+      syncParts(); engShown = null; dirShown = null; sepFlash = 30;
+      [784, 659, 523].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'triangle'), i * 80)); A.say('もどったよ！ もういちど やってみよう。');
     };
-    bDir.onclick = () => {
-      if (bDir.style.visibility === 'hidden') return;
-      const nd = sim.dir === 'retro' ? 'pro' : 'retro';
-      if (!sim.setDir(nd)) { A.tone(150, 0.15, 'square', 0.08); return; }
-      bDir.classList.remove('hint'); dirUI();
-    };
-    bEng.onclick = () => { RL._engClick = (RL._engClick || 0) + 1; if (!sim.lifted || !sim.liquidLeft() || sim.done) { A.tone(150, 0.15, 'square', 0.08); return; } sim.setEngine(!sim.engineOn); engUI(); };
+    bRew.style.visibility = 'hidden';
     bMap.onclick = () => { view = (view === 'map' || (view === 'auto' && autoMap())) ? 'near' : 'map'; A.tone(660, 0.06); };
     bDone.onclick = () => { if (bDone.style.visibility === 'hidden') return; sim.finishNow(); };
     bDone.style.visibility = 'hidden'; engUI(); bMap.innerHTML = RL.ICON.map;
@@ -282,12 +321,16 @@ RL.Flight2D = (function () {
     }
     function pipOff() { wrap.style.transform = ''; wrap.style.clipPath = ''; bPip.style.display = 'none'; }
     bPip.onclick = () => { view = 'near'; A.tone(660, 0.06); };
-    const cleanup = () => { pipOff(); cancelAnimationFrame(raf); abortCb = null; Z.on = false; zctl.style.display = 'none'; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
+    const cleanup = () => { pipOff(); cancelAnimationFrame(raf); abortCb = null; rewCb = null; bDir.style.visibility = 'hidden'; bRew.style.visibility = 'hidden';
+      lastRun = { cp: lastCp, trail: trail.slice(), rewinds }; Z.on = false; zctl.style.display = 'none'; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
     abortCb = () => { if (ended) return; ended = 'abort'; cleanup(); A.stop(); A.tone(300, 0.15, 'square', 0.1); onAbort && onAbort(sim); };
-    A.say('さん、に、いち、はっしゃ！', null, { rate: 1.1 });
-    [0, 700, 1400].forEach(d => setTimeout(() => { if (!ended) A.tone(880, 0.15); }, d));
-    setTimeout(() => { if (!ended) { A.tone(1320, 0.4); A.rumble(3); } }, pre);
-    const autoMap = () => sim.body !== E || (Math.hypot(sim.x, sim.y) - E.R) > E.atmo * 1.15;
+    if (!resume) {
+      A.say('さん、に、いち、はっしゃ！', null, { rate: 1.1 });
+      [0, 700, 1400].forEach(d => setTimeout(() => { if (!ended) A.tone(880, 0.15); }, d));
+      setTimeout(() => { if (!ended) { A.tone(1320, 0.4); A.rumble(3); } }, pre);
+    } else { A.say('もどったよ！ もういちど やってみよう。'); }
+    // v0.11：月の 地面ちかくでは ちかくの画面
+    const autoMap = () => !sim.near && !(sim.done && sim.done.type === 'landed') && (sim.body !== E || (Math.hypot(sim.x, sim.y) - E.R) > E.atmo * 1.15);
     function events() {
       sim.events.splice(0).forEach(e => {
         if (e.type === 'booster-sep') { sepReal[e.id] = performance.now(); sepFlash = 25; A.tone(180, 0.25, 'square', 0.15); if (!saidSep) { saidSep = true; A.say('ブースター、きりはなし！', null, { interrupt: false }); } }
@@ -299,21 +342,23 @@ RL.Flight2D = (function () {
         if (e.type === 'engine-on') { A.tone(523, 0.1, 'triangle'); setTimeout(() => A.tone(784, 0.15, 'triangle'), 90); }
         if (e.type === 'soi') {
           if (e.body === 'moon' && sim.liquidLeft()) {   // v0.10：ブレーキの おしえ
+            saidPeri = false; saveCp('soi');
             A.say('つきの じゅうりょくけんに はいったよ！ つきに いちばん ちかづいたら、うしろむきに ふかすと、つきを まわれるよ。', null, { interrupt: false });
-            saidPeri = false;
           } else A.say(e.body === 'moon' ? 'つきの じゅうりょくけんに はいったよ！' : 'ちきゅうの じゅうりょくけんに もどったよ。', null, { interrupt: false });
         }
-        if (e.type === 'dir') { if (e.dir === 'retro') { A.tone(440, 0.1, 'triangle'); setTimeout(() => A.tone(330, 0.15, 'triangle'), 90); A.say('うしろむき。ブレーキ！', null, { interrupt: false }); }
-          else { A.tone(523, 0.1, 'triangle'); setTimeout(() => A.tone(784, 0.15, 'triangle'), 90); A.say('まえむき。かそく！', null, { interrupt: false }); } }
+        if (e.type === 'dir') { A.tone(e.dir === 'retro' ? 440 : 660, 0.1, 'triangle'); A.say(e.dir === 'retro' ? 'うしろむき。ブレーキ！' : 'まえむき。かそく！'); }
+        // v0.11 月着陸
+        if (e.type === 'near') { saveCp('near'); view = 'auto';
+          if (!saidNear) { saidNear = true; A.say('じめんが ちかいよ！ うしろむきで エンジン。ゆっくり おりよう。', null, { interrupt: true }); } }
+        if (e.type === 'legs') { rocket.classList.add('legsOut'); [330, 440].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'square', 0.08), i * 120)); }
+        if (e.type === 'class' && e.cls === 'moonOrbit' && e.old !== 'moonOrbit') { [659, 880, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
+          A.say('やった！ つきを まわる きどうに のったよ！' + (sim.isPowered() ? ' エンジンを とめよう。' : ''), null, { interrupt: true }); }
         if (e.type === 'class') {
           const wasOrbit = ORBIT_CLS.includes(e.old);
           if (['low', 'high'].includes(e.cls) && !wasOrbit && !saidOrbit) { saidOrbit = true; [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
             A.say('やった！ ちきゅうを まわる きどうに のったよ！' + (sim.isPowered() && sim.liquidLeft() ? ' エンジンを とめると、ずっと まわりつづけるよ。' : ''), null, { interrupt: false });
             if (sim.isPowered()) { bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 4000); } }
           if (e.cls === 'toMoon' && e.old !== 'toMoon' && !saidEnc) A.say('つきの たかさまで とどくよ！ つきに であえるかな？', null, { interrupt: false });
-          if (e.cls === 'moonOrbit' && e.old !== 'moonOrbit') { [659, 880, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
-            A.say('やった！ つきを まわる きどうに のったよ！' + (sim.isPowered() && sim.liquidLeft() ? ' エンジンを とめよう。' : ''), null, { interrupt: false });
-            if (sim.isPowered()) { bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 4000); } }
           if (e.cls === 'escape' && sim.body === E) A.say('ちきゅうから にげだせる はやさに なった！', null, { interrupt: false });
         }
       });
@@ -333,9 +378,26 @@ RL.Flight2D = (function () {
         const padX = W / 2 - RW / 2 - 20 + rangeD * px * 1.4; g.fillStyle = '#ffcc00'; g.fillRect(padX, gy - 10, RW + 40, 10); }
       return { ry: startY - Math.min(Yh(h), room) };
     }
+    // ---- v0.11 月の ちかくの画面：くろい 空・灰色の 地面・クレーター・とおくに 地球 ----
+    const craters = Array.from({ length: 12 }, (_, i) => ({ x: Math.random() * 1.6, y: 0.15 + Math.random() * 0.7, r: 8 + Math.random() * 26 }));
+    function moonView(h, rangeD) {
+      const cam = Math.max(0, Yh(h) - room), gy = ground + cam;
+      g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+      g.fillStyle = '#fff'; stars.forEach(st => { g.beginPath(); g.arc(st.x, (st.y + cam * 0.3) % H, st.r, 0, 7); g.fill(); });
+      drawEarth(g, W * 0.78, H * 0.2, 26 * u, E.rot * sim.t, 29 * u);
+      if (gy < H + 50) {
+        const gr = g.createLinearGradient(0, gy, 0, H); gr.addColorStop(0, '#b9b9b4'); gr.addColorStop(1, '#6d6d6a');
+        g.fillStyle = gr; g.fillRect(0, gy, W, Math.max(0, H - gy));
+        craters.forEach(c => { const x = (((c.x * W + rangeD * px * 1.4) % (W * 1.6)) + W * 1.6) % (W * 1.6) - W * 0.3, y = gy + c.y * Math.max(40, H - gy);
+          if (y > H + 40) return; g.fillStyle = 'rgba(70,70,70,.45)'; g.beginPath(); g.ellipse(x, y, c.r * u * 1.6, c.r * u * 0.5, 0, 0, 7); g.fill();
+          g.strokeStyle = 'rgba(230,230,225,.6)'; g.lineWidth = 2; g.beginPath(); g.ellipse(x, y + 2, c.r * u * 1.6, c.r * u * 0.5, 0, 0.1, 3); g.stroke(); });
+        g.strokeStyle = '#dcdcd6'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke();
+      }
+      return { ry: startY - Math.min(Yh(h), room) };
+    }
     const cam = RL.Flight.rocketCam(cs); let box = null;
     function rocketDOM(ry, burnAny, dtR, pip) {
-      const tilt = -(Math.PI / 2 - (sim.visPt != null ? sim.visPt : sim.point));   // 東（地図で 左）へ かたむく
+      const tilt = -(Math.PI / 2 - (sim.visPt != null ? sim.visPt : sim.point));   // 東（地図で 左）へ かたむく（v0.10：見た目の 向き）
       const shake = burnAny ? 1.5 : 0;
       // のこっている部分の まんなかを 中心に かたむけ、画面の まんなかへ（切りはなしの あとも 全体が 見える）
       box = RL.Flight.remainBox(a.cells, q => {
@@ -350,8 +412,10 @@ RL.Flight2D = (function () {
         else on = +f.dataset.stage === sim.si && sim.burnC;
         if (!sim.lifted && sim.t < 0.01) on = false;
         f.style.display = on ? 'block' : 'none';
-        if (on && f.dataset.kind === 'v') { const w0 = +f.dataset.w, h0 = +f.dataset.h, kx = 0.5 + 0.5 * sim.vpow, ky = 0.35 + 0.9 * sim.vpow;
+        const th = f.dataset.kind === 'b' ? 1 : 0.3 + 0.7 * Math.sqrt(sim.throttle == null ? 1 : sim.throttle);   // v0.11：しぼると ほのおが 小さい
+        if (on && f.dataset.kind === 'v') { const w0 = +f.dataset.w, h0 = +f.dataset.h, kx = (0.5 + 0.5 * sim.vpow) * (0.6 + 0.4 * th), ky = (0.35 + 0.9 * sim.vpow) * th;
           f.style.width = w0 * kx + 'px'; f.style.left = (+f.dataset.l + w0 * (1 - kx) / 2) + 'px'; f.style.height = h0 * ky + 'px'; }
+        else if (on && f.dataset.kind === 'e') f.style.height = (+f.dataset.h) * th + 'px';
       });
       rocket.querySelectorAll('[data-stack]').forEach(b => {
         const s = sim.stacks.find(x => x.id === b.dataset.stack); if (!s || s.sepT === null || s.withStage || !sepReal[s.id]) return;
@@ -401,28 +465,35 @@ RL.Flight2D = (function () {
       const el = ts - t0, dtR = Math.min(0.05, (ts - prev) / 1000); prev = ts;
       $('count').textContent = el < pre ? String(3 - Math.floor(el / 700)) : '';
       if (el > pre && !sim.done) {
-        // v0.10：月と であう 予測の 手前は とても ゆっくり（とめる タイミングが 2秒くらい ある）
-        sim.moonNear = sim.isPowered() && sim.inSpace && sim.body === E && !!RL.CFG.ORBIT.SLOW.LOOK_MOON && RL.Predict.moonNear(sim, RL.CFG.ORBIT.SLOW.LOOK_MOON);
         const target = sim.autoWarp();
         warp = target > warp ? Math.min(target, warp * 1.06 + 0.05) : target;
+        // v0.10：月と であう 予測に かわる すぐ手前は とても ゆっくり（とめる タイミングが 2秒くらい ある）
+        sim.moonNear = sim.isPowered() && sim.inSpace && sim.body === E && RL.Predict.moonNear(sim, O.SLOW.LOOK_MOON);
         if (warp < 0.9 && !saidSlow) { saidSlow = true; [700, 520].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'sine', 0.1), i * 120)); }   // はじめて 🐢 に なった
         sim.advance(dtR * warp);
       }
       events(); engUI(); dirUI();
+      bRew.style.visibility = lastCp && sim.lifted && !ended ? 'visible' : 'hidden';
+      // v0.10：見た目の 向きは 1秒に 4ラジアンまで（くるっと まわる）
+      if (sim.visPt == null || !sim.lifted || sim.done) sim.visPt = sim.point;
+      else { const dd = Math.atan2(Math.sin(sim.point - sim.visPt), Math.cos(sim.point - sim.visPt)), mx = 4 * dtR; sim.visPt += Math.max(-mx, Math.min(mx, dd)); }
       // v0.10：月に いちばん ちかづく 少し前に「いまだ！」（ブレーキの タイミング）
-      if (!saidPeri && sim.body.id === 'moon' && !sim.isPowered() && sim.liquidLeft() && !sim.done) {
-        const el = sim.elements(), r = Math.hypot(sim.x, sim.y);
-        if (el && r < el.rp * 1.05 + 1) {   // いちばん ちかい ところの すぐ手前（早すぎると 月に おちる）
-           saidPeri = true; [880, 880, 1175].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'square', 0.1), i * 150));
-          A.say('いまだ！ うしろむきに して、エンジン！', null, { interrupt: true });
-          if (sim.dir !== 'retro') { bDir.classList.add('hint'); setTimeout(() => bDir.classList.remove('hint'), 6000); }
-          bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 6000); }
+      if (!saidPeri && sim.body.id === 'moon' && !sim.isPowered() && sim.liquidLeft() && !sim.done && !sim.near) {
+        const el = sim.elements(), rr = Math.hypot(sim.x, sim.y), vr = (sim.vx * sim.x + sim.vy * sim.y) / rr;
+        if (el && vr < 0 && rr < Math.max(el.rp, sim.body.R) * 1.08 + 150) { saidPeri = true; bDir.classList.add('hint'); bEng.classList.add('hint');
+          setTimeout(() => { bDir.classList.remove('hint'); bEng.classList.remove('hint'); }, 4000);
+          A.say(el.rp > sim.body.R ? 'いまだ！ うしろむきに して、エンジン！' : 'このままだと つきに ぶつかるよ！ うしろむきに して、エンジン！', null, { interrupt: true }); }
       }
-      // 見た目の 向き：1秒に VIS_TURN ラジアンまで まわる（うしろむきに すると くるっと まわる）
-      { const tgt = sim.dir !== 'auto' && sim.lifted && sim.canDir() ? sim.aimAngle() : sim.point;
-        if (sim.visPt == null) sim.visPt = tgt;
-        const dd = Math.atan2(Math.sin(tgt - sim.visPt), Math.cos(tgt - sim.visPt)), mx = 4 * dtR;
-        sim.visPt += Math.max(-mx, Math.min(mx, dd)); }
+      // v0.11：月の 地面ちかくの おしえ（はやすぎる／ういてる）
+      if (sim.near && !sim.done && sim.body.id === 'moon') {
+        const rr = Math.hypot(sim.x, sim.y), hh = rr - sim.body.R, gg = sim.body.mu / (rr * rr), vd = Math.max(0, -(sim.vx * sim.x + sim.vy * sim.y) / rr);
+        if (!sim.isPowered() && sim.liquidLeft() && vd * vd / (2 * (LD.TWR - 1) * gg) > hh * 0.8 && ts - warnAt > 4000) {
+          const td = RL.Predict.touchdown(sim), ok = LD.V_DOWN * (sim.legs().n ? LD.LEG_K : 1);
+          if (!td || td.vDown > ok) { warnAt = ts; A.say(sim.dir === 'retro' ? 'はやすぎる！ エンジン！' : 'はやすぎる！ うしろむきで エンジン！', null, { interrupt: true });
+            bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 2500); }
+        }
+        if (sim.hover && !saidHover) { saidHover = true; A.say('ういてるよ！ エンジンを とめると おちるよ。メーターの さんかくが みどりの ときに とめると、ふんわり おりられるよ。', null, { interrupt: true }); }
+      }
       // とんできた あと（地球から見た 位置）
       if (sim.lifted) { const ms = sim.body === E ? { x: 0, y: 0 } : SP.bodyState(sim.bodies.moon, sim.t), p = [sim.x + ms.x, sim.y + ms.y], lp = trail[trail.length - 1];
         if (!lp || Math.hypot(p[0] - lp[0], p[1] - lp[1]) > V.r * 0.006) { trail.push(p); if (trail.length > 3000) trail.splice(0, 500); } }
@@ -431,8 +502,7 @@ RL.Flight2D = (function () {
       const pr = sim.lifted ? prCache : null;
       if (pr && pr.kind !== prKind) {
         const moonNow = /^moon/.test(pr.kind), moonOld = /^moon/.test(prKind || '');
-        if (moonNow && !moonOld && sim.body === E && !saidEnc) { saidEnc = true; [659, 880, 1175].forEach((f, i) => setTimeout(() => A.tone(f, 0.18, 'triangle'), i * 100)); A.say('つきに とどく きどうだ！' + (sim.isPowered() ? ' いま、エンジンを とめて！' : ''), null, { interrupt: true });
-          if (sim.isPowered()) { bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 4000); } }
+        if (moonNow && !moonOld && sim.body === E && !saidEnc) { saidEnc = true; [659, 880, 1175].forEach((f, i) => setTimeout(() => A.tone(f, 0.18, 'triangle'), i * 100)); A.say('つきに とどく きどうだ！', null, { interrupt: false }); }
         prKind = pr.kind;
       }
       updateView(pr, dtR);
@@ -456,7 +526,8 @@ RL.Flight2D = (function () {
         pipOff();
         rocket.style.display = 'block';
         const ph = Math.atan2(sim.y, sim.x) - (O.SITE + E.rot * sim.t), rangeD = Math.atan2(Math.sin(ph), Math.cos(ph)) * E.R;
-        const { ry } = nearView(sim.body === E ? h : 9999, rangeD);
+        const onMoonNear = sim.body !== E && (sim.near || (sim.done && sim.done.type === 'landed'));
+        const { ry } = onMoonNear ? moonView(Math.max(0, h), Math.atan2(sim.y, sim.x) * sim.body.R) : nearView(sim.body === E ? h : 9999, rangeD);
         rocketDOM(ry, sim.burnC || sim.boost, dtR);
         // 小さな地図（予測の線が 地球を ひとまわり するのが 見える）
         const sz = Math.min(W, H) * 0.34, VV = { r: Math.max(E.R * 1.3, V.ra), cx: V.cx, cy: V.cy, u: u * 0.6, stars: [] };
@@ -465,21 +536,26 @@ RL.Flight2D = (function () {
       drawTop(g, W, sim, el > pre ? warp : 1, u);
       drawSpeed(g, W, H, sim, u);
       if (a.fuel > 0) drawFuel(g, H, sim, u);
+      if (sim.near && sim.body !== E && !(sim.done && sim.done.type === 'landed')) drawLandMeter(g, H, sim, u);
       if (sepFlash > 0) { g.fillStyle = `rgba(255,255,255,${sepFlash / 60})`; g.fillRect(0, 0, W, H); sepFlash--; }
       // おわり
       if (sim.done && !ended) {
         ended = sim.done.type; endAt = ts;
         if (['ground', 'hit'].includes(ended)) { A.tone(120, 0.5, 'sawtooth', 0.15); A.rumble(1); }
+        if (ended === 'landed') { rocket.classList.add('legsOut', 'landedOk'); [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.22, 'triangle'), i * 120)); }
       }
       if (ended && ended !== 'abort') {
         if (['ground', 'hit'].includes(ended)) { g.font = `${120 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('💥', W / 2, H / 2); }
-        if (ts - endAt > 1300) { cleanup(); onDone(sim); return; }
+        if (ended === 'landed') { g.font = `${90 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('\u{1F9D1}\u200D\u{1F680}', W / 2, H * 0.22); }
+        if (ts - endAt > (ended === 'landed' ? 3000 : 1300)) { cleanup(); onDone(sim); return; }
       }
       raf = requestAnimationFrame(frame);
     }
     cur = sim;
+    if (resume) syncParts();
     raf = requestAnimationFrame(frame);
     return sim;
   }
-  return { run, predict, drawSat, drawMoon, get sim() { return cur; } };
+  // lastRun（v0.11）：さいごの 飛行の ⏪ の 情報（結果画面から つづける ため）
+  return { run, predict, drawSat, drawMoon, get sim() { return cur; }, get lastRun() { return lastRun; } };
 })();

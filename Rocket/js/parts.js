@@ -1,5 +1,5 @@
 // 部品の定義と、SVGでの描き方
-RL.PART_ORDER = ['engine', 'vengine', 'tank', 'ring', 'booster', 'fin', 'win', 'nose'];
+RL.PART_ORDER = ['engine', 'vengine', 'tank', 'ring', 'booster', 'fin', 'leg', 'win', 'nose'];   // v0.11：leg＝着陸脚
 RL.BODY = { engine: 1, vengine: 1, tank: 1, win: 1, nose: 1, ring: 1 };   // 胴体としてつながる部品
 RL.ENGINES = { engine: 1, vengine: 1 };
 
@@ -60,10 +60,19 @@ RL.ENGINES = { engine: 1, vengine: 1 };
         if (s === 'right') return svg(`<path d="M0 18 L0 96 L92 96 Q78 60 0 18Z" fill="#ffd54a" stroke="${OL}" stroke-width="${W}" stroke-linejoin="round"/>`);
         return svg(`<path d="M50 10 L88 96 H12Z" fill="#ffd54a" stroke="${OL}" stroke-width="${W}" stroke-linejoin="round"/>`);
       }
+      case 'leg': {   // v0.11 着陸脚：胴体の よこに つく。.legd＝ひらいた 足、.legf＝たたんだ 足（飛行中は たたんで おく）
+        const s = ctx.side === 'right' ? -1 : 1, X = x => s > 0 ? x : 100 - x;   // left＝胴体が 右に ある
+        const open = `<g class="legd"><path d="M${X(100)} 22 L${X(18)} 90" stroke="${OL}" stroke-width="13" stroke-linecap="round"/><path d="M${X(100)} 22 L${X(18)} 90" stroke="#ffd54a" stroke-width="7" stroke-linecap="round"/>` +
+          `<path d="M${X(100)} 60 L${X(48)} 66" stroke="${OL}" stroke-width="6" stroke-linecap="round"/>` +
+          `<rect x="${s > 0 ? 2 : 66}" y="86" width="32" height="10" rx="5" fill="#cfd5e2" stroke="${OL}" stroke-width="4"/></g>`;
+        const fold = `<g class="legf"><path d="M${X(88)} 12 V88" stroke="${OL}" stroke-width="13" stroke-linecap="round"/><path d="M${X(88)} 12 V88" stroke="#ffd54a" stroke-width="7" stroke-linecap="round"/>` +
+          `<rect x="${s > 0 ? 80 : 4}" y="84" width="16" height="10" rx="4" fill="#cfd5e2" stroke="${OL}" stroke-width="4"/></g>`;
+        return svg(open + fold);
+      }
     }
     return '';
   };
-  RL.paletteIcon = kind => RL.drawPart(kind, kind === 'fin' ? { side: 'left' } : kind === 'ring' ? { up: true, down: true } : {});
+  RL.paletteIcon = kind => RL.drawPart(kind, kind === 'fin' || kind === 'leg' ? { side: 'left' } : kind === 'ring' ? { up: true, down: true } : {});
   RL.FLAME = '<svg viewBox="0 0 100 140"><path d="M20 0 H80 Q90 60 50 140 Q10 60 20 0Z" fill="#ff7a1a"/><path d="M34 0 H66 Q72 45 50 100 Q28 45 34 0Z" fill="#ffd54a"/><path d="M44 0 H56 Q58 25 50 55 Q42 25 44 0Z" fill="#fff"/></svg>';
   RL.VFLAME = '<svg viewBox="0 0 100 140"><path d="M8 0 H92 Q90 70 50 140 Q10 70 8 0Z" fill="#3d8bff" opacity=".85"/><path d="M28 0 H72 Q72 50 50 105 Q28 50 28 0Z" fill="#9fd8ff"/><path d="M42 0 H58 Q58 25 50 60 Q42 25 42 0Z" fill="#fff"/></svg>';
 
@@ -80,6 +89,10 @@ RL.ENGINES = { engine: 1, vengine: 1 };
         const L = att(r, c - 1), Rt = att(r, c + 1);
         ctx.side = (Rt && !L) ? 'left' : (L && !Rt) ? 'right' : 'both';
         ctx.attC = ctx.side === 'left' ? c + 1 : ctx.side === 'right' ? c - 1 : (L ? c - 1 : Rt ? c + 1 : null);
+      }
+      if (k === 'leg') {   // v0.11：胴体の となりに だけ つく（つかないと ロケットに ふくめない）
+        const L = isBody(r, c - 1), Rt = isBody(r, c + 1);
+        if (!L && !Rt) ctx.loose = true; else { ctx.side = Rt ? 'left' : 'right'; ctx.attC = Rt ? c + 1 : c - 1; }
       }
       if (RL.ENGINES[k]) ctx.down = false;
       if (k === 'booster') { ctx.loose = RL.isLooseBooster(grid, r, c); ctx.up = !ctx.loose && okB(r - 1, c); ctx.down = !ctx.loose && okB(r + 1, c); }

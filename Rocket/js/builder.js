@@ -29,7 +29,9 @@ RL.Builder = (function () {
       d.dataset.r = r; d.dataset.c = c;
       if (SR.n > 1) d.style.background = RL.CFG.STAGE_COLORS[SR.of(r) % RL.CFG.STAGE_COLORS.length];   // 段ごとの 色の帯
       if (hlCells.some(h => h[0] === r && h[1] === c)) d.classList.add('hl');
-      const q = map[r + ',' + c]; if (q) { d.innerHTML = RL.drawPart(q.k, q.ctx); if (q.ctx.loose) d.classList.add('loose'); }
+      const q = map[r + ',' + c]; if (q) { d.innerHTML = RL.drawPart(q.k, q.ctx);
+        // v0.11：着陸脚は さいごの 段に ついて いないと やくに たたない（切りはなしで すてられる）ので うすく
+        if (q.ctx.loose || (q.k === 'leg' && SR.of(r) !== SR.n - 1)) d.classList.add('loose'); }
       d.addEventListener('click', () => tap(r, c)); g.appendChild(d);
     }
     RL.emit('rendered');
