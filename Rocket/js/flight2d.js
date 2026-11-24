@@ -6,6 +6,7 @@
 //    v0.8.3：ボタンは いつも 同じ位置（🏁 は 出ていない間も 場所を とっておく）
 //  - v0.8.2：地図の ズーム（＋／－ボタン・ピンチ・ホイール）。画面の外の 月／地球は はしに 🌙 の しるし
 //  - v0.8.3：上の まんなかの「このまま とぶと どうなるか」の しるしは やめた。予測の線の 色で わかるため
+//  - v0.8.4：地図のときは 右上に ロケットの 小窓。ちかくの画面の 小さな地図は 軌道ぜんたいが 入る 大きさ
 //  - v0.9：まえに うちあげた 衛星（うすい 線と 小さな 衛星）と 月の 🚩 を 地図に 出す（js/save.js の ワールド）
 RL.Flight2D = (function () {
   const $ = id => document.getElementById(id), SP = RL.Space, TAU = Math.PI * 2;
@@ -233,7 +234,7 @@ RL.Flight2D = (function () {
     const ground = H * 0.82, startY = ground - 10 - lowest * cs, room = startY - H * 0.3;
     const stars = Array.from({ length: 140 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.8 + 0.3 }));
     const clouds = Array.from({ length: 14 }, (_, i) => ({ h: 25 + Math.random() * 160, x: Math.random() * 1.6, s: 0.6 + Math.random() * 0.8 }));
-    const V = { r: E.R * 1.6, cx: 0, cy: 0, u, stars: Array.from({ length: 160 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + 0.6 })) };
+    const V = { r: E.R * 1.6, ra: E.R * 1.6, cx: 0, cy: 0, u, stars: Array.from({ length: 160 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + 0.6 })) };
     const trail = []; const smoke = [];
     const sepReal = {}, stageReal = {};
     let prCache = null, prAt = 0, prKind = null, saidEnc = false;
@@ -248,7 +249,19 @@ RL.Flight2D = (function () {
     bMap.onclick = () => { view = (view === 'map' || (view === 'auto' && autoMap())) ? 'near' : 'map'; A.tone(660, 0.06); };
     bDone.onclick = () => { if (bDone.style.visibility === 'hidden') return; sim.finishNow(); };
     bDone.style.visibility = 'hidden'; engUI(); bMap.innerHTML = RL.ICON.map;
-    const cleanup = () => { cancelAnimationFrame(raf); abortCb = null; Z.on = false; zctl.style.display = 'none'; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
+    // ---- v0.8.4 ロケットの 小窓（地図のとき）：ロケットの 入れ物（#rkWrap）を 小さくして 右上へ ----
+    //  ロケットは いつもどおり 画面の (W/2, PIP_Y) に おき、まわりの L×L だけ 切りぬいて 縮める
+    const wrap = $('rkWrap'), bPip = $('btnPip'), PIP_Y = H * 0.45, PIP_L = cs * RL.CFG.ROWS * 1.15;
+    const pipBox = () => { const s = Math.min(W, H) * 0.3; return { s, x: W - 12 - s, y: 10 + 110 * u }; };
+    function pipOn(P) {
+      const k = P.s / PIP_L, cx = W / 2, cy = PIP_Y, hL = PIP_L / 2;
+      wrap.style.transformOrigin = '0 0';
+      wrap.style.transform = `translate(${P.x + P.s / 2 - k * cx}px,${P.y + P.s / 2 - k * cy}px) scale(${k})`;
+      wrap.style.clipPath = `inset(${cy - hL}px ${W - cx - hL}px ${H - cy - hL}px ${cx - hL}px)`;
+    }
+    function pipOff() { wrap.style.transform = ''; wrap.style.clipPath = ''; bPip.style.display = 'none'; }
+    bPip.onclick = () => { view = 'near'; A.tone(660, 0.06); };
+    const cleanup = () => { pipOff(); cancelAnimationFrame(raf); abortCb = null; Z.on = false; zctl.style.display = 'none'; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
     abortCb = () => { if (ended) return; ended = 'abort'; cleanup(); A.stop(); A.tone(300, 0.15, 'square', 0.1); onAbort && onAbort(sim); };
     A.say('さん、に、いち、はっしゃ！', null, { rate: 1.1 });
     [0, 700, 1400].forEach(d => setTimeout(() => { if (!ended) A.tone(880, 0.15); }, d));
@@ -290,7 +303,7 @@ RL.Flight2D = (function () {
       return { ry: startY - Math.min(Yh(h), room) };
     }
     const cam = RL.Flight.rocketCam(cs); let box = null;
-    function rocketDOM(ry, burnAny, dtR) {
+    function rocketDOM(ry, burnAny, dtR, pip) {
       const tilt = -(Math.PI / 2 - sim.point);   // 東（地図で 左）へ かたむく
       const shake = burnAny ? 1.5 : 0;
       // のこっている部分の まんなかを 中心に かたむけ、画面の まんなかへ（切りはなしの あとも 全体が 見える）
@@ -298,7 +311,7 @@ RL.Flight2D = (function () {
         if (q.stackId) { const s = sim.stacks.find(x => x.id === q.stackId); if (s && !s.withStage) return s.sepT !== null; }
         return q.stage < sim.si; }, box);
       const natural = ry + box.cy * cs;
-      cam.place(rocket, box, tilt, W / 2 + (Math.random() - 0.5) * shake, sim.lifted ? Math.max(natural, H * 0.45) : natural, dtR);
+      cam.place(rocket, box, tilt, W / 2 + (pip ? 0 : (Math.random() - 0.5) * shake), pip ? PIP_Y : sim.lifted ? Math.max(natural, H * 0.45) : natural, dtR);
       const now = performance.now();
       rocket.querySelectorAll('.flame').forEach(f => {
         let on;
@@ -321,7 +334,8 @@ RL.Flight2D = (function () {
           b.style.transform = `translateY(${tt * tt * 160 + tt * 30}px) rotate(${(i % 2 ? -1 : 1) * tt * 25}deg)`; b.style.opacity = Math.max(0, 1 - tt / 3);
         });
       });
-      // けむり
+      // けむり（小窓のときは 出さない）
+      if (pip) return;
       rocket.querySelectorAll('.flame').forEach(f => {
         if (f.style.display !== 'block') return;
         const L0 = +f.dataset.l + +f.dataset.w / 2, T0 = parseFloat(f.style.top) + cs;
@@ -341,6 +355,9 @@ RL.Flight2D = (function () {
         const r = Math.hypot(sim.x, sim.y); need = Math.max(E.R * 1.35, r * 1.2);
         if (pr) { let m = 0; pr.segs.forEach(sg => sg.pts.forEach(p => { m = Math.max(m, Math.hypot(p[0], p[1])); })); if (pr.enc) m = Math.max(m, Math.hypot(pr.enc.x, pr.enc.y) + sim.bodies.moon.soi); need = Math.max(need, Math.min(m * 1.1, E.soi)); }
       }
+      // v0.8.4：ちかくの画面の 小さな地図は ズームなしの 自動の大きさ（軌道ぜんたいが 見える）
+      const kA = Math.min(1, dtR * 2.5), needA = Math.max(sim.body.R * 1.15, Math.min(E.soi * 1.1, need));
+      V.ra = Math.exp(Math.log(V.ra) + (Math.log(needA) - Math.log(V.ra)) * kA);
       // v0.8.2：ズーム（自動の大きさ × 倍率）。ちかすぎ・とおすぎは とめる
       need = Math.max(sim.body.R * 1.15, Math.min(E.soi * 1.1, need * Math.exp(Z.log)));
       const k = Math.min(1, dtR * (Z.pins.size > 1 ? 8 : 2.5));
@@ -377,15 +394,24 @@ RL.Flight2D = (function () {
       Z.on = useMap && !ended; zctl.style.display = Z.on ? 'flex' : 'none';
       if (Z.on) { $('btnZin').classList.toggle('off', Z.log <= Z_IN + 1e-6); $('btnZout').classList.toggle('off', Z.log >= Z_OUT - 1e-6); }
       if (useMap) {
-        rocket.style.display = 'none';
         drawMap(g, V, sim, pr, trail, { x0: 0, y0: 0, w: W, h: H }, false, WD);
+        // v0.8.4：右上に ロケットの 小窓（ほのお・切りはなし・かたむき が 見える）。おすと ちかくの画面へ
+        if (sim.lifted && !ended) {
+          const P = pipBox();
+          g.fillStyle = RL.Flight.skyAt(sim.body === E ? h : 9999); g.fillRect(P.x, P.y, P.s, P.s);
+          rocket.style.display = 'block'; pipOn(P);
+          rocketDOM(0, false, dtR, true);
+          g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; g.strokeRect(P.x, P.y, P.s, P.s);
+          Object.assign(bPip.style, { display: 'block', left: P.x + 'px', top: P.y + 'px', width: P.s + 'px', height: P.s + 'px' });
+        } else { rocket.style.display = 'none'; pipOff(); }
       } else {
+        pipOff();
         rocket.style.display = 'block';
         const ph = Math.atan2(sim.y, sim.x) - (O.SITE + E.rot * sim.t), rangeD = Math.atan2(Math.sin(ph), Math.cos(ph)) * E.R;
         const { ry } = nearView(sim.body === E ? h : 9999, rangeD);
         rocketDOM(ry, sim.burnC || sim.boost, dtR);
         // 小さな地図（予測の線が 地球を ひとまわり するのが 見える）
-        const sz = Math.min(W, H) * 0.34, VV = { r: Math.max(E.R * 1.3, Math.min(V.r, E.R * 3)), cx: 0, cy: 0, u: u * 0.6, stars: [] };
+        const sz = Math.min(W, H) * 0.34, VV = { r: Math.max(E.R * 1.3, V.ra), cx: V.cx, cy: V.cy, u: u * 0.6, stars: [] };
         drawMap(g, VV, sim, pr, trail, { x0: 12, y0: 86, w: sz, h: sz }, true, WD);
       }
       drawTop(g, W, sim, el > pre ? warp : 1, u);
