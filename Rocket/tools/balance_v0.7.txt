@@ -1,0 +1,16 @@
+1段 E                            50 ☁️  段の切離し=-  宇宙-  飛行3.6s
+1段 E+T                         207 ✈️  段の切離し=-  宇宙-  飛行8.3s
+1段 E+2T+N                     1384 🛰️  段の切離し=-  宇宙7.1s  飛行26.3s
+1段 E+5T+N                     2618 🌙  段の切離し=-  宇宙13.1s  飛行42.5s
+1段 V+2T+N（宇宙用だけ）                49 ☁️  段の切離し=-  宇宙-  飛行17.5s
+1段 E+5T+N B4×2 はね外            5342 ☄️  段の切離し=-  宇宙7.4s  飛行53.4s
+2段 E3T｜E2T+N                  3969 🌙  段の切離し=10.4s@106  宇宙14.9s  飛行51.4s
+2段 E3T｜V2T+N                  7061 ☄️  段の切離し=10.4s@117  宇宙16.3s  飛行69.4s
+2段 V3T｜E2T+N（逆）               1615 🛰️  段の切離し=21.7s@0  宇宙29.1s  飛行50.2s
+2段 V3T｜V2T+N                    71 ☁️  段の切離し=21.7s@0  宇宙-  飛行39.8s
+2段 E3T｜V2T+N B3 はねB          10786 ☄️  段の切離し=10.4s@398  宇宙8.8s  飛行78.7s
+2段 E4T｜V3T+N B4 はねB          11530 ☄️  段の切離し=10.4s@456  宇宙8.0s  飛行80.4s
+3段 E2T｜E1T｜V1T+N              7390 ☄️  段の切離し=7.3s@55,11.7s@180  宇宙14.5s  飛行66.5s
+
+1段・左右対称の総当たり 最大: 9065 ☄️ [["fin"],["booster","booster","booster","booster","booster"],["vengine","tank","tank","tank","nose"],["booster","booster","booster","booster","booster"],["fin"]]
+2段・左右対称の総当たり 最大: 14704 🪐   土星に届く 59 / 2632 [["fin"],["booster","booster","booster","booster","booster","booster","booster","booster","booster"],["engine","tank","tank","tank","tank","ring","vengine","tank","nose"],["booster","booster","booster","booster","booster","booster","booster","booster","booster"],["fin"]]

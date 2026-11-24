@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ロケット ラボ</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <div id="palette"></div>
+  <div id="mid">
+    <div id="ladder"></div>
+    <div id="stage"><div id="grid"></div><div id="pad"></div></div>
+  </div>
+  <div id="bottom">
+    <button class="small" id="home" aria-label="もどる"></button>
+    <button class="small" id="clear" aria-label="ぜんぶけす"></button>
+    <button class="small" id="prof" aria-label="うちあげかた"></button>
+    <button id="launch" aria-label="はっしゃ"></button>
+    <button class="small" id="mute" aria-label="おと"></button>
+  </div>
+</div>
+<div id="fly"><canvas id="cv"></canvas><div id="flyRocket"></div><div id="count"></div>
+  <button id="btnAbort" aria-label="ちゅうし（ながおし）"><span class="ring"></span></button>
+  <div id="fctl">
+    <button id="btnEng" aria-label="エンジン"></button>
+    <button id="btnMap" aria-label="ちず"></button>
+    <button id="btnDone" aria-label="おわる"></button>
+  </div>
+</div>
+<div id="result"><div id="resIcon"></div><div id="resStars"></div><div id="resInfo"></div><button id="again" aria-label="もういっかい"></button></div>
+<div id="confirm"><div class="box"><div id="cfIcon"></div><div class="row"><button id="cfNo" aria-label="いいえ"></button><button id="cfYes" aria-label="はい"></button></div></div></div>
+<div id="tutBubble"><div id="tutIcon"></div><button id="tutEar" aria-label="もういちど きく"></button></div>
+<div id="tutHand">👆</div>
+<div id="title">
+  <div id="titleRocket"></div>
+  <div id="titleBtns">
+    <button id="btnTut" aria-label="れんしゅう"></button>
+    <button id="btnFree" aria-label="じゆうに あそぶ（たかさ）"></button>
+    <button id="btnOrbit" aria-label="うちゅうモード"></button>
+  </div>
+</div>
+<div id="ver"></div>
+<!-- 読み込み順に意味がある（RL という1つの入れ物に順番に足していく） -->
+<script src="js/config.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/parts.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/space.js"></script>
+<script src="js/physics2d.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/builder.js"></script>
+<script src="js/flight.js"></script>
+<script src="js/flight2d.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
