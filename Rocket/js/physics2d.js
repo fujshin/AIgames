@@ -4,6 +4,8 @@
 //  - 惰性で うちゅうを飛ぶ間：ケプラー軌道の式で 位置を出す（レール上）。早送りしても 軌道が くずれない
 //  - 段・ブースター・宇宙用エンジン・はね は たかさモード（physics.js）と同じ きまり
 //  - 液体エンジン（地上用・宇宙用）は 止めて また つけられる。ブースター（固体）は 止められない
+//  - v0.10：向き（sim.dir）。'auto'＝打ち上げの 自動／'pro'＝すすむ向き（前へ）／'retro'＝反対（うしろへ・ブレーキ）
+//           えらべるのは くうきの外だけ。うちゅうで いちど エンジンを とめたら、つぎからは 'pro'
 RL.Orbit = (function () {
   const SP = RL.Space, D2R = Math.PI / 180;
   const sum = (arr, f) => arr.reduce((z, x) => z + f(x), 0);
@@ -30,7 +32,7 @@ RL.Orbit = (function () {
       landed: true, lifted: false, si: 0, engineOn: true, dev: 0, devDir: 1, el: null, rails: false,
       maxAlt: 0, maxV: 0, done: null, cls: null, coastT: 0, stableT: 0, inSpace: false,
       thrust: 0, mass: 0, weight: 0, pitch: 90, point: Math.PI / 2, rho: 1, vpow: P.VAIR, burnC: false, boost: false,
-      profile: opt.profile || 'side', stages: S, stacks: st, a,
+      profile: opt.profile || 'side', dir: 'auto', stages: S, stacks: st, a,
       dvUsed: 0
     };
     sim.vx = -earth.rot * sim.y; sim.vy = earth.rot * sim.x;    // 地面と いっしょに まわっている
@@ -45,6 +47,7 @@ RL.Orbit = (function () {
     const liquidLeft = () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0; };
     const canBurnCore = () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0 && sim.t >= c.ignT; };
     const boosting = () => st.some(s => s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0);
+    const inAirNow = () => !!sim.body.atmo && Math.hypot(sim.x, sim.y) - sim.body.R < sim.body.atmo;
     sim.isPowered = () => (sim.engineOn && canBurnCore()) || boosting() || (S[sim.si].ignT > sim.t);
     // ---- ピッチ（地平線からの角度）を自動で きめる ----
     function guidance(h, r, vr, vt, aT, g) {
@@ -58,6 +61,13 @@ RL.Orbit = (function () {
       const need = g - vt * vt / r + gain * (vrT - vr);
       const th = aT > 0 ? Math.asin(Math.max(0, Math.min(1, need / aT))) / D2R : 90;
       return inAir ? Math.max(th, 90 - (90 - prof.pitch) * k) : th;
+    }
+    // v0.10：「前へ／うしろへ」の ときの おす向き（地平線からの 角度。いまの 天体から 見た 速さの 向き）
+    function aimAngle() {
+      const r = Math.hypot(sim.x, sim.y), ux = sim.x / r, uy = sim.y / r, ex = -uy, ey = ux;
+      const k = sim.dir === 'retro' ? -1 : 1, vx = sim.vx * k, vy = sim.vy * k;
+      if (Math.hypot(vx, vy) < 1e-6) return sim.point;
+      return Math.atan2(vx * ux + vy * uy, vx * ex + vy * ey);
     }
     // ---- 推力・燃料（dt 秒ぶん） ----
     function burn(dt, rho) {
@@ -105,7 +115,10 @@ RL.Orbit = (function () {
       // はねが たりないと かたむく（くうきの中だけ）
       const f = fins();
       if (sim.lifted) sim.dev = Math.min(1.2, sim.dev + devTarget(f) * P.TILT_GROW * rho * dt);
-      const pt = sim.pitch * D2R - sim.dev * sim.devDir; sim.point = pt;
+      // v0.10：向きを えらんで いるときは（くうきの外だけ）、すすむ向き／その反対へ まっすぐ おす
+      const manual = sim.dir !== 'auto' && !rho && sim.lifted;
+      const pt = manual ? aimAngle() : sim.pitch * D2R - sim.dev * sim.devDir; sim.point = pt;
+      if (manual) sim.pitch = Math.max(-90, Math.min(90, pt / D2R));   // 自動に もどったときに とばないように
       const tx = Math.cos(pt) * ex + Math.sin(pt) * ux, ty = Math.cos(pt) * ey + Math.sin(pt) * uy;
       sim.tdx = tx; sim.tdy = ty;   // おす向き（スローモーションの判定に つかう）
       // 空気のじゃま（地面といっしょに まわる 空気に対して）
@@ -238,8 +251,10 @@ RL.Orbit = (function () {
       return Math.abs(d) * earth.R;
     }
     // 軌道の種類（地球のまわり／月のまわり）
+    //  v0.10：月を まわる ＝ 月に ぶつからず、月の重力圏の 中に おさまる だ円（はみだすなら 通りぬける）
     function clsOf(el) {
-      return sim.body === earth ? SP.classify(el, earth, moon.orbitR) : (el.e < 1 && el.rp > sim.body.R ? 'moonOrbit' : el.e < 1 ? 'moonFall' : 'moonPass');
+      if (sim.body === earth) return SP.classify(el, earth, moon.orbitR);
+      return el.e < 1 && el.rp < sim.body.R ? 'moonFall' : el.e < 1 && el.ra < sim.body.soi ? 'moonOrbit' : 'moonPass';
     }
     // v0.8.2：このまま あと すこし（SLOW.LOOK）おすと 軌道の種類が かわるか（＝だいじな ところ）
     function critical() {
@@ -252,6 +267,8 @@ RL.Orbit = (function () {
     //  - くうきの中で 燃えている間・発射台の上は 実時間
     //  - v0.8.2：うちゅうで 燃えている間は スローモーション。1秒（実時間）に ふえる速さを SLOW.DV までに おさえる
     //    軌道の種類が かわる すぐ手前（月に とどく／にげる／まわりはじめる 等）は SLOW.DV_NEAR まで ゆっくり
+    //  - v0.10：月と であう 予測に かわる すぐ手前（flight2d が sim.moonNear を たてる）は SLOW.DV_MOON まで もっと ゆっくり
+    //           月の重力圏では 早送りを ひかえめに（いちばん ちかづく ところで ブレーキを かけやすく）
     function autoWarp() {
       if (sim.done) return 1;
       const r = Math.hypot(sim.x, sim.y), v = Math.max(1, Math.hypot(sim.vx, sim.vy)), h = r - sim.body.R;
@@ -260,18 +277,27 @@ RL.Orbit = (function () {
         if (!sim.lifted || (sim.body.atmo && h < sim.body.atmo)) return 1;
         const acc = sim.thrust / Math.max(0.1, sim.mass), SL = O.SLOW;
         if (!SL || acc <= 0) return 1;
+        if (sim.moonNear && SL.DV_MOON) return Math.max(SL.MIN_MOON || 0.004, Math.min(1, SL.DV_MOON / acc));
         return Math.max(SL.MIN, Math.min(1, (critical() ? SL.DV_NEAR : SL.DV) / acc));
       }
       if (sim.body.atmo && h < sim.body.atmo) return Math.max(1, Math.min(8, h / 60));
-      let wmax = r / v / 1.6;
+      let wmax = r / v / (sim.body.parent ? 6 : 1.6);
       // 月に ちかづいたら ゆっくりに（であいを 見のがさない・見せる）
       sim.body.children.forEach(c => { const cs = SP.bodyState(c, sim.t), d = Math.hypot(sim.x - cs.x, sim.y - cs.y) - c.soi, rv = Math.max(1, Math.hypot(sim.vx - cs.vx, sim.vy - cs.vy));
         if (d > 0) wmax = Math.min(wmax, Math.max(20, d / rv / 1.2)); });
       return Math.max(1, Math.min(O.WARP_MAX, wmax));
     }
     return Object.assign(sim, {
-      advance, elements, autoWarp, downrange, events: ev, alt, coreFuel, critical,
-      setEngine(on) { if (sim.engineOn === on) return; sim.engineOn = on; sim.el = null; emit(on ? 'engine-on' : 'engine-off'); },
+      advance, elements, autoWarp, downrange, events: ev, alt, coreFuel, critical, aimAngle,
+      setEngine(on) {
+        if (sim.engineOn === on) return; sim.engineOn = on; sim.el = null;
+        // v0.10：うちゅうで いちど とめたら、つぎからは「前へ」（自動の 打ち上げは おしまい）
+        if (!on && sim.dir === 'auto' && sim.lifted && !inAirNow()) sim.dir = 'pro';
+        emit(on ? 'engine-on' : 'engine-off');
+      },
+      // v0.10：向きを えらぶ（くうきの外だけ）。'pro' ⇄ 'retro'
+      setDir(d) { if (!sim.lifted || inAirNow() || !['pro', 'retro'].includes(d) || sim.dir === d) return false; sim.dir = d; sim.el = null; emit('dir', { dir: d }); return true; },
+      canDir: () => sim.lifted && !sim.done && !inAirNow(),
       abort() { finish({ type: 'abort' }); },
       finishNow() { if (sim.cls && ['low', 'high', 'toMoon', 'moonOrbit'].includes(sim.cls) && !sim.isPowered()) finish({ type: 'orbit', el: elements() }); },
       liquidLeft,

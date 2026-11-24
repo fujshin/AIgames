@@ -6,7 +6,6 @@
 RL.Predict = (function () {
   const SP = RL.Space, TAU = Math.PI * 2;
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
-
   // 近点からの 時間（だ円は 周回ぶんも つなげて 単調にする）
   function tOfNu(el, nu) {
     if (el.e < 1) { const w = wrap(nu); return SP.timeFromPeri(el, w) + (nu - w) / el.n; }
@@ -29,7 +28,6 @@ RL.Predict = (function () {
     }
     return out;
   }
-
   // 1つの重力圏の中を たどる
   //  返す: { pts:[[x,y]], el, end:{ type:'hit'|'exit'|'enc'|'loop', t, st } }
   function trace(st, body, t0, N) {
@@ -71,7 +69,6 @@ RL.Predict = (function () {
     }
     return { pts: samp.map(s => [s.x, s.y]), el, end };
   }
-
   // sim（physics2d）から 予測をつくる
   function fromSim(sim) {
     if (!sim || !sim.lifted) return null;
@@ -105,5 +102,16 @@ RL.Predict = (function () {
     const el = SP.toElements(x, y, vx, vy, E.mu, t);
     return { at: [x, y], kind: el.e >= 1 || el.ra > E.soi ? 'escape' : el.rp < E.R + E.atmo ? 'hit' : 'orbit' };
   }
-  return { fromSim, trace };
+  // v0.10：いま 燃やしている 向きに あと L まで 速さを 足したら（いまも ふくむ）月と であうか
+  //  （月と であう 予測に かわる すぐ手前で、スローモーションを もっと ゆっくりに する）
+  function moonNear(sim, L) {
+    if (!sim.lifted || sim.body !== sim.bodies.earth) return false;
+    const tx = sim.tdx || 0, ty = sim.tdy || 0;
+    for (const k of [0, 0.5, 1]) {
+      const st = { x: sim.x, y: sim.y, vx: sim.vx + tx * L * k, vy: sim.vy + ty * L * k };
+      if (trace(st, sim.body, sim.t, 120).end.type === 'enc') return true;
+    }
+    return false;
+  }
+  return { fromSim, trace, moonNear };
 })();

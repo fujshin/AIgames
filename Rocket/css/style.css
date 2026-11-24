@@ -149,3 +149,7 @@ body.flying #badge{display:none}
 /* v0.8.4 地図のときの ロケットの 小窓 */
 #rkWrap{position:absolute;inset:0;pointer-events:none}
 #btnPip{position:absolute;display:none;border:none;background:transparent;cursor:pointer;z-index:3;border-radius:6px}
+/* v0.10 向きボタン */
+#btnDir{visibility:hidden}
+#btnDir.retro{background:rgba(160,80,20,.9)!important}
+#btnDir.hint{animation:pulse .5s infinite alternate}
