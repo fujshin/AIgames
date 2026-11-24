@@ -42,6 +42,7 @@ RL.Orbit = (function () {
     const alt = () => Math.hypot(sim.x, sim.y) - sim.body.R;
     const rhoAt = h => sim.body.atmo ? Math.max(0, 1 - h / sim.body.atmo) : 0;
     const coreFuel = () => sum(S.slice(sim.si), y => y.fuel);
+    const liquidLeft = () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0; };
     const canBurnCore = () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0 && sim.t >= c.ignT; };
     const boosting = () => st.some(s => s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0);
     sim.isPowered = () => (sim.engineOn && canBurnCore()) || boosting() || (S[sim.si].ignT > sim.t);
@@ -215,12 +216,18 @@ RL.Orbit = (function () {
         checkSOI();
       }
       // 軌道の種類と「安定して まわった」の判定
+      //  v0.8.3：燃料が のこっている間は すぐには おわらない（🏁 で おわる。再点火・月を まつ ことが できる。IDLE_TURNS 周で おしまい）
+      //          燃料が もう ないとき：ORBIT_DONE 周で おわる。月まで とどく軌道は 月と であうのを MOON_WAIT 周 まつ
       if (!sim.done && sim.lifted) {
         const el = sim.el || SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t);
         const cls = clsOf(el);
         if (cls !== sim.cls) { const old = sim.cls; sim.cls = cls; emit('class', { cls, old }); }
         const stable = ['low', 'high', 'toMoon', 'moonOrbit'].includes(cls) && !sim.isPowered() && el.e < 1;
-        if (stable) { sim.stableT += dtAll; if (sim.stableT > el.T * O.ORBIT_DONE) finish({ type: 'orbit', el }); } else sim.stableT = 0;
+        if (stable) {
+          sim.stableT += dtAll;
+          const turns = liquidLeft() && !opt.autoEnd ? (O.IDLE_TURNS || 8) : cls === 'toMoon' ? (O.MOON_WAIT || 4) : O.ORBIT_DONE;
+          if (sim.stableT > el.T * turns) finish({ type: 'orbit', el });
+        } else sim.stableT = 0;
       }
       if (!sim.done && sim.t > 400000) finish({ type: 'timeout' });
     }
@@ -267,17 +274,18 @@ RL.Orbit = (function () {
       setEngine(on) { if (sim.engineOn === on) return; sim.engineOn = on; sim.el = null; emit(on ? 'engine-on' : 'engine-off'); },
       abort() { finish({ type: 'abort' }); },
       finishNow() { if (sim.cls && ['low', 'high', 'toMoon', 'moonOrbit'].includes(sim.cls) && !sim.isPowered()) finish({ type: 'orbit', el: elements() }); },
-      liquidLeft: () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0; },
+      liquidLeft,
       fuelRatio: () => (a.fuel ? coreFuel() / a.fuel : 0)
     });
   }
-  // ツール用：最後まで 一気に計算する（エンジンは 自動のまま）
+  // ツール用：最後まで 一気に計算する（エンジンは 自動のまま。燃料が のこっていても 安定した軌道なら おわる）
   function runToEnd(a, opt) {
-    const s = create(a, opt), cap = (opt && opt.maxT) || 200000;
+    opt = Object.assign({ autoEnd: true }, opt || {});
+    const s = create(a, opt), cap = opt.maxT || 200000;
     while (!s.done && s.t < cap) {
       s.advance(Math.max(0.02, s.autoWarp() * 0.05));
       // autoCut：予測の線が 地球を ひとまわり したら（近地点が くうきの外）エンジンを止める ＝ 子どもが ちょうどよく止めた場合
-      if (opt && opt.autoCut && s.engineOn && s.lifted && s.body === s.bodies.earth) {
+      if (opt.autoCut && s.engineOn && s.lifted && s.body === s.bodies.earth) {
         const el = s.elements(); if (el && el.e < 1 && el.rp > s.body.R + s.body.atmo + 20) { s.setEngine(false); s.cutFuel = s.fuelRatio(); }
       }
     }

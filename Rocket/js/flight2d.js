@@ -3,17 +3,17 @@
 //  - 地図（くうきの外）：地球を まんなかに、月・とんできた あと・予測の線（地面に ぶつかる＝オレンジ、まわる＝みどり、にげる＝むらさき）
 //  - 早送りは 自動（燃えている間は 実時間）。v0.8.2：うちゅうで 燃やす間は スローモーション（🐢）
 //  - ボタン：エンジン とめる／つける（液体だけ）、地図／ちかく、おわる（安定した軌道のとき）、中止（長おし）
+//    v0.8.3：ボタンは いつも 同じ位置（🏁 は 出ていない間も 場所を とっておく）
 //  - v0.8.2：地図の ズーム（＋／－ボタン・ピンチ・ホイール）。画面の外の 月／地球は はしに 🌙 の しるし
+//  - v0.8.3：上の まんなかの「このまま とぶと どうなるか」の しるし（💥🛰️🚀…）は やめた。予測の線の 色で わかるため
 RL.Flight2D = (function () {
   const $ = id => document.getElementById(id), SP = RL.Space, TAU = Math.PI * 2;
   const STAGE_NAME = ['だいいち', 'だいに', 'だいさん', 'だいよん', 'だいご'], IGN_NAME = ['', 'にだんめ', 'さんだんめ', 'よんだんめ', 'ごだんめ'];
-  const COL = { hit: '#ff9a3d', orbit: '#5aff7a', escape: '#d58bff' };
   const ORBIT_CLS = ['low', 'high', 'toMoon', 'moonOrbit'];
   let raf = null, cur = null;
   const earthImg = new Image(); earthImg.src = 'img/earth.webp';
-  // 予測の線の 色と、上に出す しるし（いまの まま とぶと どうなるか）
+  // 予測の線の 色
   const SEG_COL = { hit: '#ff9a3d', orbit: '#5aff7a', escape: '#d58bff', moonPass: '#7fd3ff', moonOrbit: '#5aff7a', moonHit: '#ff9a3d' };
-  const BADGE = { hit: '💥', orbit: '🛰️', escape: '🚀', moonPass: '🌙➡️', moonOrbit: '🌙🛰️', moonHit: '🌙💥' };
   const FATE_ICON = { escape: '🚀', orbit: '🔄', hit: '💥' };
   const predict = sim => RL.Predict.fromSim(sim);
   // ---- ズームの ボタンの絵（v0.8.2） ----
@@ -166,15 +166,6 @@ RL.Flight2D = (function () {
     if (slow) { g.fillStyle = '#7fd3ff'; g.fillText('🐢×1/' + Math.max(2, Math.round(1 / warp)), bx - 8 * u, 78 * u); }   // v0.8.2：スローモーション
     g.restore();
   }
-  // ---- いまの まま とぶと どうなるか の しるし（上の まんなか） ----
-  function drawBadge(g, W, pr, u, big) {
-    const t = BADGE[pr.kind]; if (!t) return;
-    const x = W / 2, y = (big ? 40 : 46) * u + 30, w = (t.length > 2 ? 120 : 84) * u, h = 56 * u;
-    g.save(); g.fillStyle = 'rgba(0,0,20,.7)'; g.strokeStyle = SEG_COL[pr.kind]; g.lineWidth = 4;
-    g.beginPath(); g.roundRect ? g.roundRect(x - w / 2, y - h / 2, w, h, h / 2) : g.rect(x - w / 2, y - h / 2, w, h); g.fill(); g.stroke();
-    g.font = `${34 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.fillText(t, x, y + 2);
-    g.restore();
-  }
   // ---- 中止ボタン（長おし） ----
   function holdButton(el, ms, fn) {
     let t0 = null, rq = null; const ring = el.querySelector('.ring');
@@ -223,14 +214,14 @@ RL.Flight2D = (function () {
     let t0 = null, prev = null, warp = 1, view = 'auto', sepFlash = 0, saidSep = false, ended = null, endAt = 0, saidOrbit = false, saidSlow = false;
     const pre = 2100;
     Z.log = 0; Z.pins.clear();
-    // ボタン
+    // ボタン（v0.8.3：🏁 は visibility で 出し入れ ＝ ほかの ボタンが うごかない）
     const bEng = $('btnEng'), bMap = $('btnMap'), bDone = $('btnDone'), zctl = $('zctl');
     let engShown = null;
     const engUI = () => { const ok = sim.liquidLeft() && !sim.done; bEng.classList.toggle('off', !ok); if (engShown !== sim.engineOn) { engShown = sim.engineOn; bEng.innerHTML = sim.engineOn ? RL.ICON.engStop : RL.ICON.engGo; } bEng.classList.toggle('on', sim.engineOn); };
     bEng.onclick = () => { RL._engClick = (RL._engClick || 0) + 1; if (!sim.lifted || !sim.liquidLeft() || sim.done) { A.tone(150, 0.15, 'square', 0.08); return; } sim.setEngine(!sim.engineOn); engUI(); };
     bMap.onclick = () => { view = (view === 'map' || (view === 'auto' && autoMap())) ? 'near' : 'map'; A.tone(660, 0.06); };
-    bDone.onclick = () => { sim.finishNow(); };
-    bDone.style.display = 'none'; engUI(); bMap.innerHTML = RL.ICON.map;
+    bDone.onclick = () => { if (bDone.style.visibility === 'hidden') return; sim.finishNow(); };
+    bDone.style.visibility = 'hidden'; engUI(); bMap.innerHTML = RL.ICON.map;
     const cleanup = () => { cancelAnimationFrame(raf); abortCb = null; Z.on = false; zctl.style.display = 'none'; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
     abortCb = () => { if (ended) return; ended = 'abort'; cleanup(); A.stop(); A.tone(300, 0.15, 'square', 0.1); onAbort && onAbort(); };
     A.say('さん、に、いち、はっしゃ！', null, { rate: 1.1 });
@@ -355,7 +346,7 @@ RL.Flight2D = (function () {
       }
       updateView(pr, dtR);
       const h = Math.hypot(sim.x, sim.y) - sim.body.R, useMap = view === 'map' || (view === 'auto' && autoMap());
-      bDone.style.display = (!sim.done && ORBIT_CLS.includes(sim.cls) && !sim.isPowered()) ? 'flex' : 'none';
+      bDone.style.visibility = (!sim.done && ORBIT_CLS.includes(sim.cls) && !sim.isPowered()) ? 'visible' : 'hidden';
       // ズームの ボタン：地図のときだけ（ちかくの画面では 左上に 小さな地図が あるため）
       Z.on = useMap && !ended; zctl.style.display = Z.on ? 'flex' : 'none';
       if (Z.on) { $('btnZin').classList.toggle('off', Z.log <= Z_IN + 1e-6); $('btnZout').classList.toggle('off', Z.log >= Z_OUT - 1e-6); }
@@ -372,7 +363,6 @@ RL.Flight2D = (function () {
         drawMap(g, VV, sim, pr, trail, { x0: 12, y0: 86, w: sz, h: sz }, true);
       }
       drawTop(g, W, sim, el > pre ? warp : 1, u);
-      if (pr && !ended) drawBadge(g, W, pr, u, useMap);
       drawSpeed(g, W, H, sim, u);
       if (a.fuel > 0) drawFuel(g, H, sim, u);
       if (sepFlash > 0) { g.fillStyle = `rgba(255,255,255,${sepFlash / 60})`; g.fillRect(0, 0, W, H); sepFlash--; }
