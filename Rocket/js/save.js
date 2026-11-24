@@ -20,7 +20,10 @@ RL.MEDALS = [
   { key: 'softLeg',   icon: '\u{1F9B5}' },   // v0.11 着陸脚で ふんわり（下むき SOFT 以下）
   { key: 'earthLand', icon: '\u{1F3E0}' },   // v0.12 地球に 着陸（エンジン）
   { key: 'chuteLand', icon: '\u{1FA82}' },   // v0.12 パラシュートで 着陸
-  { key: 'moonRock',  icon: '\u{1FAA8}' }    // v0.13 月から かえってきた（つきの いし）
+  { key: 'moonRock',  icon: '\u{1FAA8}' },   // v0.13 月から かえってきた（つきの いし）
+  { key: 'mis1',      icon: '\u{1F530}' },   // v0.14 ミッション 1章（うちゅうモードの きほん）
+  { key: 'mis2',      icon: '\u{1F4AB}' },   // v0.14 ミッション 2章（ちきゅうを まわる）
+  { key: 'mis3',      icon: '\u{1F3C5}' }    // v0.14 ミッション 3章（ちきゅうに かえる）
 ];
 RL.Save = (function () {
   const C = RL.CFG.SAVE;

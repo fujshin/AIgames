@@ -41,7 +41,7 @@
     <button id="btnZout" aria-label="とおくを みる（ズーム）"></button>
   </div>
 </div>
-<div id="result"><div id="resIcon"></div><div id="resStars"></div><div id="resInfo"></div><div id="resBtns"><button id="resRew" aria-label="ここから やりなおし"></button><button id="again" aria-label="もういっかい"></button></div></div>
+<div id="result"><div id="resIcon"></div><div id="resStars"></div><div id="resInfo"></div><div id="resBtns"><button id="resMap" aria-label="ミッションの ちず">🗺️</button><button id="resRew" aria-label="ここから やりなおし"></button><button id="again" aria-label="もういっかい"></button></div></div>
 <div id="toast" aria-live="polite"></div>
 <div id="confirm"><div class="box"><div id="cfIcon"></div><div class="row"><button id="cfNo" aria-label="いいえ"></button><button id="cfYes" aria-label="はい"></button></div></div></div>
 <div id="tutBubble"><div id="tutIcon"></div><button id="tutEar" aria-label="もういちど きく"></button></div>
@@ -56,6 +56,7 @@
     <button id="btnTut" aria-label="れんしゅう"></button>
     <button id="btnFree" aria-label="じゆうに あそぶ（たかさ）"></button>
     <button id="btnOrbit" aria-label="うちゅうモード"></button>
+    <button id="btnMis" aria-label="ミッション">🗺️</button>
   </div>
 </div>
 <!-- v0.9 こどもを えらぶ -->
@@ -71,7 +72,10 @@
   <div id="medGrid"></div>
   <button id="mdClose" aria-label="とじる"></button>
 </div></div>
+<!-- v0.14 ミッションの ちず -->
+<div id="misMap"><div class="box"><div id="misRows"></div><button id="misClose" aria-label="とじる"></button></div></div>
 <div id="badge"></div>
+<div id="misBadge"></div>
 <div id="ver"></div>
 <!-- 読み込み順に意味がある（RL という1つの入れ物に順番に足していく） -->
 <script src="js/config.js"></script>
@@ -87,6 +91,7 @@
 <script src="js/flight.js"></script>
 <script src="js/flight2d.js"></script>
 <script src="js/tutorial.js"></script>
+<script src="js/missions.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

@@ -184,6 +184,9 @@
       if (!RL.Tutorial.active) B.hint('engine');
       RL.emit('launch-fail', 'noEngine'); return;
     }
+    // v0.14 ミッション：きまった 打ち上げかたで ないと 発射しない
+    if (MS.active && mode === 'orbit' && !MS.onLaunch(B.grid, profile)) {
+      A.tone(150, 0.15, 'square', 0.08); A.say(PROF_SAY[MS.active.need] + ' とぶ うちあげかたに しよう。 したの ボタンだよ。'); flash($('prof')); return; }
     RL.emit('launch', s);
     if (mode === 'orbit') { lastA = a; lastProf = profile; RL.Flight2D.run(a, profile, sim => result2d(sim), aborted); return; }
     RL.Flight.run(a, s, () => result(s), aborted);
@@ -197,7 +200,7 @@
     lastRec = null; closeResult(); A.tone(660, 0.08);
     RL.Flight2D.run(lastA, lastProf, sim => result2d(sim), aborted, lr);
   });
-  function aborted(sim) { if (sim && sim.t) SV.advanceClock(sim.t); A.say('ちゅうし！ つくりなおそう。'); RL.emit('abort'); }
+  function aborted(sim) { if (MS.ctx) MS.ctx.aborts++; if (sim && sim.t) SV.advanceClock(sim.t); A.say('ちゅうし！ つくりなおそう。'); RL.emit('abort'); }
   // ---- うちゅうモードの結果 ----
   function result2d(sim) {
     const d = sim.done, info = [], medals = [];
@@ -239,6 +242,7 @@
         if (d.vDown != null) { say += ' はやさ ' + Math.round(d.vDown) + '。' + (d.vDown < 40 ? 'もうすこし ゆっくり おりれば ちゃくりく できるよ！' : 'つきの ちかくで うしろむきに エンジンを つかうと、ゆっくり おりられるよ。'); }
         SV.addObj({ kind: 'flag', ang: Math.atan2(sim.y, sim.x), abs: W0 + sim.t }); objAdded = true; break;
       case 'heavy': icon = '🏋️'; say = 'おもくて あがらなかった！'; break;
+      case 'mission': icon = '\u{1F389}'; stars = 3; break;   // v0.14：とちゅうで ミッション クリア
       default: icon = '⏱️'; say = 'じかん ぎれ！';
     }
     // v0.13：月面に のこした もの（✂️ した 段＝着陸機、🚩）。月面で おわった ときの 着陸機は 上で のこしている
@@ -258,6 +262,21 @@
     $('resIcon').textContent = icon; $('resStars').textContent = stars ? '⭐'.repeat(stars) : '💨';
     $('resInfo').innerHTML = [...new Set(info)].join('');
     if (stars >= 3) [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.25, 'triangle'), i * 120)); else A.tone(523, 0.3, 'triangle');
+    // v0.14 ミッションの けっか（ほしは ミッションの ⭐）
+    $('resMap').style.display = MS.active ? 'flex' : 'none';
+    if (MS.active) {
+      const m = MS.active, j = MS.judge(sim, d);
+      if (j.clear) {
+        $('resIcon').textContent = '\u{1F389}'; $('resStars').textContent = '⭐'.repeat(j.stars) + '☆'.repeat(3 - j.stars);
+        say = 'ミッション クリア！' + (j.stars < 3 ? (j.stars < 2 && !m.rewOk ? ' くるくる もどる ボタンを つかわないと、ほしが ふえるよ。' : m.help ? ' ' + m.help : '') : ' ほし みっつ！ すごい！');
+        let rec = null; SV.update(p => { p.missions = p.missions || {}; p.missions[m.id] = Math.max(p.missions[m.id] || 0, j.stars); rec = p.missions; });
+        const ch = MS.CHAPTERS.find(c => c.ch === m.ch); if (ch && rec && MS.chapterDone(rec, m.ch)) medals.push(ch.medal);
+        $('resRew').style.display = 'none';
+      } else {
+        $('resStars').textContent = '\u{1F4A8}';
+        say = (d.type === 'mission' ? '' : say + ' ') + 'もういちど ちょうせん しよう！' + (MS.ctx.fails >= 3 && m.help ? ' ヒント：' + m.help : '');
+      }
+    }
     A.say(say); $('result').style.display = 'flex';
     award(medals);
     RL.emit('result2d', sim);
@@ -281,11 +300,11 @@
     RL.emit('result', s);
   }
   // 組み立てを しまう（れんしゅう中は しまわない）
-  RL.on('change', d => { if (RL.Tutorial.active || !SV.cur) return; const k = gridKey(); SV.update(p => { p[k] = clone(d.grid); }); });
+  RL.on('change', d => { if (RL.Tutorial.active || !SV.cur || MS.active) return; const k = gridKey(); SV.update(p => { p[k] = clone(d.grid); }); });
   function closeResult() { $('result').style.display = 'none'; }
   RL.closeResult = closeResult;
   let tutRun = false;
-  function showTitle() { RL.Tutorial.stop(); A.stop(); closeResult(); $('title').style.display = 'flex'; renderWho(); }
+  function showTitle() { endMission(); RL.Tutorial.stop(); A.stop(); closeResult(); $('title').style.display = 'flex'; renderWho(); }
   function needWho() { if (SV.cur) return false; openPicker(true); return true; }
   function startFree() {
     // れんしゅうを さいごまで やったら 勲章
@@ -298,14 +317,62 @@
   $('launch').addEventListener('click', launch);
   $('clear').addEventListener('click', () => {
     if (RL.Tutorial.active) { if (!RL.Tutorial.canClear) { A.tone(150, 0.15, 'square', 0.08); return; } B.clear(); return; }
+    if (MS.active && (MS.active.lock || MS.active.start)) { A.tone(150, 0.15, 'square', 0.08); return; }   // v0.14：きまった ロケットの ミッション
     if (!B.grid.some(row => row.some(Boolean))) { A.tone(200, 0.1, 'square', 0.08); return; }
     confirmBox(RL.ICON.trash + '<span>🚀❓</span>', 'ぜんぶ けしても いい？', () => B.clear());   // まちがえて けさないように
   });
   $('home').addEventListener('click', showTitle);
   $('mute').addEventListener('click', () => { $('mute').innerHTML = A.toggle() ? RL.ICON.soundOff : RL.ICON.soundOn; });
-  $('again').addEventListener('click', () => { if (RL.Tutorial.active) return; closeResult(); A.tone(660, 0.08); });
+  $('again').addEventListener('click', () => { if (RL.Tutorial.active) return; closeResult(); A.tone(660, 0.08);
+    if (MS.active && MS.active.start) missionFly(MS.active); });   // v0.14：とちゅうから の ミッションは すぐ もういちど
+  $('resMap').addEventListener('click', () => { closeResult(); A.tone(660, 0.08); openMissionMap(); });
   $('btnFree').addEventListener('click', () => { if (!needWho()) startFree(); });
   $('btnOrbit').addEventListener('click', () => { if (!needWho()) startOrbit(); });
+  // =====================================================================
+  // v0.14 ミッション
+  // =====================================================================
+  const MS = RL.Missions;
+  function flash(el, ms) { if (!el) return; el.classList.add('mhint'); setTimeout(() => el.classList.remove('mhint'), ms || 4000); }
+  // 飛行中の ボタンを おした 回数（ミッションの はんてい用）
+  $('fly').addEventListener('click', e => { const b = e.target.closest('button'); if (b && MS.active) MS.ui(b.id); }, true);
+  function endMission() { if (!MS.active) return; MS.end(); document.body.classList.remove('mission'); B.lockGrid(false); B.setAllowed(null); }
+  function openMissionMap() {
+    const p = SV.cur; if (!p) return; const rec = p.missions || {}, box = $('misRows'); box.innerHTML = '';
+    let nextSet = false;
+    MS.CHAPTERS.forEach(ch => {
+      const row = document.createElement('div'); row.className = 'misRow';
+      row.innerHTML = `<div class="misCh${MS.chapterDone(rec, ch.ch) ? ' done' : ''}">${ch.icon}</div>`;
+      MS.LIST.filter(m => m.ch === ch.ch).forEach(m => {
+        const st = rec[m.id] || 0, open = MS.unlocked(rec, m.id), b = document.createElement('button'); b.type = 'button';
+        b.className = 'misCard' + (open ? '' : ' lock') + (open && !st && !nextSet ? ' next' : ''); if (open && !st) nextSet = true;
+        b.setAttribute('aria-label', 'ミッション ' + m.id);
+        b.innerHTML = `<span class="ic">${open ? m.icon.join('') : '\u{1F512}'}</span><span class="st">${st ? '⭐'.repeat(st) : ''}</span>`;
+        b.addEventListener('click', () => { if (!open) { A.tone(150, 0.15, 'square', 0.08); A.say('まえの ミッションを クリア すると ひらくよ。'); return; } startMission(m); });
+        row.appendChild(b);
+      });
+      box.appendChild(row);
+    });
+    $('misMap').style.display = 'flex'; A.say('ミッションを えらんでね。');
+  }
+  $('misClose').addEventListener('click', () => { $('misMap').style.display = 'none'; A.tone(300, 0.08); });
+  $('btnMis').addEventListener('click', () => { if (!needWho()) openMissionMap(); });
+  function startMission(m) {
+    $('misMap').style.display = 'none'; closeResult(); RL.Tutorial.stop();
+    endMission(); startFree(); setMode('orbit');
+    MS.begin(m); document.body.classList.add('mission'); $('misBadge').textContent = '\u{1F5FA}\uFE0F ' + m.id + ' ' + m.icon.join('');
+    if (m.rocket || m.preset) B.setGrid(MS.gridOf(m));
+    if (m.lock || m.start) { B.setAllowed([]); B.lockGrid(true); } else B.setAllowed(m.allow || null);
+    if (m.profile) setProfile(m.profile);
+    A.stop();
+    if (m.start) { missionFly(m); return; }
+    A.say(m.say.join(' '));
+    if (m.hl) { if (m.hl.startsWith('pal:')) { const k = m.hl.slice(4); setTimeout(() => B.hint(k), 300); } else flash($(m.hl), 6000); }
+  }
+  function missionFly(m) {
+    const g = B.grid, a = RL.analyze(g); MS.onLaunch(g, 'side'); lastA = a; lastProf = 'side';
+    RL.Flight2D.run(a, 'side', sim => result2d(sim), aborted, null, m.start);
+    setTimeout(() => A.say(m.say.join(' '), null, { interrupt: true }), 300);
+  }
   $('btnTut').addEventListener('click', () => { if (needWho()) return; tutRun = true; setMode('free'); $('title').style.display = 'none'; document.body.classList.add('tutorial'); RL.Tutorial.start(); });
   // バージョン表示を3回タップ：見本のロケット（2段式）
   let vt = 0; $('ver').addEventListener('click', () => {

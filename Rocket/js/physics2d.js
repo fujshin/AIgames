@@ -49,16 +49,25 @@ RL.Orbit = (function () {
     sim.vx = -earth.rot * sim.y; sim.vy = earth.rot * sim.x;    // 地面と いっしょに まわっている
     ignite(0, 0);
     { const f = fins(); sim.dev = devTarget(f); sim.devDir = Math.sign(f.L - f.R) || 1; }
+    function coreFuel0() { return S.slice(sim.si).reduce((z, y) => z + y.fuel, 0); }
     // v0.12：空中から 始める（ミッション用）。{ h, vDown, vSide, fuel }：さいごの 段だけ、燃料は 割合
+    //   v0.14：{ orbit: { pe, ap, at: 'pe'|'ap' }, stages, fuel }：地球を まわる 軌道の 上から（ミッション用）。stages＝上から いくつの 段を のこすか
     if (opt.start) {
-      const o = opt.start, r0 = earth.R + o.h, ux = Math.cos(site), uy = Math.sin(site);
-      sim.si = last; S.forEach((x, i) => { if (i < last) { x.sepT = 0; x.fuel = 0; } }); st.forEach(x => { x.sepT = 0; x.withStage = true; x.fuel = 0; });
-      S[last].fuel *= o.fuel == null ? 1 : o.fuel; S[last].ignT = 0;
-      const vt = earth.rot * r0 + (o.vSide || 0), vr = -(o.vDown || 0);
-      Object.assign(sim, { x: r0 * ux, y: r0 * uy, vx: vr * ux - vt * uy, vy: vr * uy + vt * ux, landed: false, lifted: true, engineOn: false, dir: 'pro', maxAlt: o.h, inSpace: o.h > earth.atmo });
-      sim.dev = 0; sim.point = Math.PI / 2; sim.pitch = 90;
+      const o = opt.start, keep = Math.max(1, Math.min(last + 1, o.stages || 1)), s0 = last - keep + 1;
+      sim.si = s0; S.forEach((x, i) => { if (i < s0) { x.sepT = 0; x.fuel = 0; } else x.fuel *= o.fuel == null ? 1 : o.fuel; }); st.forEach(x => { x.sepT = 0; x.withStage = true; x.fuel = 0; });
+      S[s0].ignT = 0;
+      if (o.orbit) {
+        const rp = earth.R + o.orbit.pe, ra = earth.R + o.orbit.ap, sma = (rp + ra) / 2, r0 = o.orbit.at === 'ap' ? ra : rp, v = Math.sqrt(earth.mu * (2 / r0 - 1 / sma));
+        const ux = Math.cos(site), uy = Math.sin(site);
+        Object.assign(sim, { x: r0 * ux, y: r0 * uy, vx: -v * uy, vy: v * ux, landed: false, lifted: true, engineOn: false, dir: 'pro', maxAlt: r0 - earth.R, inSpace: true });
+      } else {
+        const r0 = earth.R + o.h, ux = Math.cos(site), uy = Math.sin(site);
+        const vt = earth.rot * r0 + (o.vSide || 0), vr = -(o.vDown || 0);
+        Object.assign(sim, { x: r0 * ux, y: r0 * uy, vx: vr * ux - vt * uy, vy: vr * uy + vt * ux, landed: false, lifted: true, engineOn: false, dir: 'pro', maxAlt: o.h, inSpace: o.h > earth.atmo });
+      }
+      sim.dev = 0; sim.point = Math.PI / 2; sim.pitch = 90; sim.fuelBase = coreFuel0();
     }
-    const hasProp = S.some(s => s.eng + s.veng > 0) || st.length;
+    const hasProp = S.some(s => s.eng + s.veng > 0) || st.length || (opt.start && opt.noPropOk);
     if (!hasProp) sim.done = { type: 'noEngine' };
     const mass = () => Math.max(0.1, sum(S.slice(sim.si), x => x.dry + x.fuel) + sum(st.filter(attached), x => x.dry + x.fuel));
     const alt = () => Math.hypot(sim.x, sim.y) - sim.body.R;
@@ -496,6 +505,7 @@ RL.Orbit = (function () {
         sim.stages = S; sim.stacks = st; ev.length = 0;
       },
       abort() { finish({ type: 'abort' }); },
+      missionEnd() { finish({ type: 'mission', el: sim.lifted ? elements() : null }); },   // v0.14：ミッションの クリア（とちゅうで おわる）
       finishNow() { if (sim.cls && ['low', 'high', 'toMoon', 'moonOrbit'].includes(sim.cls) && !sim.isPowered()) finish({ type: 'orbit', el: elements() }); },
       liquidLeft,
       // v0.11.1：燃料メーター（いまの 段から 上の のこり ÷ さいごに 切りはなした ときの のこり）。fuelAll＝ロケット ぜんぶ との 割合（ツール用）

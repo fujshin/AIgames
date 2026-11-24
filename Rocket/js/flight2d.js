@@ -251,13 +251,14 @@ RL.Flight2D = (function () {
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => cv.addEventListener(n, e => { Z.pins.delete(e.pointerId); Z.pinD = dist(); }));
   }
   // resume（v0.11）：{ cp, trail, rewinds } ＝ 結果画面の ⏪ から つづける
-  function run(a, profile, onDone, onAbort, resume) {
+  // start（v0.14 ミッション）：とちゅうから はじめる（RL.Orbit の opt.start）。カウントダウン なし
+  function run(a, profile, onDone, onAbort, resume, start) {
     const fly = $('fly'), cv = $('cv'), g = cv.getContext('2d'), A = RL.Audio, dpr = devicePixelRatio || 1;
     fly.style.display = 'block'; fly.classList.add('orbit'); document.body.classList.add('flying');
     const W = innerWidth, H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
     const u = Math.max(0.5, Math.min(1, Math.min(W, H * 0.75) / 700));
     $('count').style.fontSize = (130 * u) + 'px';
-    const sim = RL.Orbit.create(a, { profile }), O = RL.CFG.ORBIT, E = sim.bodies.earth, LDb = () => O.LAND[sim.body.id] || O.LAND.moon;
+    const sim = RL.Orbit.create(a, start && !resume ? { profile, start } : { profile }), O = RL.CFG.ORBIT, E = sim.bodies.earth, LDb = () => O.LAND[sim.body.id] || O.LAND.moon;
     // v0.9 ワールド：この 飛行が はじまった ときの ワールドの 時計と、まえに のこした もの
     const pf = RL.Save && RL.Save.cur, WD = pf ? { W0: pf.world.clock, items: pf.world.objs.map(o => ({ o, pts: o.kind === 'sat' ? RL.World.orbitPts(o) : null })) } : null;
     sim.worldStart = WD ? WD.W0 : 0;
@@ -273,7 +274,7 @@ RL.Flight2D = (function () {
     const sepReal = {}, stageReal = {};
     let prCache = null, prAt = 0, prKind = null, saidEnc = false;
     let t0 = null, prev = null, warp = 1, view = 'auto', sepFlash = 0, saidSep = false, ended = null, endAt = 0, saidOrbit = false, saidSlow = false;
-    const pre = resume ? 0 : 2100;
+    const pre = resume || start ? 0 : 2100;
     // v0.10／v0.11 の おしえ（いちど だけ）
     let saidPeri = true, saidNear = false, saidHover = false, warnAt = 0, boomY = null;
     // v0.11 ここからやり直し
@@ -365,7 +366,8 @@ RL.Flight2D = (function () {
     const cleanup = () => { pipOff(); cancelAnimationFrame(raf); abortCb = null; rewCb = null; bDir.style.visibility = 'hidden'; bRew.style.visibility = 'hidden'; bChute.style.visibility = 'hidden'; bSep.style.visibility = 'hidden'; bFlag.style.visibility = 'hidden';
       lastRun = { cp: lastCp, trail: trail.slice(), rewinds }; Z.on = false; zctl.style.display = 'none'; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
     abortCb = () => { if (ended) return; ended = 'abort'; cleanup(); A.stop(); A.tone(300, 0.15, 'square', 0.1); onAbort && onAbort(sim); };
-    if (!resume) {
+    if (start && !resume) { lastCp = { snap: sim.snapshot(), trailLen: 0, tag: 'start' }; }   // v0.14：はじめの ところに ⏪ で もどれる
+    else if (!resume) {
       A.say('さん、に、いち、はっしゃ！', null, { rate: 1.1 });
       [0, 700, 1400].forEach(d => setTimeout(() => { if (!ended) A.tone(880, 0.15); }, d));
       setTimeout(() => { if (!ended) { A.tone(1320, 0.4); A.rumble(3); } }, pre);
@@ -374,6 +376,7 @@ RL.Flight2D = (function () {
     const autoMap = () => !sim.near && !(sim.done && sim.done.type === 'landed') && (sim.body !== E || (Math.hypot(sim.x, sim.y) - E.R) > E.atmo * 1.15);
     function events() {
       sim.events.splice(0).forEach(e => {
+        if (RL.Missions && RL.Missions.active) RL.Missions.event(e, sim);   // v0.14
         if (e.type === 'booster-sep') { sepReal[e.id] = performance.now(); sepFlash = 25; A.tone(180, 0.25, 'square', 0.15); if (!saidSep) { saidSep = true; A.say('ブースター、きりはなし！', null, { interrupt: false }); } }
         if (e.type === 'stage-sep' && e.surface) { sepFlash = 20; A.tone(220, 0.3, 'square', 0.18); A.say('きりはなし！ したの だんは つきに のこるよ。', null, { interrupt: true }); fuelFlash = 1; }
         else if (e.type === 'stage-sep') { stageReal[e.i] = performance.now(); sepFlash = 40; A.tone(220, 0.3, 'square', 0.18); setTimeout(() => A.tone(140, 0.4, 'square', 0.12), 140);
@@ -561,6 +564,12 @@ RL.Flight2D = (function () {
         sim.advance(dtR * warp);
       }
       events(); engUI(); dirUI(); chuteUI(); sepUI();
+      // v0.14 ミッション：ヒント（声・ボタンの 点滅）と とちゅうで クリア
+      if (RL.Missions && RL.Missions.active && !ended && el >= pre) RL.Missions.tick(sim).forEach(h => {
+        if (h.clear) { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 100)); A.say('ミッション クリア！', null, { interrupt: true }); sim.missionEnd(); return; }
+        A.say(h.say, null, { interrupt: true });
+        if (h.hl && $(h.hl)) { const b = $(h.hl); b.classList.add('mhint'); setTimeout(() => b.classList.remove('mhint'), 4000); }
+      });
       // v0.13 月面で なにも しない とき：1回だけ さそう
       if (sim.surface && !ended && !saidIdle && idleAt && ts - idleAt > (O.MOON_IDLE_SEC || 60) * 1000) { saidIdle = true; A.say('ほのおの ボタンで ちきゅうに かえろう。 おわるときは ゴールの はた。'); }
       // v0.13 くうきに 入る（🔥 の 光・声）。月から かえる ときは くうきの 手前を ⏪ に おぼえる

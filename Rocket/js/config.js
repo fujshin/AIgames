@@ -1,7 +1,7 @@
 // 全体設定。数値の調整はここだけで行う
 window.RL = window.RL || {};
 RL.CFG = {
-  COLS: 5, ROWS: 9, VERSION: 'v0.13',
+  COLS: 5, ROWS: 9, VERSION: 'v0.14',
   ROWS_FREE: 9, ROWS_ORBIT: 18, VIS_ROWS: 9,   // v0.12：うちゅうモードは 縦14行（見えるのは 9行。上下に うごかす）。ROWS は いまの モードの 行数
   PHYS: {
     G: 10,
@@ -60,7 +60,7 @@ RL.CFG = {
     LAND: {
       moon:  { V_DOWN: 4, V_SIDE: 3, HARD_K: 1.5, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 2000, TWR: 3,
                V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5 },
-      earth: { V_DOWN: 5, V_SIDE: 3, HARD_K: 1.5, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 600, TWR: 3,
+      earth: { V_DOWN: 5, V_SIDE: 3, HARD_K: 1.2, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 600, TWR: 3,
                V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5, MIN_ALT: 100 }
     },
     // v0.12 パラシュート：くうきの中で ひらく（OPEN_T 秒で ふくらむ）。くうきに たいする 速さが V_TEAR より はやいと やぶれる
