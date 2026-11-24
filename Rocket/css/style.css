@@ -216,5 +216,9 @@ body.tutorial #btnRew{display:none}
 #misClose{position:absolute;right:8px;top:8px;width:44px;height:44px;border-radius:22px;border:2px solid #fff;background:#a33;color:#fff;font-size:22px;cursor:pointer}
 #misClose::before{content:'\2716'}
 .mhint{animation:pulse .5s infinite alternate!important}
-#misBadge{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:4;background:rgba(200,70,30,.9);color:#fff;border-radius:18px;padding:4px 12px;font-size:20px;display:none;pointer-events:none}
+#misBadge{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:6;background:rgba(200,70,30,.92);color:#fff;border:2px solid #fff;border-radius:18px;padding:4px 12px;font-size:20px;display:none;cursor:pointer}
 body.mission #misBadge{display:block}
+#misGoal{position:fixed;inset:0;z-index:41;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:rgba(0,0,30,.88);cursor:pointer}
+#mgIcon{font-size:min(140px,30vw);line-height:1;animation:pulse .6s infinite alternate}
+#mgTap{font-size:48px;opacity:.8}
+.mhint{animation:pulse .45s infinite alternate!important;outline:5px solid #ffd54a!important;outline-offset:2px;box-shadow:0 0 22px 8px rgba(255,213,74,.85)!important}

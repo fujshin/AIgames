@@ -382,6 +382,7 @@ RL.Flight2D = (function () {
         else if (e.type === 'stage-sep') { stageReal[e.i] = performance.now(); sepFlash = 40; A.tone(220, 0.3, 'square', 0.18); setTimeout(() => A.tone(140, 0.4, 'square', 0.12), 140);
           A.say((STAGE_NAME[e.i] || '') + 'だん、きりはなし！', null, { interrupt: false });
           setTimeout(() => { if (!ended && sim.stages[e.i + 1] && sim.stages[e.i + 1].eng + sim.stages[e.i + 1].veng > 0) { [523, 784].forEach((f, k) => setTimeout(() => A.tone(f, 0.18, 'triangle', 0.15), k * 90)); A.say((IGN_NAME[e.i + 1] || '') + '、てんか！', null, { interrupt: false }); } }, 400); }
+        if (e.type === 'space' && !lastCp) saveCp('space', true);   // v0.14.1：うちゅうに でた ところも ⏪ で もどれる（あとで もっと いい ところが あれば うわがき）
         if (e.type === 'space') { [784, 1175].forEach((f, i) => setTimeout(() => A.tone(f, 0.3, 'sine', 0.15), i * 150)); A.say('うちゅうに でたよ！', null, { interrupt: false }); }
         if (e.type === 'engine-off') { A.tone(400, 0.12, 'square', 0.1); setTimeout(() => A.tone(260, 0.2, 'square', 0.1), 110); }
         if (e.type === 'engine-on') { A.tone(523, 0.1, 'triangle'); setTimeout(() => A.tone(784, 0.15, 'triangle'), 90); }
@@ -396,7 +397,7 @@ RL.Flight2D = (function () {
         if (e.type === 'near') { saveCp('near'); view = 'auto';
           if (!saidNear) { saidNear = true;
             const ch = sim.chutes() && !sim.chute && sim.body === E;
-            A.say(ch ? 'じめんが ちかいよ！ パラシュートを ひらこう。 エンジンで おりても いいよ。' : 'じめんが ちかいよ！ うしろむきで エンジン。ゆっくり おりよう。', null, { interrupt: true });
+            if (!quiet()) A.say(ch ? 'じめんが ちかいよ！ パラシュートを ひらこう。 エンジンで おりても いいよ。' : 'じめんが ちかいよ！ うしろむきで エンジン。ゆっくり おりよう。', null, { interrupt: true });
             if (ch) { bChute.classList.add('hint'); setTimeout(() => bChute.classList.remove('hint'), 4000); } } }
         // v0.12 パラシュート
         if (e.type === 'chute-deploy') { rocket.classList.add('chuteOut'); A.tone(500, 0.1, 'triangle'); setTimeout(() => A.tone(380, 0.25, 'sine', 0.15), 100); A.say('パラシュート、ひらけ！', null, { interrupt: true }); }
@@ -463,6 +464,7 @@ RL.Flight2D = (function () {
       boomY = gy;
       return { ty: MOON_Y };
     }
+    const quiet = () => !!(RL.Missions && RL.Missions.active && RL.Missions.active.quiet);   // v0.14.1：ミッションの あんないと ちがう 声を ださない
     const cam = RL.Flight.rocketCam(cs); let box = null, fuelFlash = 0, hideRocket = false, tornAt = 0;
     // ---- v0.12 パラシュートの 絵（のこっている ロケットの 上） ----
     function drawChute() {
@@ -567,8 +569,7 @@ RL.Flight2D = (function () {
       // v0.14 ミッション：ヒント（声・ボタンの 点滅）と とちゅうで クリア
       if (RL.Missions && RL.Missions.active && !ended && el >= pre) RL.Missions.tick(sim).forEach(h => {
         if (h.clear) { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 100)); A.say('ミッション クリア！', null, { interrupt: true }); sim.missionEnd(); return; }
-        A.say(h.say, null, { interrupt: true });
-        if (h.hl && $(h.hl)) { const b = $(h.hl); b.classList.add('mhint'); setTimeout(() => b.classList.remove('mhint'), 4000); }
+        A.say(h.say.join(' '), null, { interrupt: true });   // 光らせるのは missions.js（つぎの あんないまで ずっと）
       });
       // v0.13 月面で なにも しない とき：1回だけ さそう
       if (sim.surface && !ended && !saidIdle && idleAt && ts - idleAt > (O.MOON_IDLE_SEC || 60) * 1000) { saidIdle = true; A.say('ほのおの ボタンで ちきゅうに かえろう。 おわるときは ゴールの はた。'); }
@@ -576,7 +577,7 @@ RL.Flight2D = (function () {
       let hot = 0;
       if (sim.body === E && sim.lifted && !sim.done) { const hh = Math.hypot(sim.x, sim.y) - E.R, wv = Math.hypot(sim.vx + E.rot * sim.y, sim.vy - E.rot * sim.x);
         if (hh < E.atmo) { hot = Math.max(0, Math.min(1, (wv - O.REENTRY.HOT) / 150)) * Math.min(1, (E.atmo - hh) / 40);
-          if (hot > 0.2 && !saidHot) { saidHot = true; A.tone(200, 0.4, 'sawtooth', 0.08); A.say('くうきに はいった！ あつい！', null, { interrupt: true }); }
+          if (hot > 0.2 && !saidHot) { saidHot = true; A.tone(200, 0.4, 'sawtooth', 0.08); if (!quiet()) A.say('くうきに はいった！ あつい！', null, { interrupt: true }); }
           if (saidHot && !saidOpen && sim.chutes() && !sim.chute && wv < O.CHUTE.V_TEAR * 0.95) { saidOpen = true; A.say('いまだ！ パラシュートを ひらいて！', null, { interrupt: true }); bChute.classList.add('hint'); setTimeout(() => bChute.classList.remove('hint'), 4000); } }
         else if (sim.moonLanded && !savedAtmo && hh < E.atmo * 1.6 && (sim.vx * sim.x + sim.vy * sim.y) < 0) { savedAtmo = true; saveCp('atmo', true); } }
       sim.hot = hot;

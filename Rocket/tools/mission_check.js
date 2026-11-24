@@ -10,8 +10,8 @@ const vr = s => (s.vx * s.x + s.vy * s.y) / Math.hypot(s.x, s.y);
 const press = (id, f) => { M.ui(id); return f && f(); };
 // 自動パイロット（ミッションごと）：毎こま よばれる。st＝その ミッションの メモ
 const P = {
-  '1-2': (s) => {}, '1-3': () => {}, '1-5': () => {}, '2-1': () => {}, '1-1': () => {},
-  '1-4': (s, c, st) => { if (s.maxAlt > 100 && !st.a) { st.a = 1; press('btnMap'); press('btnZin'); press('btnMap'); } },
+  '1-1': () => {}, '1-2': () => {}, '1-4': () => {},
+  '1-3': (s, c, st) => { if (s.maxAlt > 100 && !st.a) { st.a = 1; press('btnMap'); press('btnZout'); press('btnMap'); } },
   '2-2': (s, c, st) => cut(s, st), '2-4': (s, c, st) => { cut(s, st); if (st.cut && !st.d) { st.d = 1; press('btnDone', () => s.finishNow()); } },
   '2-8': (s, c, st) => { cut(s, st); if (st.cut) s.finishNow(); },
   '2-3': (s, c, st) => { cut(s, st); if (!st.cut) return;
@@ -37,29 +37,42 @@ function deorbit(s, st, sep) {
   else if (st.a === 2 && sep && s.canSep()) { press('btnSep'); press('btnSep', () => s.separate()); st.a = 3; }
   chute(s, st, st.a >= 2);
 }
-const extraGrid = { '1-1': [['fin'], B => 0, ['engine', ...T(12), 'win', 'nose'], [], ['fin']], '1-2': [['fin'], [], ['engine', 'tank', 'tank', 'win', 'nose'], [], ['fin']],
-  '3-1': [['fin'], [], ['engine', 'tank', 'win+chute', 'nose'], [], ['fin']], '2-8': M.ROCKETS.ORBIT };
-const prof = { '1-2': 'up', '1-3': 'side', '1-5': 'tilt', '3-1': 'up' };
+const addTop = g => { g = g.map(r => r.slice()); let top = g.length; g.forEach((r, i) => { if (r[2] && i < top) top = i; }); g[top - 1][2] = 'tank'; return g; };
+const PLAN = { '1-1': [{ prof: 'up' }, { prof: 'side' }], '1-2': [{ prof: 'side' }, { mod: addTop }], '1-4': [{ prof: 'tilt' }, { rew: true }] };
+const extraGrid = { '3-1': [['fin'], [], ['engine', 'tank', 'win+chute', 'nose'], [], ['fin']], '2-8': M.ROCKETS.ORBIT };
+const prof0 = { '3-1': 'up' };
+const info = (g, p) => M.buildInfo(g, p);
 let ok = 0;
 for (const m of M.LIST) {
-  const c = M.begin(m), cols = extraGrid[m.id] ? extraGrid[m.id].map(x => (Array.isArray(x) ? x : [])) : M.ROCKETS[m.rocket || m.preset];
-  const grid = toGrid(cols), pf = prof[m.id] || m.need || 'side';
-  if (m.id === '1-3') c.profs.add('tilt');   // まえに ななめ でも とんだ
-  if (m.id === '1-5') c.aborts = 1;
-  M.onLaunch(grid, pf);
-  const s = RL.Orbit.create(RL.analyze(grid), m.start ? { start: m.start } : { profile: pf });
-  if (m.id === '1-5') s.rewinds = 1;
-  const st = {}, said = [];
-  while (!s.done && s.t < 60000) {
-    s.advance(s.isPowered() || s.alt() < 1500 || st.fine ? 0.02 : Math.max(0.02, Math.min(s.autoWarp(), 100) * 0.05));
-    if (P[m.id]) P[m.id](s, c, st);
-    M.tick(s).forEach(h => { if (h.clear) s.missionEnd(); else said.push(h.say.slice(0, 10)); });
-    s.events.splice(0).forEach(e => M.event(e, s));
+  const c = M.begin(m); let grid = toGrid(extraGrid[m.id] || M.ROCKETS[m.rocket || m.preset] || []), pf = prof0[m.id] || m.profile || 'side';
+  c.tanks0 = M.countTanks(grid);
+  const log = []; M.pollAll('build', info(grid, pf)).forEach(x => log.push('🗣' + x.say[0].slice(0, 12)));
+  if (m.id === '1-1') log.push('よこ で 発射→' + JSON.stringify(M.onLaunch(grid, 'side')).slice(0, 20));
+  let s, d, j = null;
+  for (const fl of PLAN[m.id] || [{}]) {
+    if (fl.mod) grid = fl.mod(grid); if (fl.prof) pf = fl.prof;
+    M.pollAll('build', info(grid, pf)).forEach(x => log.push('🗣' + x.say[0].slice(0, 12)));
+    const L = M.onLaunch(grid, pf); if (L !== true) { log.push('発射できない ' + JSON.stringify(L).slice(0, 30)); break; }
+    if (m.id === '1-4' && fl.rew === undefined) c.aborts = 1;
+    s = RL.Orbit.create(RL.analyze(grid), m.start ? { start: m.start } : { profile: pf });
+    if (fl.rew) s.rewinds = 1;
+    const st = {};
+    while (!s.done && s.t < 60000) {
+      s.advance(s.isPowered() || s.alt() < 1500 || st.fine ? 0.02 : Math.max(0.02, Math.min(s.autoWarp(), 100) * 0.05));
+      if (P[m.id]) P[m.id](s, c, st);
+      M.tick(s).forEach(h => { if (h.clear) s.missionEnd(); else log.push('🗣' + h.say[0].slice(0, 10) + (h.hl ? '[' + h.hl + ']' : '')); });
+      s.events.splice(0).forEach(e => M.event(e, s));
+    }
+    d = s.done || {};
+    const exp = M.poll('result', { d, sim: s });
+    if (exp) { log.push(`(${d.type} → わざと しっぱい)`); continue; }
+    j = M.judge(s, d); break;
   }
-  const d = s.done || {}, j = M.judge(s, d);
+  if (!j) j = { clear: false, stars: 0 };
   if (j.clear) ok++;
   const el = d.el && d.body === 'earth' ? ` ▼${Math.round(d.el.rp - 12000)} ▲${d.el.e < 1 ? Math.round(d.el.ra - 12000) : '∞'}` : '';
   console.log(`${m.id} ${j.clear ? 'クリア' : '×    '} ${'⭐'.repeat(j.stars).padEnd(3, '・')}  ${d.type}${d.chute ? '🪂' : ''}${d.vDown != null ? ' ↓' + d.vDown.toFixed(1) : ''}${el}` +
-    ` 高さ${Math.round(d.maxAlt || s.maxAlt)} ➡${Math.round(d.range || 0)} G${Math.round(d.maxG || 0)} 燃料(段)${Math.round(s.fuelRatio() * 100)}% cut${Math.round(c.cutFuel * 100)}%  声${said.length}`);
+    ` 高さ${Math.round(d.maxAlt || s.maxAlt)} G${Math.round(d.maxG || 0)} cut${Math.round(c.cutFuel * 100)}%`);
+  if (process.env.V || m.ch === 1) console.log('     ' + log.join(' '));
 }
 console.log(`クリア ${ok}/${M.LIST.length}`);

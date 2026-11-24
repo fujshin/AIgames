@@ -14,7 +14,7 @@
   const PROF_SAY = { up: 'まっすぐ うえに', tilt: 'ななめに', side: 'よこに たおして' };
   function setProfile(p) { profile = PROF.includes(p) ? p : 'side'; $('prof').innerHTML = PROF_ICON[profile]; }
   setProfile('side');
-  $('prof').addEventListener('click', () => { setProfile(PROF[(PROF.indexOf(profile) + 1) % 3]); SV.update(p => { p.profile = profile; }); A.tone(660, 0.08); A.say(PROF_SAY[profile] + ' とぶよ。'); });
+  $('prof').addEventListener('click', () => { setProfile(PROF[(PROF.indexOf(profile) + 1) % 3]); SV.update(p => { p.profile = profile; }); A.tone(660, 0.08); A.say(PROF_SAY[profile] + ' とぶよ。'); if (RL.Missions.active) setTimeout(() => missionBuild(), 0); });
   // v0.12：モードごとに 行数と 組み立てを きりかえる（たかさ 9行＝p.grid／うちゅう 14行＝p.gridOrbit）
   function setMode(m) { mode = m; document.body.classList.toggle('orbitMode', m === 'orbit'); loadModeGrid(); }
   // ---- 確認ダイアログ（絵 ＋ ⭕／❌）。文字は 使わない ----
@@ -185,8 +185,10 @@
       RL.emit('launch-fail', 'noEngine'); return;
     }
     // v0.14 ミッション：きまった 打ち上げかたで ないと 発射しない
-    if (MS.active && mode === 'orbit' && !MS.onLaunch(B.grid, profile)) {
-      A.tone(150, 0.15, 'square', 0.08); A.say(PROF_SAY[MS.active.need] + ' とぶ うちあげかたに しよう。 したの ボタンだよ。'); flash($('prof')); return; }
+    if (MS.active && mode === 'orbit') { const ok = MS.onLaunch(B.grid, profile);
+      if (ok !== true) { A.tone(150, 0.15, 'square', 0.08);
+        if (ok.need) { A.say(ok.need === 'up' ? 'まずは、まっすぐ うえに うちあげて みよう。' : PROF_SAY[ok.need] + ' とぶ うちあげかたに しよう。 したの ひかっている ボタンだよ。'); MS.setHl('prof'); }
+        else { A.say(ok.say.join(' ')); MS.setHl(ok.hl); } return; } }
     RL.emit('launch', s);
     if (mode === 'orbit') { lastA = a; lastProf = profile; RL.Flight2D.run(a, profile, sim => result2d(sim), aborted); return; }
     RL.Flight.run(a, s, () => result(s), aborted);
@@ -200,7 +202,7 @@
     lastRec = null; closeResult(); A.tone(660, 0.08);
     RL.Flight2D.run(lastA, lastProf, sim => result2d(sim), aborted, lr);
   });
-  function aborted(sim) { if (MS.ctx) MS.ctx.aborts++; if (sim && sim.t) SV.advanceClock(sim.t); A.say('ちゅうし！ つくりなおそう。'); RL.emit('abort'); }
+  function aborted(sim) { if (MS.ctx) { MS.ctx.aborts++; MS.retry(); } if (sim && sim.t) SV.advanceClock(sim.t); A.say('ちゅうし！ つくりなおそう。'); RL.emit('abort'); }
   // ---- うちゅうモードの結果 ----
   function result2d(sim) {
     const d = sim.done, info = [], medals = [];
@@ -264,17 +266,22 @@
     if (stars >= 3) [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.25, 'triangle'), i * 120)); else A.tone(523, 0.3, 'triangle');
     // v0.14 ミッションの けっか（ほしは ミッションの ⭐）
     $('resMap').style.display = MS.active ? 'flex' : 'none';
-    if (MS.active) {
+    const expFail = MS.active ? MS.poll('result', { d, sim }) : null;   // v0.14.1：わざと しっぱい（あんないの とおり）
+    if (expFail) {
+      $('resStars').textContent = '\u{1F4A1}'; say = expFail.say.join(' ');
+      if (!expFail.rew) $('resRew').style.display = 'none';
+    } else if (MS.active) {
       const m = MS.active, j = MS.judge(sim, d);
       if (j.clear) {
         $('resIcon').textContent = '\u{1F389}'; $('resStars').textContent = '⭐'.repeat(j.stars) + '☆'.repeat(3 - j.stars);
         say = 'ミッション クリア！' + (j.stars < 3 ? (j.stars < 2 && !m.rewOk ? ' くるくる もどる ボタンを つかわないと、ほしが ふえるよ。' : m.help ? ' ' + m.help : '') : ' ほし みっつ！ すごい！');
         let rec = null; SV.update(p => { p.missions = p.missions || {}; p.missions[m.id] = Math.max(p.missions[m.id] || 0, j.stars); rec = p.missions; });
         const ch = MS.CHAPTERS.find(c => c.ch === m.ch); if (ch && rec && MS.chapterDone(rec, m.ch)) medals.push(ch.medal);
-        $('resRew').style.display = 'none';
+        $('resRew').style.display = 'none'; MS.setHl(null);
       } else {
         $('resStars').textContent = '\u{1F4A8}';
         say = (d.type === 'mission' ? '' : say + ' ') + 'もういちど ちょうせん しよう！' + (MS.ctx.fails >= 3 && m.help ? ' ヒント：' + m.help : '');
+        MS.retry(); MS.setHl('again');
       }
     }
     A.say(say); $('result').style.display = 'flex';
@@ -324,7 +331,7 @@
   $('home').addEventListener('click', showTitle);
   $('mute').addEventListener('click', () => { $('mute').innerHTML = A.toggle() ? RL.ICON.soundOff : RL.ICON.soundOn; });
   $('again').addEventListener('click', () => { if (RL.Tutorial.active) return; closeResult(); A.tone(660, 0.08);
-    if (MS.active && MS.active.start) missionFly(MS.active); });   // v0.14：とちゅうから の ミッションは すぐ もういちど
+    if (MS.active && MS.active.start) missionFly(MS.active); else if (MS.active) { MS.retryBuild && MS.retryBuild(); missionBuild(true); } });   // v0.14：とちゅうから の ミッションは すぐ もういちど
   $('resMap').addEventListener('click', () => { closeResult(); A.tone(660, 0.08); openMissionMap(); });
   $('btnFree').addEventListener('click', () => { if (!needWho()) startFree(); });
   $('btnOrbit').addEventListener('click', () => { if (!needWho()) startOrbit(); });
@@ -359,19 +366,34 @@
   function startMission(m) {
     $('misMap').style.display = 'none'; closeResult(); RL.Tutorial.stop();
     endMission(); startFree(); setMode('orbit');
-    MS.begin(m); document.body.classList.add('mission'); $('misBadge').textContent = '\u{1F5FA}\uFE0F ' + m.id + ' ' + m.icon.join('');
+    const c = MS.begin(m); document.body.classList.add('mission'); $('misBadge').innerHTML = '\u{1F50A} ' + m.id + ' ' + m.icon.join('');
     if (m.rocket || m.preset) B.setGrid(MS.gridOf(m));
     if (m.lock || m.start) { B.setAllowed([]); B.lockGrid(true); } else B.setAllowed(m.allow || null);
     if (m.profile) setProfile(m.profile);
+    c.tanks0 = MS.countTanks(B.grid);
     A.stop();
-    if (m.start) { missionFly(m); return; }
-    A.say(m.say.join(' '));
-    if (m.hl) { if (m.hl.startsWith('pal:')) { const k = m.hl.slice(4); setTimeout(() => B.hint(k), 300); } else flash($(m.hl), 6000); }
+    // v0.14.1：はじめに ミッションの めあて（大きな 絵）。タップで とじる
+    $('mgIcon').textContent = m.icon.join(''); $('misGoal').style.display = 'flex'; A.tone(523, 0.12); setTimeout(() => A.tone(784, 0.18), 120);
+    goalNext = () => { if (m.start) missionFly(m); else missionBuild(); };
+    A.say('ミッション ' + m.id.replace('-', 'の ') + '。', null, { interrupt: true });
+    clearTimeout(goalT); goalT = setTimeout(closeGoal, 2200);
   }
+  let goalNext = null, goalT = 0;
+  function closeGoal() { clearTimeout(goalT); if ($('misGoal').style.display !== 'flex') return; $('misGoal').style.display = 'none'; const f = goalNext; goalNext = null; f && f(); }
+  $('misGoal').addEventListener('click', closeGoal);
+  // くみたての 画面の あんない（すすんだら 声）。again＝もういちど（いまの あんないを もういちど いう）
+  function missionBuild(again) {
+    if (!MS.active) return;
+    const got = MS.pollAll('build', MS.buildInfo(B.grid, profile));
+    if (got.length) A.say(got.map(x => x.say.join(' ')).join(' '), null, { interrupt: true });
+    else if (again && MS.current() && MS.current().at === 'build') { A.say(MS.current().say.join(' '), null, { interrupt: true }); MS.setHl(MS.current().hl); }
+  }
+  RL.on('change', () => { if (MS.active) missionBuild(); });
+  // バッジを おすと いまの あんないを もういちど
+  $('misBadge').addEventListener('click', () => { const c = MS.current(); if (c) { A.say(c.say.join(' '), null, { interrupt: true }); MS.setHl(c.hl); } });
   function missionFly(m) {
     const g = B.grid, a = RL.analyze(g); MS.onLaunch(g, 'side'); lastA = a; lastProf = 'side';
     RL.Flight2D.run(a, 'side', sim => result2d(sim), aborted, null, m.start);
-    setTimeout(() => A.say(m.say.join(' '), null, { interrupt: true }), 300);
   }
   $('btnTut').addEventListener('click', () => { if (needWho()) return; tutRun = true; setMode('free'); $('title').style.display = 'none'; document.body.classList.add('tutorial'); RL.Tutorial.start(); });
   // バージョン表示を3回タップ：見本のロケット（2段式）
