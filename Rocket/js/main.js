@@ -6,7 +6,7 @@
   $('launch').innerHTML = RL.ICON.rocket; $('clear').innerHTML = RL.ICON.trash; $('home').innerHTML = RL.ICON.home;
   $('mute').innerHTML = RL.ICON.soundOn; $('again').innerHTML = RL.ICON.again; $('resRew').innerHTML = RL.ICON.rewind; $('scrUp').innerHTML = RL.ICON.up; $('scrDown').innerHTML = RL.ICON.down; $('btnChute').innerHTML = RL.ICON.chute; $('tutEar').innerHTML = RL.ICON.ear;
   $('btnTut').innerHTML = RL.ICON.learn; $('btnFree').innerHTML = RL.ICON.play; $('titleRocket').innerHTML = RL.ICON.rocket;
-  $('btnOrbit').innerHTML = RL.ICON.orbit; $('btnMap').innerHTML = RL.ICON.map; $('btnDone').innerHTML = RL.ICON.flag;
+  $('btnOrbit').insertAdjacentHTML('afterbegin', RL.ICON.orbit); $('btnMap').innerHTML = RL.ICON.map; $('btnDone').innerHTML = RL.ICON.flag;
   $('cfYes').innerHTML = RL.ICON.ok; $('cfNo').innerHTML = RL.ICON.ng; $('pkClose').innerHTML = RL.ICON.ng; $('mdClose').innerHTML = RL.ICON.ng;
   // ---- モード：'free'（たかさ）／ 'orbit'（うちゅう） ----
   let mode = 'free', profile = 'side';
@@ -32,6 +32,12 @@
   const emptyGrid = () => Array.from({ length: RL.CFG.ROWS }, () => Array(RL.CFG.COLS).fill(null));
   const clone = g => g.map(r => r.slice());
   const medalCount = p => (p ? Object.keys(p.medals).length : 0);
+  // v0.14.5：うちゅうモードの かぎ（ミッション 2-5）
+  const ORBIT_KEY = '2-5';
+  const orbitOpen = () => !!(SV.cur && SV.cur.missions && SV.cur.missions[ORBIT_KEY] >= 1);
+  function renderOrbitLock() { $('btnOrbit').classList.toggle('locked', !!SV.cur && !orbitOpen()); }
+  let misFlashT = 0;
+  function flashMis() { const b = $('btnMis'); b.classList.add('mhint'); clearTimeout(misFlashT); misFlashT = setTimeout(() => b.classList.remove('mhint'), 5000); }
   // いまの こどもの きろくを 画面に もどす
   const rowsOf = m => (m === 'orbit' ? RL.CFG.ROWS_ORBIT : RL.CFG.ROWS_FREE);
   const gridKey = () => (mode === 'orbit' ? 'gridOrbit' : 'grid');
@@ -58,6 +64,7 @@
     $('medBtn').innerHTML = `<span>🏅</span><b>${medalCount(p)}</b>`;
     $('medBtn').style.visibility = p ? 'visible' : 'hidden';
     $('badge').textContent = p ? p.avatar : '';
+    renderOrbitLock();
   }
   // こどもの わく（4つ）
   function renderPicker(forced) {
@@ -278,7 +285,9 @@
       if (j.clear) {
         $('resIcon').textContent = '\u{1F389}'; $('resStars').textContent = '⭐'.repeat(j.stars) + '☆'.repeat(3 - j.stars);
         say = 'ミッション クリア！' + (j.stars < 3 ? (j.stars < 2 && !m.rewOk ? ' くるくる もどる ボタンを つかわないと、ほしが ふえるよ。' : m.help ? ' ' + m.help : '') : ' ほし みっつ！ すごい！');
+        const wasOpen = orbitOpen();
         let rec = null; SV.update(p => { p.missions = p.missions || {}; p.missions[m.id] = Math.max(p.missions[m.id] || 0, j.stars); rec = p.missions; });
+        if (!wasOpen && orbitOpen()) say += ' うちゅうモードが ひらいたよ！ タイトルの ちきゅうの ボタンで、じゆうに あそべるよ。';
         const ch = MS.CHAPTERS.find(c => c.ch === m.ch); if (ch && rec && MS.chapterDone(rec, m.ch)) medals.push(ch.medal);
         $('resRew').style.display = 'none'; MS.setHl(null);
         // v0.14.2：つぎの ミッションへ（クリアで ひらいた もの）
@@ -342,7 +351,11 @@
   let nextMis = null;
   $('resNext').addEventListener('click', () => { const m = nextMis; if (!m) return; nextMis = null; A.tone(784, 0.1); startMission(m); });
   $('btnFree').addEventListener('click', () => { if (!needWho()) startFree(); });
-  $('btnOrbit').addEventListener('click', () => { if (!needWho()) startOrbit(); });
+  // v0.14.5：うちゅうモードは ミッション 2-5 を クリア（⭐1 いじょう）すると ひらく
+  $('btnOrbit').addEventListener('click', () => {
+    if (needWho()) return;
+    if (!orbitOpen()) { A.tone(150, 0.15, 'square', 0.08); A.say('さきに ミッションを クリア しよう！ ひかっている ちずの ボタンだよ。', null, { interrupt: true }); flashMis(); return; }
+    startOrbit(); });
   // =====================================================================
   // v0.14 ミッション
   // =====================================================================
