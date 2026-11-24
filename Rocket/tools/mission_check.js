@@ -12,15 +12,11 @@ const press = (id, f) => { M.ui(id); return f && f(); };
 const P = {
   '1-1': () => {}, '1-2': () => {}, '1-4': () => {},
   '1-3': (s, c, st) => { if (s.maxAlt > 100 && !st.a) { st.a = 1; press('btnMap'); press('btnZout'); press('btnMap'); } },
-  '2-2': (s, c, st) => cut(s, st), '2-4': (s, c, st) => { cut(s, st); if (st.cut && !st.d) { st.d = 1; press('btnDone', () => s.finishNow()); } },
-  '2-8': (s, c, st) => { cut(s, st); if (st.cut) s.finishNow(); },
-  '2-3': (s, c, st) => { cut(s, st); if (!st.cut) return;
-    if (!st.b && s.alt() >= ap(s) - 30 && !s.engineOn) { st.b = 1; press('btnEng', () => s.setEngine(true)); }
-    else if (st.b === 1 && s.engineOn && pe(s) >= 850) { st.b = 2; press('btnEng', () => s.setEngine(false)); }
-    else if (st.b === 2) s.finishNow(); },
-  '2-5': (s, c, st) => { if (!st.a) { st.a = 1; press('btnEng', () => s.setEngine(true)); } else if (st.a === 1 && ap(s) > 3800) { st.a = 2; press('btnEng', () => s.setEngine(false)); } },
-  '2-6': (s, c, st) => { if (!st.a) { st.a = 1; press('btnDir', () => s.setDir('retro')); press('btnEng', () => s.setEngine(true)); } else if (st.a === 1 && ap(s) <= 1400) { st.a = 2; press('btnEng', () => s.setEngine(false)); } },
-  '2-7': (s, c, st) => { st.fine = s.alt() > 2800; if (!st.a && s.alt() > 2500 && vr(s) <= 0) { st.a = 1; press('btnEng', () => s.setEngine(true)); } else if (st.a === 1 && (ap(s) - pe(s) <= 60 || ap(s) - pe(s) > (st.m = Math.min(st.m || 1e9, ap(s) - pe(s))) + 1)) { st.a = 2; press('btnEng', () => s.setEngine(false)); } },
+  '2-1': (s, c, st) => { if (st.second) cut(s, st); if (st.cut && (st.d = (st.d || 0) + 1) === 3) press('btnDone', () => s.finishNow()); },
+  '2-5': (s, c, st) => { cut(s, st); if (st.cut) s.finishNow(); },
+  '2-2': (s, c, st) => { if (!st.a) { st.a = 1; press('btnEng', () => s.setEngine(true)); } else if (st.a === 1 && ap(s) > 3800) { st.a = 2; press('btnEng', () => s.setEngine(false)); } },
+  '2-3': (s, c, st) => { if (!st.a) { st.a = 1; press('btnDir', () => s.setDir('retro')); press('btnEng', () => s.setEngine(true)); } else if (st.a === 1 && ap(s) <= 1400) { st.a = 2; press('btnEng', () => s.setEngine(false)); } },
+  '2-4': (s, c, st) => { st.fine = s.alt() > 2800; if (!st.a && s.alt() > 2500 && vr(s) <= 0) { st.a = 1; press('btnEng', () => s.setEngine(true)); } else if (st.a === 1 && (ap(s) - pe(s) <= 60 || ap(s) - pe(s) > (st.m = Math.min(st.m || 1e9, ap(s) - pe(s))) + 1)) { st.a = 2; press('btnEng', () => s.setEngine(false)); } },
   '3-1': (s, c, st) => chute(s, st, vr(s) < 0),
   '3-2': (s, c, st) => { if (!st.c && s.alt() < 100) { st.c = 1; press('btnChute', () => s.deployChute()); } },
   '3-3': (s, c, st) => deorbit(s, st, false), '3-5': (s, c, st) => deorbit(s, st, true),
@@ -38,9 +34,9 @@ function deorbit(s, st, sep) {
   chute(s, st, st.a >= 2);
 }
 const addTop = g => { g = g.map(r => r.slice()); let top = g.length; g.forEach((r, i) => { if (r[2] && i < top) top = i; }); g[top - 1][2] = 'tank'; return g; };
-const PLAN = { '1-1': [{ prof: 'up' }, { prof: 'side' }], '1-2': [{ prof: 'side' }, { mod: addTop }], '1-4': [{ prof: 'tilt' }, { rew: true }] };
-const extraGrid = { '3-1': [['fin'], [], ['engine', 'tank', 'win+chute', 'nose'], [], ['fin']], '2-8': M.ROCKETS.ORBIT };
-const prof0 = { '3-1': 'up' };
+const PLAN = { '2-1': [{}, { second: true }], '3-1': [{ grid: M.ROCKETS.SMALL }, { mod: g => g.map(r => r.map(k => (k === 'win' ? 'win+chute' : k))) }], '1-1': [{ prof: 'up' }, { prof: 'side' }], '1-2': [{ prof: 'side' }, { mod: addTop }], '1-4': [{ prof: 'tilt' }, { rew: true }] };
+const extraGrid = { '2-5': M.ROCKETS.ORBIT };
+const prof0 = {};
 const info = (g, p) => M.buildInfo(g, p);
 let ok = 0;
 for (const m of M.LIST) {
@@ -53,10 +49,10 @@ for (const m of M.LIST) {
     if (fl.mod) grid = fl.mod(grid); if (fl.prof) pf = fl.prof;
     M.pollAll('build', info(grid, pf)).forEach(x => log.push('🗣' + x.say[0].slice(0, 12)));
     const L = M.onLaunch(grid, pf); if (L !== true) { log.push('発射できない ' + JSON.stringify(L).slice(0, 30)); break; }
-    if (m.id === '1-4' && fl.rew === undefined) c.aborts = 1;
+    
     s = RL.Orbit.create(RL.analyze(grid), m.start ? { start: m.start } : { profile: pf });
-    if (fl.rew) s.rewinds = 1;
-    const st = {};
+    if (fl.rew) { s.rewinds = 1; if (m.id === '1-4') c.aborts = 1; }
+    const st = { second: !!fl.second };
     while (!s.done && s.t < 60000) {
       s.advance(s.isPowered() || s.alt() < 1500 || st.fine ? 0.02 : Math.max(0.02, Math.min(s.autoWarp(), 100) * 0.05));
       if (P[m.id]) P[m.id](s, c, st);

@@ -8,16 +8,16 @@ RL.Missions = (function () {
   const T = n => Array(n).fill('tank'), B = n => Array(n).fill('booster');
   const ROCKETS = {
     ORBIT: [['fin'], B(6), ['engine', ...T(4), 'ring', 'vengine+leg', ...T(3), 'win+chute', 'nose'], B(6), ['fin']],   // v0.12 の 見本（地球を まわれる）
-    SMALL: [['fin'], [], ['engine', 'tank', 'win', 'nose'], [], ['fin']],                     // ぎりぎり 宇宙（まっすぐ で 高さ 約330）
+    SMALL: [[], ['fin'], ['engine', 'tank', 'win', 'nose'], ['fin'], []],                     // ぎりぎり 宇宙（まっすぐ で 高さ 約330）
     SUB: [['fin'], B(3), ['engine', ...T(3), 'win', 'nose'], B(3), ['fin']],                  // 宇宙まで、でも まわれない
     UP: [[], [], ['vengine', ...T(3), 'win+chute', 'nose'], [], []],                          // 軌道の 上の 1段
     CAP: [[], [], ['vengine', 'tank', 'win+chute', 'nose'], [], []],                          // かるい カプセル
     LEGE: [[], [], ['engine+leg', ...T(3), 'win', 'nose'], [], []],                           // 脚つき（パラシュート なし）
     SEP: [[], [], ['vengine', ...T(2), 'ring', 'win+chute', 'nose'], [], []],                 // 下の段（エンジン）＋ カプセル
     // v0.14.1：よこ なら ちきゅうを まわれる、まっすぐ だと おちてくる（tools/mission_check.js）
-    FIRST: [['fin'], [], ['engine', ...T(2), 'ring', 'vengine', 'tank', 'win', 'nose'], [], ['fin']],
+    FIRST: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine', 'tank', 'win', 'nose'], ['fin'], []],
     // v0.14.1：ねんりょうが たりない（タンクを 1つ のせると まわれる）
-    SHORT: [['fin'], [], ['engine', ...T(2), 'ring', 'vengine'], [], ['fin']]
+    SHORT: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine'], ['fin'], []]
   };
   const ORB = ['low', 'high'];
   const E = s => s.bodies.earth;
@@ -62,63 +62,68 @@ RL.Missions = (function () {
         { at: 'fly', when: (s, c) => (c.ui.btnMap || 0) >= 1, hl: 'btnZout', say: ['ちきゅうと ロケットが みえるね。 ひだりの むしめがねで、とおくを みてみよう。'] },
         { at: 'fly', when: (s, c) => (c.ui.btnZin || 0) + (c.ui.btnZout || 0) >= 1, hl: 'btnMap', say: ['ひろく みえた！ もういちど ちずの ボタンを おすと、ロケットの ちかくに もどるよ。'] }
       ] },
-    { id: '1-4', ch: 1, quiet: true, icon: ['\u23EA', '\u270B'], rocket: 'SUB', lock: true, profile: 'tilt', rewOk: true, goal: { done: (d, s) => d.type !== 'abort' && (s.rewinds || 0) >= 1 },
-      star3: (d, s, c) => c.aborts >= 1,
+    // v0.14.3：⏪ で もどった あとは ✋ で ちゅうし しても クリア（abortClear）。おちて おわっても クリア（⭐3 は ✋ を つかう）
+    { id: '1-4', ch: 1, quiet: true, icon: ['\u23EA', '\u270B'], rocket: 'SUB', lock: true, profile: 'tilt', rewOk: true, abortClear: true,
+      goal: { done: (d, s) => (s.rewinds || 0) >= 1 }, star3: (d, s, c) => c.aborts >= 1,
       steps: [
         { at: 'build', hl: 'launch', say: ['この ロケットは、ちきゅうを まわれない ロケット。 どうなるか みてみよう。 はっしゃ！'] },
         { at: 'result', fail: (d, s) => d.type === 'ground' && !s.rewinds, hl: 'resRew', rew: true,
           say: ['おちちゃったね。 でも だいじょうぶ。', 'この くるくる もどる ボタンを おすと、おちる まえの ところから やりなおせるよ。 おしてみて！'] },
-        { at: 'fly', when: s => s.rewinds >= 1, say: ['もどった！ とちゅうから つづきが できるよ。 こまったら つかってね。', 'それから、あかい てのひらの ボタンを ながく おすと、ちゅうし できるよ。'] }
+        { at: 'fly', when: s => s.rewinds >= 1, hl: 'btnAbort',
+          say: ['もどった！ とちゅうから つづきが できるよ。 こまったら つかってね。', 'さいごに、ひかっている あかい てのひらの ボタンを、ながーく おしてみよう。 ちゅうし できるよ。 これで ミッション クリア！'] }
       ] },
-    // ===== 2章 ちきゅうを まわる =====
-    { id: '2-1', ch: 2, icon: ['\u{1F7E0}', '\u{1F7E2}'], rocket: 'ORBIT', lock: true, profile: 'side', hl: 'launch',
-      say: ['ちずの せんを みてね。 オレンジは おちる せん、みどりは ちきゅうを まわる せん だよ。', 'よこに はやく なると、みどりに なるよ。 はっしゃ！'],
-      goal: { tick: s => ORB.includes(s.cls) },
-      hints: [{ t: s => s.inSpace, say: 'せんが だんだん のびていくよ。 みどりに なるかな？' }] },
-    { id: '2-2', ch: 2, icon: ['\u{1F525}', '\u270B'], rocket: 'ORBIT', lock: true, profile: 'side', hl: 'launch',
-      say: ['せんが みどりに なったら、ほのおの ボタンで エンジンを とめよう。', 'ゴールの はたで おわると、えいせいに なるよ。'],
+    // ===== 2章 ちきゅうを まわる（v0.14.4：5こに 見なおし。1つに 1つ）=====
+    //  2-1 エンジンを とめる・🏁（まえの 2-1・2-2・2-4）／2-2 まえへ・▲（2-5）／2-3 うしろへ（2-6）／2-4 ▲で まえへ・▼・まんまる（2-3・2-7）／2-5 まとめ（2-8）
+    { id: '2-1', ch: 2, quiet: true, icon: ['\u{1F525}', '\u{1F3C1}'], rocket: 'ORBIT', lock: true, profile: 'side',
       goal: { done: (d, s, c) => d.type === 'orbit' && onEarth(d) && (c.ui.btnEng || 0) >= 1 }, star3: (d, s, c) => (c.cutFuel || 0) >= 0.35,
-      hints: [{ t: s => ORB.includes(s.cls) && s.isPowered(), say: 'みどりに なった！ いまだ、ほのおの ボタンで とめよう！', hl: 'btnEng' },
-              { t: s => ORB.includes(s.cls) && off(s), say: 'ずっと まわりつづけるよ。 ゴールの はたで おわろう。', hl: 'btnDone' }],
-      help: 'メーターの みどりの ところで とめると いいよ。' },
-    { id: '2-3', ch: 2, icon: ['\u25BC', '\u25B2'], rocket: 'ORBIT', lock: true, profile: 'side', hl: 'launch',
-      say: ['ちずの ▼ は ちきゅうに いちばん ちかい ところ、▲ は いちばん とおい ところ。', '▼ も ▲ も、たかさ 400 より たかく して おわろう。'],
-      goal: { done: d => d.type === 'orbit' && onEarth(d) && d.el.rp - 12000 >= 400 && d.el.ra - 12000 >= 400 },
-      star3: d => d.el.rp - 12000 >= 800 && d.el.ra - 12000 >= 800,
-      hints: [{ t: s => ORB.includes(s.cls) && pe(s) < 400, say: '▼ が ひくいね。 ▲ の ところで まえに ふかすと、▼ が あがるよ。' }],
-      help: '▲ に ついたら エンジンを つけて、▼ の かずを みてね。' },
-    { id: '2-4', ch: 2, icon: ['\u{1F3C1}', '\u{1F6F0}\uFE0F'], rocket: 'ORBIT', lock: true, profile: 'side', hl: 'launch',
-      say: ['ゴールの はたで おわると、ロケットは えいせいに なって、ワールドに のこるよ。', 'ちきゅうを まわって、ゴールの はたで おわろう。'],
-      goal: { done: (d, s, c) => d.type === 'orbit' && onEarth(d) && (c.ui.btnDone || 0) >= 1 }, star3: () => sats() >= 3,
-      hints: [{ t: s => ORB.includes(s.cls) && off(s), say: 'ゴールの はたを おそう！', hl: 'btnDone' }],
-      help: 'えいせいを みっつ うちあげると、ほしが ふえるよ。' },
-    { id: '2-5', ch: 2, icon: ['\u23E9', '\u25B2'], rocket: 'UP', start: { orbit: { pe: 500, ap: 600 } },
-      say: ['いま、ちきゅうを まわっているよ。', 'むきの ボタンが まえむき の まま、エンジンを つけてみよう。 ▲ が どんどん とおく なるよ。', '▲ が 2000 より とおく なったら とめてね。'],
+      steps: [
+        { at: 'build', hl: 'launch', say: ['ちきゅうを まわったら、エンジンは どうすれば いいかな？', 'まずは なにも おさずに、ずっと とばして みよう。 はっしゃ！'] },
+        { at: 'fly', when: s => ORB.includes(s.cls), say: ['ちきゅうを まわる せんに なったよ。 でも、エンジンは もえた まま…'] },
+        { at: 'result', fail: (d, s, c) => !(c.ui.btnEng >= 1) && d.type !== 'abort', hl: 'again',
+          say: ['エンジンを つけっぱなし だと、どんどん はやく なって、ちきゅうから とびだしちゃった！', 'みどりの せんに なったら、ほのおの ボタンで エンジンを とめよう。 みどりの ボタンで もういちど。'] },
+        { at: 'build', hl: 'launch', say: ['こんどは、みどりの せんに なったら とめるよ。 はっしゃ！'] },
+        { at: 'fly', when: s => ORB.includes(s.cls) && s.isPowered(), hl: 'btnEng', say: ['みどりに なった！ いまだ、ひかっている ほのおの ボタンで とめよう！'] },
+        { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnDone', say: ['とまった！ もう ずっと まわりつづけるよ。', 'ゴールの はたで おわると、ロケットは えいせいに なって、ワールドに のこるよ。'] }
+      ], help: 'みどりの せんに なったら、すぐ とめると ねんりょうが のこるよ。' },
+    { id: '2-2', ch: 2, icon: ['\u23E9', '\u25B2'], rocket: 'UP', start: { orbit: { pe: 500, ap: 600 } },
       goal: { tick: (s, c) => off(s) && (c.ui.btnEng || 0) >= 2 && ap(s) >= 2000 }, star3: s => s.cls === 'high',
-      hints: [{ t: () => true, say: 'ほのおの ボタンを おしてね。', hl: 'btnEng' }, { t: s => ap(s) >= 2000, say: '2000 を こえた！ とめていいよ。', hl: 'btnEng' }],
-      help: 'もっと とおくの、たかい きどうも ねらえるよ。' },
-    { id: '2-6', ch: 2, icon: ['\u23EA', '\u25B2'], rocket: 'UP', start: { orbit: { pe: 500, ap: 6000 } },
-      say: ['こんどは とても ほそながい きどう。', 'むきの ボタンで うしろむき に して エンジンを つけると、▲ が ちかく なるよ。 ▲ を 3000 より ちかく しよう。'],
+      steps: [
+        { at: 'fly', hl: 'btnEng', say: ['いま、ちきゅうを まわっているよ。 ちずの ▲ は、ちきゅうから いちばん とおい ところ。', 'すすむ むきに エンジンを つけると、▲ が とおく なるよ。 ほのおの ボタンを おしてみて。'] },
+        { at: 'fly', when: s => s.isPowered(), say: ['▲ が どんどん とおく なっていくね。 ▲ の かずが 2000 を こえたら とめよう。'] },
+        { at: 'fly', when: s => s.isPowered() && ap(s) >= 2000, hl: 'btnEng', say: ['2000 を こえた！ とめよう！'] }
+      ], help: 'もっと ながく つけると、たかい きどうに なるよ。' },
+    { id: '2-3', ch: 2, icon: ['\u23EA', '\u25B2'], rocket: 'UP', start: { orbit: { pe: 500, ap: 6000 } },
       goal: { tick: (s, c) => off(s) && c.dirs.has('retro') && ap(s) <= 3000 && pe(s) >= 300 }, star3: s => ap(s) <= 1500,
-      hints: [{ t: () => true, say: 'まず、むきの ボタンを おして うしろむき に しよう。', hl: 'btnDir' },
-              { t: (s, c) => c.dirs.has('retro'), say: 'ほのおの ボタンで エンジンを つけよう。', hl: 'btnEng' }],
-      help: '▼ が 300 より ちかく なると、くうきに はいっちゃうよ。 ▲ だけ ちかく しよう。' },
-    { id: '2-7', ch: 2, icon: ['\u2B55', '\u23E9'], rocket: 'UP', start: { orbit: { pe: 500, ap: 3000 } },
-      say: ['たまごがた の きどうを、まんまるに しよう。', '▲ の ところまで まって、まえむきで ふかすと、▼ が もちあがるよ。', '▼ と ▲ の かずが ちかく なったら とめてね。'],
+      steps: [
+        { at: 'fly', hl: 'btnDir', say: ['こんどは ▲ が とおすぎる。 ちかく したいね。', 'むきの ボタンを おして、ロケットを うしろむき に しよう。'] },
+        { at: 'fly', when: (s, c) => c.dirs.has('retro'), hl: 'btnEng', say: ['うしろむき に なった。 エンジンを つけると、ブレーキに なるよ。'] },
+        { at: 'fly', when: s => s.isPowered() && ap(s) <= 3000, hl: 'btnEng', say: ['▲ が 3000 より ちかく なった！ とめよう。'] }
+      ], help: 'ながく つけすぎると、ちきゅうに おちちゃうよ。' },
+    { id: '2-4', ch: 2, icon: ['\u25BC', '\u2B55'], rocket: 'UP', start: { orbit: { pe: 500, ap: 3000 } },
       goal: { tick: (s, c) => off(s) && (c.ui.btnEng || 0) >= 2 && ap(s) - pe(s) <= 300 && pe(s) >= 300 }, star3: s => ap(s) - pe(s) <= 100,
-      hints: [{ t: s => Math.hypot(s.x, s.y) - 12000 > ap(s) - 60, say: '▲ に ついたよ！ いま ふかそう！', hl: 'btnEng' }],
-      help: 'はやおくりで ▲ まで まって、そこで エンジンを つけよう。' },
-    { id: '2-8', ch: 2, icon: ['\u{1F6E0}\uFE0F', '\u{1F6F0}\uFE0F'], preset: null, allow: null, hl: 'launch',
+      steps: [
+        { at: 'fly', say: ['ちずの ▼ は、ちきゅうに いちばん ちかい ところ。 いまは たまごがた の きどう だね。', '▲ の ところで まえに ふかすと、こんどは ▼ が もちあがって、まんまるに なるよ。 ▲ まで まとう。'] },
+        { at: 'fly', when: s => Math.hypot(s.x, s.y) - 12000 > ap(s) - 60, hl: 'btnEng', say: ['▲ に ついた！ いま ふかそう！'] },
+        { at: 'fly', when: s => s.isPowered() && ap(s) - pe(s) <= 300, hl: 'btnEng', say: ['▼ と ▲ が ちかく なった！ まんまるだ。 とめよう！'] }
+      ], help: 'はやおくりで ▲ まで まって、そこで エンジンを つけよう。' },
+    { id: '2-5', ch: 2, icon: ['\u{1F6E0}\uFE0F', '\u{1F6F0}\uFE0F'], preset: null, allow: null, hl: 'launch',
       say: ['さいごは、じぶんで ロケットを つくって、ちきゅうを まわろう！', 'ゴールの はたで おわったら クリア だよ。'],
       goal: { done: d => d.type === 'orbit' && onEarth(d) }, star3: (d, s) => s.fuelAll() >= 0.15,
       help: 'ブースターと、2だんの ロケットが おすすめ だよ。' },
     // ===== 3章 ちきゅうに かえる =====
-    { id: '3-1', ch: 3, icon: ['\u{1F9F7}', '\u{1FA82}'], preset: 'SMALL', allow: ['chute'], profile: 'up', need: 'up', hl: 'pal:chute',
-      build: [{ at: 'build', when: x => x.grid.some(r => r.some(k => RL.has(k, 'chute'))), hl: 'launch', say: ['まどに パラシュートが ついた！ まっすぐ うえに はっしゃ！'] }],
-      say: ['パラシュートは、まどに つける ぶひん だよ。', 'パラシュートを えらんで、まどを タップしてね。 それから はっしゃ！', 'おちてきたら、パラシュートの ボタンを おそう。'],
+    // v0.14.4：パラシュートなしで わざと しっぱい → まどに つけて もういちど
+    { id: '3-1', ch: 3, quiet: true, icon: ['\u{1F9F7}', '\u{1FA82}'], preset: 'SMALL', allow: ['chute'], profile: 'up', need: 'up',
       goal: { done: d => d.type === 'landed' && onEarth(d) && d.chute },
-      hints: [{ t: s => vr(s) < 0 && s.chutes(), say: 'おちてきた！ パラシュートの ボタンを おそう！', hl: 'btnChute' }],
-      help: 'まどに パラシュートを つけて、まっすぐ で とんでね。' },
+      steps: [
+        { at: 'build', hl: 'launch', say: ['ちいさな ロケットで、うちゅうの いりぐちまで いって、ちきゅうに かえって こよう。', 'まっすぐ うえに はっしゃ！'] },
+        { at: 'fly', when: s => s.maxAlt > 100 && vr(s) < 0, say: ['おちてきた！ だいじょうぶ かな？'] },
+        { at: 'result', fail: d => d.type === 'ground', hl: 'again',
+          say: ['どーん！ はやすぎて、じめんに ぶつかっちゃった。', 'ゆっくり おりるには、どうしたら いいかな？ そう、パラシュート！ みどりの ボタンで もどろう。'] },
+        { at: 'build', block: true, hl: 'pal:chute', cells: 'win', say: ['パラシュートは、まどに つける ぶひん。 パラシュートを えらんで、ひかっている まどを タップ してね。'] },
+        { at: 'build', when: x => x.grid.some(r => r.some(k => RL.has(k, 'chute'))), hl: 'launch', say: ['まどに パラシュートが ついた！ もういちど まっすぐ うえに はっしゃ！'] },
+        { at: 'fly', when: s => s.maxAlt > 100 && vr(s) < 0 && s.chutes() && s.alt() < 250, hl: 'btnChute', say: ['おちてきた！ いまだ、ひかっている パラシュートの ボタンを おそう！'] },
+        { at: 'fly', when: s => !!s.chute, say: ['ひらいた！ ふわふわ おりていくよ。'] }
+      ], help: 'おちて きたら、パラシュートの ボタンを おしてね。' },
     { id: '3-2', ch: 3, icon: ['\u{1F4A8}', '\u{1FA82}'], rocket: 'CAP', start: { h: 1200, vDown: 0, fuel: 0 },
       say: ['たかい ところから おちているよ！', 'はやすぎる ときに パラシュートを ひらくと、やぶれちゃう。', 'くうきで ゆっくりに なるまで まって、ひらこう。'],
       goal: { done: d => d.type === 'landed' && onEarth(d) && d.chute }, star3: (d, s, c) => (c.ui.btnChute || 0) === 1,
@@ -184,6 +189,7 @@ RL.Missions = (function () {
   function hlCells(st) {
     if (!st || !st.cells || !RL.Builder) return;
     const g = RL.Builder.grid; let top = g.length; g.forEach((r, i) => { if (r[2] && i < top) top = i; });
+    if (st.cells === 'win') { const w = []; g.forEach((r, i) => r.forEach((k, j) => { if (RL.base(k) === 'win') w.push([i, j]); })); if (w.length) RL.Builder.highlightCell(w); return; }
     if (top > 0) RL.Builder.highlightCell([top - 1, 2]);
   }
   M.begin = m => { M.active = m; M.ctx = newCtx(); stepsOf(m); return M.ctx; };
@@ -209,7 +215,7 @@ RL.Missions = (function () {
     if (need && profile !== need) return { need };
     c.prof = profile; c.profs.add(profile);
     c.topRow = 99; grid.forEach((row, r) => { if (row.some(Boolean)) c.topRow = Math.min(c.topRow, r); });
-    c.ui = {}; c.dirs = new Set(['pro']); c.cleared = null; c.manualSep = 0; c.sepAlt = 0; c.mapT0 = 0; c.cutFuel = 0; c.siLaunch = c.si;
+    c.ui = {}; c.aborts = 0; c.dirs = new Set(['pro']); c.cleared = null; c.manualSep = 0; c.sepAlt = 0; c.mapT0 = 0; c.cutFuel = 0; c.siLaunch = c.si;
     return true;
   };
   M.buildInfo = (grid, profile) => ({ grid, profile, tanks: countTanks(grid) });

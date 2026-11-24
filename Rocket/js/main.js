@@ -202,7 +202,10 @@
     lastRec = null; closeResult(); A.tone(660, 0.08);
     RL.Flight2D.run(lastA, lastProf, sim => result2d(sim), aborted, lr);
   });
-  function aborted(sim) { if (MS.ctx) { MS.ctx.aborts++; MS.retry(); } if (sim && sim.t) SV.advanceClock(sim.t); A.say('ちゅうし！ つくりなおそう。'); RL.emit('abort'); }
+  function aborted(sim) {
+    // v0.14.3：⏪ で もどった あとの ちゅうしで クリア できる ミッション（1-4）
+    if (MS.active && MS.active.abortClear && sim && (sim.rewinds || 0) >= 1) { MS.ctx.aborts++; sim.done = { type: 'mission', maxAlt: sim.maxAlt, t: sim.t, body: 'earth' }; result2d(sim); return; }
+    if (MS.ctx) { MS.ctx.aborts++; MS.retry(); } if (sim && sim.t) SV.advanceClock(sim.t); A.say('ちゅうし！ つくりなおそう。'); RL.emit('abort'); }
   // ---- うちゅうモードの結果 ----
   function result2d(sim) {
     const d = sim.done, info = [], medals = [];
@@ -265,7 +268,7 @@
     $('resInfo').innerHTML = [...new Set(info)].join('');
     if (stars >= 3) [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.25, 'triangle'), i * 120)); else A.tone(523, 0.3, 'triangle');
     // v0.14 ミッションの けっか（ほしは ミッションの ⭐）
-    $('resMap').style.display = MS.active ? 'flex' : 'none';
+    $('resMap').style.display = MS.active ? 'flex' : 'none'; $('resNext').style.display = 'none'; nextMis = null;
     const expFail = MS.active ? MS.poll('result', { d, sim }) : null;   // v0.14.1：わざと しっぱい（あんないの とおり）
     if (expFail) {
       $('resStars').textContent = '\u{1F4A1}'; say = expFail.say.join(' ');
@@ -278,6 +281,9 @@
         let rec = null; SV.update(p => { p.missions = p.missions || {}; p.missions[m.id] = Math.max(p.missions[m.id] || 0, j.stars); rec = p.missions; });
         const ch = MS.CHAPTERS.find(c => c.ch === m.ch); if (ch && rec && MS.chapterDone(rec, m.ch)) medals.push(ch.medal);
         $('resRew').style.display = 'none'; MS.setHl(null);
+        // v0.14.2：つぎの ミッションへ（クリアで ひらいた もの）
+        const i = MS.LIST.indexOf(m); nextMis = MS.LIST[i + 1] || null;
+        if (nextMis) { $('resNext').style.display = 'flex'; MS.setHl('resNext'); say += ' つぎの ミッションに すすもう！'; }
       } else {
         $('resStars').textContent = '\u{1F4A8}';
         say = (d.type === 'mission' ? '' : say + ' ') + 'もういちど ちょうせん しよう！' + (MS.ctx.fails >= 3 && m.help ? ' ヒント：' + m.help : '');
@@ -333,6 +339,8 @@
   $('again').addEventListener('click', () => { if (RL.Tutorial.active) return; closeResult(); A.tone(660, 0.08);
     if (MS.active && MS.active.start) missionFly(MS.active); else if (MS.active) { MS.retryBuild && MS.retryBuild(); missionBuild(true); } });   // v0.14：とちゅうから の ミッションは すぐ もういちど
   $('resMap').addEventListener('click', () => { closeResult(); A.tone(660, 0.08); openMissionMap(); });
+  let nextMis = null;
+  $('resNext').addEventListener('click', () => { const m = nextMis; if (!m) return; nextMis = null; A.tone(784, 0.1); startMission(m); });
   $('btnFree').addEventListener('click', () => { if (!needWho()) startFree(); });
   $('btnOrbit').addEventListener('click', () => { if (!needWho()) startOrbit(); });
   // =====================================================================

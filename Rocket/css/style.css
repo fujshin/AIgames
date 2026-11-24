@@ -222,3 +222,5 @@ body.mission #misBadge{display:block}
 #mgIcon{font-size:min(140px,30vw);line-height:1;animation:pulse .6s infinite alternate}
 #mgTap{font-size:48px;opacity:.8}
 .mhint{animation:pulse .45s infinite alternate!important;outline:5px solid #ffd54a!important;outline-offset:2px;box-shadow:0 0 22px 8px rgba(255,213,74,.85)!important}
+#resNext{width:110px;height:90px;border-radius:45px;border:none;background:linear-gradient(#ffd54a,#e8a400);box-shadow:0 8px 0 #8a5d00;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:52px}
+@media (max-width:460px){#resBtns{gap:12px}#resNext,#resRew{width:84px;height:80px;font-size:42px}#resMap{width:76px;height:76px;font-size:40px}#again{width:120px;height:80px}}
