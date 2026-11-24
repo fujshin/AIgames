@@ -5,7 +5,8 @@
 //  - ボタン：エンジン とめる／つける（液体だけ）、地図／ちかく、おわる（安定した軌道のとき）、中止（長おし）
 //    v0.8.3：ボタンは いつも 同じ位置（🏁 は 出ていない間も 場所を とっておく）
 //  - v0.8.2：地図の ズーム（＋／－ボタン・ピンチ・ホイール）。画面の外の 月／地球は はしに 🌙 の しるし
-//  - v0.8.3：上の まんなかの「このまま とぶと どうなるか」の しるし（💥🛰️🚀…）は やめた。予測の線の 色で わかるため
+//  - v0.8.3：上の まんなかの「このまま とぶと どうなるか」の しるしは やめた。予測の線の 色で わかるため
+//  - v0.9：まえに うちあげた 衛星（うすい 線と 小さな 衛星）と 月の 🚩 を 地図に 出す（js/save.js の ワールド）
 RL.Flight2D = (function () {
   const $ = id => document.getElementById(id), SP = RL.Space, TAU = Math.PI * 2;
   const STAGE_NAME = ['だいいち', 'だいに', 'だいさん', 'だいよん', 'だいご'], IGN_NAME = ['', 'にだんめ', 'さんだんめ', 'よんだんめ', 'ごだんめ'];
@@ -43,6 +44,13 @@ RL.Flight2D = (function () {
     g.fillStyle = '#e5383b'; g.beginPath(); g.moveTo(12, 0); g.lineTo(4, -3.3); g.lineTo(4, 3.3); g.closePath(); g.fill();
     g.restore();
   }
+  // ---- まえに うちあげた 衛星（v0.9）：まんなかの 箱 と 青い はね ----
+  function drawSat(g, x, y, s) {
+    g.save(); g.translate(x, y); g.scale(s, s);
+    g.fillStyle = '#3d7bd9'; g.strokeStyle = '#fff'; g.lineWidth = 1;
+    g.fillRect(-11, -3, 7, 6); g.strokeRect(-11, -3, 7, 6); g.fillRect(4, -3, 7, 6); g.strokeRect(4, -3, 7, 6);
+    g.fillStyle = '#ffd54a'; g.fillRect(-3.5, -3.5, 7, 7); g.restore();
+  }
   // ---- 画面の外にある 天体の しるし（はしに 絵と 向きの 三角）（v0.8.2） ----
   function offscreenMark(g, x, y, box, icon, u) {
     const { x0, y0, w, h } = box, m = 34 * u;
@@ -59,7 +67,7 @@ RL.Flight2D = (function () {
     g.restore();
   }
   // ---- 地図を描く（全画面 または 小窓） ----
-  function drawMap(g, V, sim, pr, trail, box, small) {
+  function drawMap(g, V, sim, pr, trail, box, small, WD) {
     const W = sim.bodies, E = W.earth, M = W.moon, ms = SP.bodyState(M, sim.t);
     const { x0, y0, w, h } = box, cx = x0 + w / 2, cy = y0 + h / 2, sc = Math.min(w, h) / 2 / V.r;
     const X = x => cx + (x - V.cx) * sc, Y = y => cy - (y - V.cy) * sc;
@@ -71,8 +79,23 @@ RL.Flight2D = (function () {
     g.beginPath(); g.arc(X(0), Y(0), M.orbitR * sc, 0, TAU); g.stroke();
     if (sim.body === M || V.r > M.orbitR * 0.3) { g.strokeStyle = 'rgba(200,200,255,.25)'; g.beginPath(); g.arc(X(ms.x), Y(ms.y), M.soi * sc, 0, TAU); g.stroke(); }
     g.setLineDash([]);
-    drawMoon(g, X(ms.x), Y(ms.y), Math.max(small ? 3 : 5, M.R * sc));
+    const mR = Math.max(small ? 3 : 5, M.R * sc);
+    drawMoon(g, X(ms.x), Y(ms.y), mR);
     drawEarth(g, X(0), Y(0), Math.max(small ? 4 : 7, E.R * sc), E.rot * sim.t, (E.R + E.atmo) * sc);
+    // v0.9 ワールド：まえの 衛星（うすい 線）と 月の はた
+    if (WD) {
+      const abs = WD.W0 + sim.t;
+      WD.items.forEach(it => {
+        const o = it.o;
+        if (o.kind === 'flag') { if (mR < 6) return; const fx = ms.x + Math.cos(o.ang) * M.R * 1.12, fy = ms.y + Math.sin(o.ang) * M.R * 1.12;
+          g.font = `${small ? 10 : Math.min(22, Math.max(12, mR * 0.35))}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🚩', X(fx), Y(fy)); return; }
+        const off = o.body === 'moon' ? ms : { x: 0, y: 0 };
+        if (!small) { g.strokeStyle = 'rgba(255,213,74,.22)'; g.lineWidth = 1; g.beginPath();
+          it.pts.forEach((p, i) => i ? g.lineTo(X(p[0] + off.x), Y(p[1] + off.y)) : g.moveTo(X(p[0] + off.x), Y(p[1] + off.y))); g.stroke(); }
+        const s = RL.World.posAt(o, abs);
+        drawSat(g, X(s.x + off.x), Y(s.y + off.y), small ? 0.5 : V.u * 0.9);
+      });
+    }
     // 発射場
     if (E.R * sc > 25) { const ph = RL.CFG.ORBIT.SITE + E.rot * sim.t; g.font = `${small ? 12 : 18}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.fillText('🏠', X(Math.cos(ph) * E.R * 1.03), Y(Math.sin(ph) * E.R * 1.03)); }
@@ -200,6 +223,9 @@ RL.Flight2D = (function () {
     const u = Math.max(0.5, Math.min(1, Math.min(W, H * 0.75) / 700));
     $('count').style.fontSize = (130 * u) + 'px';
     const sim = RL.Orbit.create(a, { profile }), O = RL.CFG.ORBIT, E = sim.bodies.earth;
+    // v0.9 ワールド：この 飛行が はじまった ときの ワールドの 時計と、まえに のこした もの
+    const pf = RL.Save && RL.Save.cur, WD = pf ? { W0: pf.world.clock, items: pf.world.objs.map(o => ({ o, pts: o.kind === 'sat' ? RL.World.orbitPts(o) : null })) } : null;
+    sim.worldStart = WD ? WD.W0 : 0;
     const cs = Math.min(36, W / 12, H / 20), rocket = RL.Flight.buildRocket(a, cs), RW = RL.CFG.COLS * cs;
     rocket.style.display = 'block';
     let lowest = 0; a.cells.forEach(q => { if (!q.ctx.loose) lowest = Math.max(lowest, q.r + 1); });
@@ -223,7 +249,7 @@ RL.Flight2D = (function () {
     bDone.onclick = () => { if (bDone.style.visibility === 'hidden') return; sim.finishNow(); };
     bDone.style.visibility = 'hidden'; engUI(); bMap.innerHTML = RL.ICON.map;
     const cleanup = () => { cancelAnimationFrame(raf); abortCb = null; Z.on = false; zctl.style.display = 'none'; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
-    abortCb = () => { if (ended) return; ended = 'abort'; cleanup(); A.stop(); A.tone(300, 0.15, 'square', 0.1); onAbort && onAbort(); };
+    abortCb = () => { if (ended) return; ended = 'abort'; cleanup(); A.stop(); A.tone(300, 0.15, 'square', 0.1); onAbort && onAbort(sim); };
     A.say('さん、に、いち、はっしゃ！', null, { rate: 1.1 });
     [0, 700, 1400].forEach(d => setTimeout(() => { if (!ended) A.tone(880, 0.15); }, d));
     setTimeout(() => { if (!ended) { A.tone(1320, 0.4); A.rumble(3); } }, pre);
@@ -352,7 +378,7 @@ RL.Flight2D = (function () {
       if (Z.on) { $('btnZin').classList.toggle('off', Z.log <= Z_IN + 1e-6); $('btnZout').classList.toggle('off', Z.log >= Z_OUT - 1e-6); }
       if (useMap) {
         rocket.style.display = 'none';
-        drawMap(g, V, sim, pr, trail, { x0: 0, y0: 0, w: W, h: H }, false);
+        drawMap(g, V, sim, pr, trail, { x0: 0, y0: 0, w: W, h: H }, false, WD);
       } else {
         rocket.style.display = 'block';
         const ph = Math.atan2(sim.y, sim.x) - (O.SITE + E.rot * sim.t), rangeD = Math.atan2(Math.sin(ph), Math.cos(ph)) * E.R;
@@ -360,7 +386,7 @@ RL.Flight2D = (function () {
         rocketDOM(ry, sim.burnC || sim.boost, dtR);
         // 小さな地図（予測の線が 地球を ひとまわり するのが 見える）
         const sz = Math.min(W, H) * 0.34, VV = { r: Math.max(E.R * 1.3, Math.min(V.r, E.R * 3)), cx: 0, cy: 0, u: u * 0.6, stars: [] };
-        drawMap(g, VV, sim, pr, trail, { x0: 12, y0: 86, w: sz, h: sz }, true);
+        drawMap(g, VV, sim, pr, trail, { x0: 12, y0: 86, w: sz, h: sz }, true, WD);
       }
       drawTop(g, W, sim, el > pre ? warp : 1, u);
       drawSpeed(g, W, H, sim, u);
@@ -381,5 +407,5 @@ RL.Flight2D = (function () {
     raf = requestAnimationFrame(frame);
     return sim;
   }
-  return { run, predict, get sim() { return cur; } };
+  return { run, predict, drawSat, drawMoon, get sim() { return cur; } };
 })();
