@@ -1,0 +1,2637 @@
+rklbzq ROCKET LAB BUNDLE
+created: 2026-11-24 12:07:43
+root: Rocket
+files: 30
+
+## INDEX (path / lines / bytes / modified)
+- css/style.css / 106 / 8781 / 2026-11-24 12:06
+- docs/DESIGN_v0.7.md / 47 / 3314 / 2026-11-24 12:06
+- docs/DESIGN_v0.8.md / 106 / 8809 / 2026-11-24 12:06
+- index.html / 61 / 2633 / 2026-11-24 12:06
+- js/audio.js / 38 / 2269 / 2026-11-24 12:06
+- js/builder.js / 86 / 5039 / 2026-11-24 12:06
+- js/config.js / 65 / 4090 / 2026-11-24 12:06
+- js/flight.js / 260 / 21009 / 2026-11-24 12:06
+- js/flight2d.js / 357 / 27926 / 2026-11-24 12:06
+- js/icons.js / 25 / 5136 / 2026-11-24 12:06
+- js/main.js / 116 / 8810 / 2026-11-24 12:06
+- js/parts.js / 102 / 7605 / 2026-11-24 12:06
+- js/physics.js / 120 / 8270 / 2026-11-24 12:06
+- js/physics2d.js / 270 / 17160 / 2026-11-24 12:06
+- js/predict.js / 110 / 7241 / 2026-11-24 12:06
+- js/space.js / 97 / 5559 / 2026-11-24 12:06
+- js/tutorial.js / 207 / 21526 / 2026-11-24 12:06
+- README.md / 60 / 4398 / 2026-11-24 12:06
+- tools/balance_check.js / 37 / 3614 / 2026-11-24 12:06
+- tools/balance_v0.7.txt / 17 / 1816 / 2026-11-24 12:06
+- tools/dv.js / 43 / 3119 / 2026-11-24 12:06
+- tools/kepler_test.js / 26 / 2190 / 2026-11-24 12:06
+- tools/lib.js / 11 / 811 / 2026-11-24 12:06
+- tools/lib2d.js / 8 / 697 / 2026-11-24 12:06
+- tools/make_rocket_bundle.ps1 / 62 / 2859 / 2026-11-24 12:06
+- tools/moon_test.js / 19 / 1180 / 2026-11-24 12:06
+- tools/orbit_check.js / 33 / 2451 / 2026-11-24 12:06
+- tools/orbit_v0.8.txt / 11 / 1666 / 2026-11-24 12:06
+- tools/predict_test.js / 50 / 3571 / 2026-11-24 12:06
+- tools/search_max.js / 20 / 1581 / 2026-11-24 12:06
+
+===FILE: css/style.css===
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#0b1640;font-family:system-ui,"Hiragino Sans",sans-serif;color:#fff;overflow:hidden}
+button{font:inherit;color:inherit;padding:0}
+#app{display:flex;flex-direction:column;height:100%;max-width:760px;margin:0 auto;padding:8px;gap:8px}
+#palette{display:flex;gap:5px;justify-content:center}
+.pal{flex:1;max-width:92px;aspect-ratio:1;border-radius:14px;border:3px solid transparent;background:#24357a;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 0 #121b45;transition:transform .1s,opacity .2s;min-width:0}
+.pal svg{width:74%;height:74%;flex:none}
+.pal.sel{border-color:#ffd54a;background:#34489a;transform:translateY(-3px) scale(1.05)}
+.pal.off{opacity:.25;filter:grayscale(1)}
+.pal.hint,.hl{animation:pulse .5s infinite alternate}
+@keyframes pulse{to{transform:scale(1.12);box-shadow:0 0 26px #ffd54a}}
+#mid{flex:1;display:flex;gap:8px;min-height:0}
+#ladder{width:56px;flex:none;position:relative;background:linear-gradient(#000 0%,#1a0f4a 35%,#3a6fd8 75%,#8fd3ff 100%);border-radius:14px}
+.zone{position:absolute;left:0;right:0;text-align:center;font-size:24px;transform:translateY(50%)}
+.atmo{position:absolute;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,#9fd8ff 0 6px,transparent 6px 10px)}
+.flag{position:absolute;left:-4px;font-size:22px;transform:translateY(50%)}
+.flag.best{left:auto;right:-6px}
+#stage{flex:1;position:relative;background:radial-gradient(ellipse at bottom,#2c4a9a,#0b1640 70%);border-radius:18px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:8px}
+#grid{display:grid;gap:0}
+.cell{position:relative;outline:1px dashed rgba(255,255,255,.16);outline-offset:-3px;cursor:pointer}
+.cell svg{position:absolute;inset:0;width:100%;height:100%;animation:drop .18s ease-out}
+.cell.hl{outline:4px solid #ffd54a;outline-offset:-4px;border-radius:8px}
+.cell.loose svg{opacity:.35;filter:grayscale(.6)}
+.cell.flash{outline:4px solid #5aff7a;outline-offset:-4px;border-radius:8px}
+@keyframes drop{from{transform:translateY(-35%) scale(.85)}to{transform:none}}
+#pad{width:100%;height:16px;background:repeating-linear-gradient(45deg,#ffcc00 0 14px,#333 14px 28px);border-radius:4px;margin-top:4px}
+#bottom{display:flex;gap:10px;justify-content:center;align-items:center}
+#launch{flex:1;max-width:340px;height:80px;border-radius:40px;border:none;background:linear-gradient(#ff5a5a,#c81e1e);box-shadow:0 8px 0 #7a0d0d;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#launch svg{height:70%}
+#launch:active{transform:translateY(6px);box-shadow:0 2px 0 #7a0d0d}
+#launch.off{opacity:.3}
+.small{width:60px;height:60px;border-radius:30px;border:none;background:#3a4a8a;box-shadow:0 6px 0 #1d2550;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
+.small svg{width:55%;height:55%}
+.small.off{opacity:.3}
+#fly{position:fixed;inset:0;display:none;background:#000;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%}
+#flyRocket{position:absolute;left:0;top:0;will-change:transform}
+#flyRocket .p{position:absolute}
+#flyRocket .p svg{width:100%;height:100%;display:block}
+#flyRocket .flame{position:absolute;display:none;transform-origin:50% 0;animation:flick .08s infinite alternate}
+#flyRocket .flame[data-kind="b"]{animation-duration:.05s}
+@keyframes flick{from{transform:scaleY(.8)}to{transform:scaleY(1.15)}}
+#flyRocket .face{transform-origin:50% 50%;animation:wave .5s infinite alternate}
+@keyframes wave{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
+#count{position:absolute;left:0;right:0;top:22%;text-align:center;font-size:130px;font-weight:900;text-shadow:0 4px 0 rgba(0,0,0,.3)}
+#result{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(0,0,30,.78);z-index:5}
+#resIcon{font-size:120px;animation:pop .5s}
+#resStars{font-size:44px;letter-spacing:4px;min-height:52px}
+#resInfo{display:flex;gap:18px;font:bold 34px "Courier New",monospace}
+#resInfo span{background:#071a0b;padding:6px 14px;border-radius:10px;color:#5aff7a}
+#resInfo span.h{color:#fff;background:rgba(255,255,255,.12)}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+#again{width:180px;height:90px;border-radius:45px;border:none;background:linear-gradient(#5ad66b,#1f9a32);box-shadow:0 8px 0 #0d5a1b;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#again svg{height:65%}
+#ver{position:fixed;right:6px;bottom:2px;font-size:10px;opacity:.35;z-index:20}
+/* チュートリアル：ふきだしは 左の はしごの上に たてに おく */
+#tutBubble{pointer-events:none;position:fixed;display:none;flex-direction:column;align-items:center;gap:8px;background:#fff;color:#223;border-radius:20px;padding:8px 6px;box-shadow:0 6px 0 rgba(0,0,0,.25);z-index:10;width:64px;overflow:hidden}
+#tutIcon{display:flex;flex-direction:column;gap:4px;align-items:center}
+#tutIcon svg{width:46px;height:46px}
+#tutIcon .em{font-size:36px;line-height:46px}
+#tutEar{pointer-events:auto;flex:none;width:50px;height:50px;border-radius:25px;border:none;background:#3a4a8a;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#tutEar svg{width:60%}
+#tutBubble.talk #tutEar{animation:pulse .4s infinite alternate}
+#tutHand{position:fixed;display:none;font-size:56px;z-index:11;pointer-events:none;animation:tap .7s infinite;filter:drop-shadow(0 3px 2px rgba(0,0,0,.5))}
+@keyframes tap{0%,100%{transform:translate(-30%,0)}50%{transform:translate(-30%,14px)}}
+body.flying #tutBubble,body.flying #tutHand{display:none!important}
+/* タイトル */
+#title{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;background:radial-gradient(ellipse at bottom,#2c4a9a,#0b1640 70%);z-index:30}
+#titleRocket svg{height:200px}
+#titleBtns{display:flex;gap:24px}
+#titleBtns button{width:150px;height:150px;border-radius:30px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 0 rgba(0,0,0,.35)}
+#titleBtns svg{width:75%;height:75%}
+#btnTut{background:linear-gradient(#ffd54a,#e8a400)}
+#btnFree{background:linear-gradient(#ff5a5a,#c81e1e)}
+#btnOrbit{background:linear-gradient(#3a6fd8,#1a2f7a)}
+#titleBtns{flex-wrap:wrap;justify-content:center;padding:0 10px}
+#titleBtns button{width:min(150px,28vw);height:min(150px,28vw)}
+/* v0.8 うちゅうモード */
+#prof{display:none;background:#2a5ab0}
+body.orbitMode #prof{display:flex}
+#prof svg{width:70%;height:70%}
+#btnAbort{position:absolute;left:10px;top:10px;width:64px;height:64px;border-radius:32px;border:3px solid #fff;background:rgba(200,30,30,.75);cursor:pointer;z-index:3;display:flex;align-items:center;justify-content:center;touch-action:none}
+#btnAbort svg{width:60%;height:60%;pointer-events:none}
+#btnAbort .ring{position:absolute;inset:-8px;border-radius:50%;pointer-events:none;-webkit-mask:radial-gradient(circle,transparent 58%,#000 60%);mask:radial-gradient(circle,transparent 58%,#000 60%)}
+body.tutorial #btnAbort{display:none}
+#fctl{position:absolute;right:12px;bottom:150px;display:none;flex-direction:column;gap:14px;z-index:3}
+#fly.orbit #fctl{display:flex}
+#fctl button{width:72px;height:72px;border-radius:36px;border:3px solid #fff;background:rgba(40,60,130,.85);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+#fctl button svg{width:72%;height:72%;pointer-events:none}
+#fctl button.off{opacity:.3}
+#btnEng.on{background:rgba(200,60,20,.85)}
+#btnEng.hint,#btnDone{animation:pulse .5s infinite alternate}
+#btnDone{background:rgba(30,150,50,.9)!important}
+#confirm{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,30,.7);z-index:40}
+#confirm .box{background:#24357a;border-radius:28px;padding:24px 28px;display:flex;flex-direction:column;align-items:center;gap:22px;box-shadow:0 8px 0 #121b45}
+#cfIcon{display:flex;gap:10px;align-items:center;font-size:64px}
+#cfIcon svg{width:96px;height:96px}
+#confirm .row{display:flex;gap:28px}
+#confirm .row button{width:96px;height:96px;border-radius:48px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 rgba(0,0,0,.35)}
+#confirm .row svg{width:60%;height:60%}
+#cfYes{background:linear-gradient(#5ad66b,#1f9a32)}
+#cfNo{background:linear-gradient(#ff5a5a,#c81e1e)}
+#resInfo{flex-wrap:wrap;justify-content:center;font-size:28px}
+@media (max-width:420px){.small{width:46px;height:46px}#fctl button{width:60px;height:60px}#launch{height:70px}#ladder{width:46px}.zone{font-size:20px}}
+===END: css/style.css===
+===FILE: docs/DESIGN_v0.7.md===
+# Rocket Lab v0.7 設計：2段式と宇宙用エンジン
+
+## ねらい
+「とにかく積む」から「段ごとに役わりを考える」へ。**下の段＝地上用で力強く、上の段＝宇宙用で遠くまで** に、子どもが自分で行き着けるようにする。
+
+## 追加した部品
+| 部品 | はたらき | 数値 |
+|---|---|---|
+| 切りはなしリング | リングより下の行が1段目、上が2段目（リングの行は下の段）。いまの段で燃えるものがなくなると リングごと外れ、0.3秒後に次の段が点火 | 重さ 0.3 |
+| 宇宙用エンジン | くうきの中では力 30%、くうきの外で本来の力。燃料がながもち | 力 120／重さ 0.6／燃料の使い方 0.45 |
+
+地上用エンジン：力 188／重さ 1／燃料の使い方 0.93（v0.6.3 と同じ）
+
+## 組み立て画面
+- 横5 × 縦9。リングがあると、段ごとに背景の色が変わる（1段目オレンジ、2段目水色…）
+- ブースターは胴体のすぐ となりにだけ置ける（となりに胴体がないと ブー音＋となりの胴体が光る）。胴体より高くはみ出した分は半とうめいになり、ロケットに含まれない
+
+## 飛行中
+- 段の切りはなし：音・画面の光・「だいいちだん、きりはなし！」。外れた段はまっすぐ下へ落ちる
+- 次の段の点火：「にだんめ、てんか！」
+- 宇宙用エンジンの青いほのおは、くうきの中では小さく、宇宙で大きくなる。オレンジの力の矢印も同じように伸びる
+
+## バランス（実装後の確認）
+| 構成 | 高さ |
+|---|---|
+| 1段：地上用＋燃料5＋先っぽ | 2,618 🌙 |
+| 1段：宇宙用＋燃料2＋先っぽ | 49（くうきの中で弱い） |
+| 2段：地上用＋燃料3｜地上用＋燃料2 | 3,969 🌙 |
+| 2段：地上用＋燃料3｜宇宙用＋燃料2 | 7,061 ☄️ |
+| 2段：宇宙用＋燃料3｜地上用＋燃料2（逆） | 1,615（1段目は動けない） |
+| 2段：地上用＋燃料3｜宇宙用＋燃料1、ブースター5段＋はね外 | 12,133 🪐 |
+| 1段の最大（総当たり／探索） | 9,065／約9,400 |
+| 2段の最大（左右対称の総当たり） | 約14,700（土星に届くのは 2,632通り中 59通り） |
+
+## チュートリアル 第6章
+1. リングを紹介 → 地上用＋燃料3 の上にリング
+2. 2段目に地上用エンジン＋燃料2 → 発射（段が外れるのを見る）
+3. 宇宙用エンジンを紹介 → 2段目を宇宙用＋燃料2 に作り直して発射（さっきよりずっと高い）
+4. 逆（下が宇宙用）を発射 → 1段目は動けない
+5. 「したは ちからもち、うえは ながもち」。ブースター＋宇宙用の段で どせいへ、のヒントで自由モードへ
+
+## 決めたこと
+- 縦9マスで、長いブースター4本＋宇宙用エンジンの1段が15,000を超えた → ブースターは胴体のとなり・胴体の高さまで、のきまりにした
+- 2段目のはね：くうきの中で効く（宇宙では おもり）
+- 低い高さで切りはなして宇宙用エンジンが弱いとき：地面でふんばり、軽くなったら とぶ
+- 土星の先の目標は置かない（v0.8以降で検討）
+===END: docs/DESIGN_v0.7.md===
+===FILE: docs/DESIGN_v0.8.md===
+# Rocket Lab v0.8 設計：うちゅうモード（周回軌道の土台）
+
+## ねらい
+「高さを競う」から「速さの向きと大きさ」へ。ちょうどいい所で止めようとする遊び方を、
+**エンジンを止めるタイミングで軌道が決まる** 遊びにつなげる。第1・第2宇宙速度を体で覚える。
+
+## この版でやったこと（改修順序の 1・2 ＋ 3 の一部）
+| # | 内容 | 状態 |
+|---|---|---|
+| 1 | 物理の2D化（距離の2乗に反比例する重力）、重力圏の切り替え（地球→月）の構造 | 済 |
+| 2 | エンジンの停止・再点火、中止ボタン（長おし）、自動早送り | 済 |
+| 3 | 軌道の判定、地図、予測の線 | 最低限（磨きは次） |
+| — | ぜんぶけす の確認（絵＋⭕❌） | 済 |
+| 4〜9 | ワールド保存、ペイロード、パーツ追加、帰還、組立棟拡張、バランス | 未 |
+
+たかさモード（v0.7）とチュートリアルは **そのまま**（physics.js / flight.js は中止ボタン対応のみ）。
+
+## ファイル
+| ファイル | 役割 |
+|---|---|
+| js/space.js | 天体（地球・月）、ケプラー軌道（状態⇔軌道要素、時刻→位置）、軌道の種類 |
+| js/physics2d.js | うちゅうモードの飛行（1こまずつ進める。エンジン停止・中止ができる） |
+| js/flight2d.js | 飛行画面（ちかく／地図、予測の線、速さメーター、ボタン） |
+| img/earth.webp | 地図の地球（北極の上から見た絵。Microsoft Copilot で生成） |
+| tools/lib2d.js, orbit_check.js, dv.js, kepler_test.js, moon_test.js | 確かめ用（Node） |
+
+## 世界の大きさ（縮小縮尺）
+| 値 | 設定 | 理由 |
+|---|---|---|
+| 地球の半径 R | 12,000 | 第1宇宙速度 √(10×12000) ≒ **346**。今の部品のΔv（264〜約680）で「2段式でぎりぎり周回、ブースターつきで月・脱出」になる大きさ |
+| 第2宇宙速度 | ≒ 490（= 第1 × √2） | 縮小しても √2 の関係はそのまま |
+| くうき | 300（半径の2.5%。ほんもの 1.6%） | たかさモードと同じ |
+| 自転 | 地面の速さ = 第1宇宙速度の 6% | ほんものと同じ割合。真上に打っても少し横に流れる |
+| 月 | 距離 15R、半径 0.27R、重さ 1/81、重力圏 ≒ 2.6R | 半径・重さは ほんものの比 |
+| 地球の重力圏 | 30R | ここを出たら「地球だっしゅつ」 |
+| 低軌道 1周 | 約218秒 | 早送りで 約10秒 |
+
+## 計算のしくみ（パッチドコニック）
+- 位置・速度は「いま いる重力圏の天体」から見た値。重力は その天体だけ
+- エンジンを使っている間・くうきの中：0.02秒きざみの数値積分（空気のじゃまは 地面といっしょに回る空気に対して）
+- 惰性で うちゅうを飛ぶ間：**ケプラー軌道の式（レール上）**。早送りしても軌道がくずれない。くうき・地面・重力圏の境目は 二分法で ちょうどの瞬間を さがす
+- ほぼ真上に打った 細長すぎる軌道は 式が不安定なので、重力だけの RK4（きざみ自動）にまかせる
+- 打ち上げた衛星を将来ためるときは、軌道要素（a, e, w, s, tp）を保存するだけで いつでも位置が出せる
+
+## 打ち上げ方（自動でかたむける）
+組み立て画面の 新しいボタンで切りかえ（うちゅうモードのときだけ出る）。
+| 絵 | 名前 | 動き |
+|---|---|---|
+| ⬆ | まっすぐ | ずっと真上。速ければ 遠くまで行って もどる／にげる（第2宇宙速度の体験） |
+| ↗ | ななめ | 高さ220までに 45°へ |
+| ➡ | よこ（はじめの設定） | くうきの中は 上むきの速さ50を保ちつつ たおす。くうきの外では 高さ約390を保ちながら 横に加速（力が弱いほど 上むきに） |
+
+はね・左右のバランスによる「かたむき」は v0.7 と同じきまりで、自動の角度に足される。
+
+## 飛行中の画面
+- **ちかく**（くうきの中）：空・雲・地面。東＝左（地図と同じ向き）。左上に小さな地図
+- **地図**（くうきの外で自動で切りかえ／ボタンでも）：地球・月・月の通り道・とんできたあと・**予測の線**
+  - オレンジ＝地面にぶつかる（弾道） ／ みどり＝まわりつづける（周回） ／ むらさき＝にげる（脱出）
+  - ▼近地点 ▲遠地点 の高さ
+- **速さメーター**：🛰️1（第1宇宙速度）と 🚀2（第2宇宙速度）の しるし。いまの高さでの値なので、高いほど左へ動く
+- ボタン（右下）：🔥エンジン 止める／つける（液体だけ。ブースターは止められない）、🗺 地図／ちかく、🏁 おわる（安定した軌道のとき）
+- ✋中止（左上・0.9秒 長おし）：結果を出さず、組み立てたまま もどる。たかさモードでも使える。チュートリアル中は出さない
+
+## おわり方と結果
+| できごと | 結果 | ⭐ |
+|---|---|---|
+| 地面に落ちた | 🎯 最高の高さ・とんだ距離 | 0〜2 |
+| 安定した軌道を 1.2周 まわった（または🏁） | 🛰️ 低い軌道 3 ／ 高い軌道 4 ／ 🌙 月まで届く軌道 4 ／ 月をまわる 5 | 3〜5 |
+| 地球の重力圏を出た | 🚀 だっしゅつ | 5 |
+| 月にぶつかった | 🌙 とうちゃく（ドーン） | 5 |
+| 上がらない | 🏋️ | 0 |
+
+## バランス（tools/orbit_v0.8.txt）
+- 1段は どの構成でも周回できない（Δv 最大 約430）
+- 2段「地上用→宇宙用」（E3T｜V2T、Δv 566）：よこ で ちょうどよく止めると 低い軌道（燃料 残り2%）
+- ブースターつき2段：周回して燃料が 約10%のこる → 月・脱出をねらえる
+- 低い軌道から再点火のタイミングを変えると、月の重力圏に入る／月にぶつかる／**月の近くを通って 脱出（スイングバイ）** が自然に起きる（tools/moon_test.js）
+- 地図で「線が地球をひとまわりした」から 燃料が切れるまでの時間は、上の2段式で 約2秒 → 13歳向けのむずかしさ。5歳は 🏁 が出なくても 落ちる／にげる を楽しめる
+
+## v0.8.1（改修3：軌道の判定・地図・予測の線）
+### 直したこと
+- 切りはなしの あと、ロケットが 画面の はしに よったままになる → **のこっている部分の まんなか** を中心に かたむけ、画面の まんなかへ なめらかに うごかす（うちゅうモード・たかさモードの 両方。js/flight.js の rocketCam / remainBox）。けむりの出る位置・力の矢印も のこっている部分に あわせた
+
+### 予測の線（js/predict.js）
+- いまの重力圏の軌道を たどって、**地面にぶつかる／重力圏を出る／月の重力圏に入る（であい）** を さがす
+- 月と であうなら、月から見た軌道に のりかえて 続きを描く。中心は **であう ときの 月の位置（うすい月）**
+  - 月に ぶつかる 💥 ／ 月を まわる ／ 月の そばを 通りぬける（そのあと 🚀にげる・🔄地球にもどる・💥おちる の しるし）
+  - 月に いちばん ちかづく ところの 高さ ▼
+- 線の色：オレンジ＝おちる、みどり＝まわる、むらさき＝にげる、水色＝月の まわり
+- 画面の上に「このまま とぶと どうなるか」の しるし：💥 ／ 🛰️ ／ 🚀 ／ 🌙➡️ ／ 🌙🛰️ ／ 🌙💥
+- 月と であう線に かわった しゅんかん「つきに とどく きどうだ！」
+- 計算は physics2d と同じ式・同じ天体。燃えている間は 毎こま、惰性の間は 0.1秒ごとに 計算しなおす
+- 月に ちかづくと 早送りを ゆるめる（であいを 見のがさない・見せる）
+
+### 確かめ（tools/predict_test.js）
+| しらべたこと | 結果 |
+|---|---|
+| 低い軌道から 0〜225秒後に再点火（46通り）：燃え終わった時点の予測 と 実際 | 46/46 一致（にげる・月を通りぬける・月にぶつかる） |
+| 月と であう時刻：予測 と 実際 | ずれ 最大 約2秒（実際の計算こまの幅） |
+| 代表構成5つ × 打ち上げ方3つ × エンジン止める／止めない | 30/30 一致 |
+
+## 次にやること（候補）
+1. 予測の線の磨き：月との出会いの予測、月の重力圏に入った後の線
+2. エンジン再点火の向き（今は自動の「よこ」だけ）
+3. ワールド保存（設置物・子どもごとのセーブ・リセット2回確認・勲章）
+===END: docs/DESIGN_v0.8.md===
+===FILE: index.html===
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ロケット ラボ</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <div id="palette"></div>
+  <div id="mid">
+    <div id="ladder"></div>
+    <div id="stage"><div id="grid"></div><div id="pad"></div></div>
+  </div>
+  <div id="bottom">
+    <button class="small" id="home" aria-label="もどる"></button>
+    <button class="small" id="clear" aria-label="ぜんぶけす"></button>
+    <button class="small" id="prof" aria-label="うちあげかた"></button>
+    <button id="launch" aria-label="はっしゃ"></button>
+    <button class="small" id="mute" aria-label="おと"></button>
+  </div>
+</div>
+<div id="fly"><canvas id="cv"></canvas><div id="flyRocket"></div><div id="count"></div>
+  <button id="btnAbort" aria-label="ちゅうし（ながおし）"><span class="ring"></span></button>
+  <div id="fctl">
+    <button id="btnEng" aria-label="エンジン"></button>
+    <button id="btnMap" aria-label="ちず"></button>
+    <button id="btnDone" aria-label="おわる"></button>
+  </div>
+</div>
+<div id="result"><div id="resIcon"></div><div id="resStars"></div><div id="resInfo"></div><button id="again" aria-label="もういっかい"></button></div>
+<div id="confirm"><div class="box"><div id="cfIcon"></div><div class="row"><button id="cfNo" aria-label="いいえ"></button><button id="cfYes" aria-label="はい"></button></div></div></div>
+<div id="tutBubble"><div id="tutIcon"></div><button id="tutEar" aria-label="もういちど きく"></button></div>
+<div id="tutHand">👆</div>
+<div id="title">
+  <div id="titleRocket"></div>
+  <div id="titleBtns">
+    <button id="btnTut" aria-label="れんしゅう"></button>
+    <button id="btnFree" aria-label="じゆうに あそぶ（たかさ）"></button>
+    <button id="btnOrbit" aria-label="うちゅうモード"></button>
+  </div>
+</div>
+<div id="ver"></div>
+<!-- 読み込み順に意味がある（RL という1つの入れ物に順番に足していく） -->
+<script src="js/config.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/parts.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/space.js"></script>
+<script src="js/physics2d.js"></script>
+<script src="js/predict.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/builder.js"></script>
+<script src="js/flight.js"></script>
+<script src="js/flight2d.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
+===END: index.html===
+===FILE: js/audio.js===
+// 効果音と声。声は順番に話し、話しおわったら cb を呼ぶ
+RL.Audio = (function () {
+  let ac = null, muted = false, jaVoice = null;
+  const ctx = () => (ac = ac || new (window.AudioContext || window.webkitAudioContext)());
+  function tone(f, d, type = 'sine', v = 0.2) {
+    if (muted) return; try {
+      const a = ctx(), o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(v, a.currentTime); g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + d);
+      o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + d);
+    } catch (e) {}
+  }
+  function rumble(sec) {
+    if (muted) return; try {
+      const a = ctx(), n = a.sampleRate * sec, b = a.createBuffer(1, n, a.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+      f.type = 'lowpass'; f.frequency.value = 400; g.gain.value = 0.5; s.buffer = b; s.connect(f).connect(g).connect(a.destination); s.start();
+    } catch (e) {}
+  }
+  function pickVoice() { try { jaVoice = speechSynthesis.getVoices().find(v => /ja/i.test(v.lang)) || null; } catch (e) {} }
+  if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  let talkId = 0;
+  function say(t, cb, opt = {}) {
+    const id = ++talkId, done = () => { if (id === talkId && cb) { const f = cb; cb = null; f(); } };
+    const est = (900 + t.length * 170) / RL.CFG.VOICE_RATE;
+    if (muted || !window.speechSynthesis) { setTimeout(done, muted ? est * 0.6 : est); return; }
+    try {
+      if (opt.interrupt !== false) speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(t); u.lang = 'ja-JP'; u.rate = opt.rate || RL.CFG.VOICE_RATE; u.pitch = 1.15;
+      if (jaVoice) u.voice = jaVoice;
+      u.onend = done; u.onerror = done; speechSynthesis.speak(u);
+      setTimeout(done, est * 2.5);
+    } catch (e) { setTimeout(done, est); }
+  }
+  function stop() { talkId++; try { speechSynthesis.cancel(); } catch (e) {} }
+  return { tone, rumble, say, stop, get muted() { return muted; }, toggle() { muted = !muted; if (muted) stop(); return muted; } };
+})();
+===END: js/audio.js===
+===FILE: js/builder.js===
+// くみたて画面
+RL.Builder = (function () {
+  const $ = id => document.getElementById(id);
+  let grid, sel = 'engine', allowed = null, gridLocked = false, hlCells = [];
+  const S = { best: 0, last: null };
+  const empty = () => Array.from({ length: RL.CFG.ROWS }, () => Array(RL.CFG.COLS).fill(null));
+
+  function palette() {
+    const p = $('palette'); p.innerHTML = '';
+    RL.PART_ORDER.forEach(k => {
+      const off = allowed && !allowed.includes(k);
+      const b = document.createElement('div'); b.className = 'pal' + (k === sel ? ' sel' : '') + (off ? ' off' : ''); b.dataset.k = k;
+      b.innerHTML = RL.paletteIcon(k);
+      b.addEventListener('click', () => {
+        if (off) { RL.Audio.tone(150, 0.15, 'square', 0.08); return; }
+        sel = k; RL.Audio.tone(660, 0.08); palette(); RL.emit('select', k);
+      });
+      p.appendChild(b);
+    });
+  }
+  function cellSize() { const s = $('stage'); return Math.floor(Math.min((s.clientWidth - 16) / RL.CFG.COLS, (s.clientHeight - 40) / RL.CFG.ROWS)); }
+  function render() {
+    const g = $('grid'), cs = cellSize(), C = RL.CFG.COLS, R = RL.CFG.ROWS;
+    g.style.gridTemplateColumns = `repeat(${C},${cs}px)`; g.innerHTML = '';
+    const map = {}; RL.layout(grid).forEach(q => map[q.r + ',' + q.c] = q);
+    const SR = RL.stageRows(grid);
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      const d = document.createElement('div'); d.className = 'cell'; d.style.width = d.style.height = cs + 'px';
+      d.dataset.r = r; d.dataset.c = c;
+      if (SR.n > 1) d.style.background = RL.CFG.STAGE_COLORS[SR.of(r) % RL.CFG.STAGE_COLORS.length];   // 段ごとの 色の帯
+      if (hlCells.some(h => h[0] === r && h[1] === c)) d.classList.add('hl');
+      const q = map[r + ',' + c]; if (q) { d.innerHTML = RL.drawPart(q.k, q.ctx); if (q.ctx.loose) d.classList.add('loose'); }
+      d.addEventListener('click', () => tap(r, c)); g.appendChild(d);
+    }
+    RL.emit('rendered');
+  }
+  function buzz() { RL.Audio.tone(150, 0.2, 'square', 0.1); }
+  // レゴのように下からつむ。タップでけすと上がおちてくる
+  function tap(r, c) {
+    if (gridLocked) return;
+    let action;
+    if (grid[r][c]) {
+      for (let i = r; i > 0; i--) grid[i][c] = grid[i - 1][c];
+      grid[0][c] = null; RL.Audio.tone(300, 0.1, 'square', 0.1); action = 'remove';
+    } else {
+      if (allowed && !allowed.includes(sel)) return;
+      let t = -1; for (let i = RL.CFG.ROWS - 1; i >= 0; i--) if (!grid[i][c]) { t = i; break; }
+      if (t < 0) { buzz(); return; }
+      // ブースターは 胴体の すぐ となりにだけ つけられる
+      if (sel === 'booster') {
+        const B = cc => cc >= 0 && cc < RL.CFG.COLS && RL.BODY[grid[t][cc]];
+        if (!B(c - 1) && !B(c + 1)) {
+          buzz(); const near = document.querySelectorAll(`.cell[data-r="${t}"]`);
+          near.forEach(e => { if (RL.BODY[grid[t][+e.dataset.c]]) { e.classList.add('flash'); setTimeout(() => e.classList.remove('flash'), 900); } });
+          if (!(RL.Tutorial && RL.Tutorial.active)) RL.Audio.say('ブースターは、どうたいの となりに つけてね。');
+          RL.emit('booster-reject'); return;
+        }
+      }
+      grid[t][c] = sel; RL.Audio.tone(520 + Math.random() * 200, 0.09, 'triangle'); action = 'place';
+    }
+    render(); RL.emit('change', { action, grid });
+  }
+  function ladder() {
+    const l = $('ladder'); l.innerHTML = '';
+    const pos = h => (RL.hPos(h) * 92 + 3) + '%';
+    const at = document.createElement('div'); at.className = 'atmo'; at.style.bottom = pos(RL.CFG.PHYS.ATMO_H); l.appendChild(at);
+    RL.CFG.ZONES.forEach(z => { const d = document.createElement('div'); d.className = 'zone'; d.style.bottom = pos(z.h); d.textContent = z.icon; l.appendChild(d); });
+    if (S.last !== null) { const f = document.createElement('div'); f.className = 'flag'; f.textContent = '🚩'; f.style.bottom = pos(S.last); l.appendChild(f); }
+    if (S.best > 0) { const f = document.createElement('div'); f.className = 'flag best'; f.textContent = '🏆'; f.style.bottom = pos(S.best); l.appendChild(f); }
+  }
+  function hint(k) { const p = document.querySelector(`.pal[data-k="${k}"]`); if (!p) return; p.classList.add('hint'); setTimeout(() => p.classList.remove('hint'), 2000); }
+  function init() { grid = empty(); palette(); ladder(); setTimeout(render, 0); addEventListener('resize', render); }
+
+  return {
+    init, render, ladder, hint, state: S,
+    get grid() { return grid; }, get selected() { return sel; },
+    clear() { grid = empty(); RL.Audio.tone(250, 0.15, 'square', 0.1); render(); RL.emit('change', { action: 'clear', grid }); },
+    setGrid(g) { grid = g; render(); },
+    setAllowed(list) { allowed = list; if (allowed && !allowed.includes(sel)) sel = allowed[0]; palette(); },
+    select(k) { sel = k; palette(); },
+    lockGrid(b) { gridLocked = b; },
+    highlightCell(rc) { hlCells = !rc ? [] : Array.isArray(rc[0]) ? rc : [rc]; render(); },
+    resetRecords() { S.best = 0; S.last = null; ladder(); }
+  };
+})();
+===END: js/builder.js===
+===FILE: js/config.js===
+// 全体設定。数値の調整はここだけで行う
+window.RL = window.RL || {};
+RL.CFG = {
+  COLS: 5, ROWS: 9, VERSION: 'v0.8.1',
+  PHYS: {
+    G: 10,
+    THRUST: 188,      // 地上用エンジン1つの力
+    VTHRUST: 120,     // 宇宙用エンジン1つの力（くうきの外で）
+    VAIR: 0.3,        // 宇宙用エンジンは くうきの中では この割合の力しか出ない
+    MASS: { engine: 1, vengine: 0.6, tank: 0.26, win: 0.22, nose: 0.11, fin: 0.15, booster: 0.2, ring: 0.3 }, // 燃料ぬきの重さ
+    FUEL_ENGINE: 0.6, FUEL_TANK: 2.3,
+    BURN: 0.93,       // 地上用エンジン1つが使う燃料
+    VBURN: 0.45,      // 宇宙用エンジン1つが使う燃料（ながもち）
+    DRAG: 0.05, NOSE_DRAG: 0.55,
+    TILT_NOFIN: 0.5, TILT_ASYM: 0.5, TILT_GROW: 0.15,
+    ATMO_H: 300,      // くうきの おわり
+    BOOST_THRUST: 110, BOOST_FUEL: 0.7, BOOST_BURN: 0.45, BOOST_DRAG: 0.15,
+    BOOST_SEG_POW: 0.5, // 長いブースターほど 力が強く、長く もえる（√長さ 倍）
+    IGN_DELAY: 0.3,   // 切りはなしから つぎの段が 点火するまで（秒）
+    TIME_STRETCH: 1.3, DT: 0.02, MAX_T: 120
+  },
+  PLAY: { MAX_SEC: 30, COAST_SEC: 4, FF_MIN: 3 },   // 燃えている間は実時間。燃料が なくなったら 早送り
+  VOICE_RATE: 1.2,
+  SPEED_SCALE: 40, SPEED_MAX: 20000,
+  ZONES: [
+    { h: 0,     icon: '🏠', sky: '#8fd3ff' },
+    { h: 40,    icon: '☁️', sky: '#6cb8f5' },
+    { h: 120,   icon: '✈️', sky: '#3a6fd8' },
+    { h: 300,   icon: '🌌', sky: '#0d0a30' },
+    { h: 700,   icon: '🛰️', sky: '#05051a' },
+    { h: 1800,  icon: '🌙', sky: '#000000' },
+    { h: 4000,  icon: '☄️', sky: '#000000' },
+    { h: 12000, icon: '🪐', sky: '#000000' }
+  ],
+  TOP: 13000,
+  // ---- うちゅうモード（v0.8）。長さ・時間の単位は たかさモードと同じ（地面の重力 10）
+  ORBIT: {
+    G0: 10,            // 地面での 重力
+    R: 12000,          // 地球の半径（ほんものの 約530分の1。第1宇宙速度 = √(G0×R) ≒ 346、第2 ≒ 490）
+    ROT: 0.06,         // 地球の自転（地面の速さ ÷ 第1宇宙速度。ほんものと だいたい同じ割合）
+    ATMO_H: 300,       // くうきの おわり
+    LEO_TOP: 0.3,      // 遠地点の高さが 半径×0.3 までなら「ひくい軌道」
+    EARTH_SOI: 30,     // 地球の重力圏（半径の何倍）。ここを出たら「地球だっしゅつ」
+    MOON: { DIST: 15, R: 0.27, MU: 1 / 81, PHASE: 0.9 },   // 月：距離（半径の何倍）、大きさ（半径の何倍）、重さの割合、はじめの位置（rad）
+    SITE: Math.PI / 2, // 発射場の位置（rad。π/2 = 地図の上）。地球は 反時計まわり（北極の上から見た向き）なので、東＝地図の左
+    SUB_DT: 0.02,      // エンジンを使う間・くうきの中の 計算のきざみ
+    WARP_MAX: 3000,    // 早送りの上限
+    ORBIT_DONE: 1.2,   // 安定した軌道を この周回ぶん まわったら おしまい
+    TURN_START: 20,    // この高さから かたむけ はじめる
+    PROFILES: {        // 自動で かたむける（pitch：地平線からの角度。turnH までに そこまで倒す）
+      up:   { pitch: 90, turnH: 1 },
+      tilt: { pitch: 45, turnH: 220 },
+      side: { pitch: 10, turnH: 300, hold: true }   // くうきの外では 高さを保ちながら 横に加速
+    },
+    CLIMB_V: 50,       // よこ：くうきの中で めざす 上むきの速さ
+    HOLD_H: 1.3,       // よこ：くうきの外で たもつ高さ（くうきの おわり の何倍）
+    HOLD_GAIN: 0.25    // よこ：くうきの外で 上下の速さを 0 に近づける強さ
+  },
+  STAGE_COLORS: ['rgba(255,150,40,.16)', 'rgba(80,190,255,.16)', 'rgba(120,230,120,.16)', 'rgba(220,120,255,.16)']
+};
+RL.hPos = h => Math.log(1 + Math.max(0, h) / 40) / Math.log(1 + RL.CFG.TOP / 40);
+RL._ev = {};
+RL.on = (n, f) => (RL._ev[n] = RL._ev[n] || []).push(f);
+RL.emit = (n, d) => (RL._ev[n] || []).slice().forEach(f => f(d));
+===END: js/config.js===
+===FILE: js/flight.js===
+// はっしゃの演出：空・けむり・メーター・力の矢印は canvas、ロケットは SVG部品をそのまま動かす
+RL.Flight = (function () {
+  const $ = id => document.getElementById(id);
+  let raf = null;
+  const hex = s => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16));
+  const STAGE_NAME = ['だいいち', 'だいに', 'だいさん', 'だいよん', 'だいご'], IGN_NAME = ['', 'にだんめ', 'さんだんめ', 'よんだんめ', 'ごだんめ'];
+  function skyAt(h) {
+    const Z = RL.CFG.ZONES; let a = Z[0], b = Z[Z.length - 1];
+    for (let i = 0; i < Z.length - 1; i++) if (h >= Z[i].h && h < Z[i + 1].h) { a = Z[i]; b = Z[i + 1]; }
+    const t = b.h > a.h ? Math.min(1, (h - a.h) / (b.h - a.h)) : 0, x = hex(a.sky), y = hex(b.sky);
+    return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(',')})`;
+  }
+
+  function buildRocket(a, cs) {
+    const el = $('flyRocket'); el.innerHTML = ''; el.className = '';
+    el.style.width = RL.CFG.COLS * cs + 'px'; el.style.height = RL.CFG.ROWS * cs + 'px';
+    a.cells.forEach(q => {
+      if (q.ctx.loose) return;                      // くっついていない ブースターは のせない
+      const d = document.createElement('div'); d.className = 'p'; d.dataset.stage = q.stage;
+      Object.assign(d.style, { left: q.c * cs + 'px', top: q.r * cs + 'px', width: cs + 'px', height: cs + 'px' });
+      d.innerHTML = RL.drawPart(q.k, q.ctx); el.appendChild(d);
+      if (q.stackId) {
+        const s = q.stack; d.dataset.stack = q.stackId;
+        d.dataset.side = s.c < (RL.CFG.COLS - 1) / 2 ? -1 : 1;
+        d.style.transformOrigin = `${(s.c - q.c + 0.5) * cs}px ${((s.r0 + s.r1 + 1) / 2 - q.r) * cs}px`;
+      }
+      const isEng = RL.ENGINES[q.k], isB = q.k === 'booster' && !q.ctx.down;
+      if (isEng || isB) {
+        const f = document.createElement('div'); f.className = 'flame'; f.innerHTML = q.k === 'vengine' ? RL.VFLAME : RL.FLAME;
+        f.dataset.kind = isB ? 'b' : q.k === 'vengine' ? 'v' : 'e'; f.dataset.stage = q.stage; if (isB) f.dataset.stackFlame = q.stackId;
+        const fw = q.k === 'vengine' ? 0.95 : 0.76;
+        Object.assign(f.style, { left: q.c * cs + cs * (1 - fw) / 2 + 'px', top: (q.r + 1) * cs - 4 + 'px', width: cs * fw + 'px', height: cs * 1.1 + 'px' });
+        f.dataset.l = q.c * cs + cs * (1 - fw) / 2; f.dataset.w = cs * fw; f.dataset.h = cs * 1.1;
+        el.appendChild(f);
+      }
+    });
+    return el;
+  }
+
+  // メーター：針（緑→黄→赤）＋ デジタル数字。右上に高さと時計、右はしに高さのはしご。u＝画面の大きさの倍率
+  let shownSpeed = 0;
+  function drawMeters(g, W, H, spd, h, sec, best, u) {
+    const MAX = RL.CFG.SPEED_MAX, R = 90 * u, cx = R + 30 * u, cy = H - 120 * u;
+    shownSpeed += (spd - shownSpeed) * 0.35;
+    g.save();
+    g.fillStyle = 'rgba(0,0,20,.55)'; g.beginPath(); g.arc(cx, cy, R + 14 * u, Math.PI, 0); g.lineTo(cx + R + 14 * u, cy + 78 * u); g.lineTo(cx - R - 14 * u, cy + 78 * u); g.closePath(); g.fill();
+    [['#3ecf5a', 0, .5], ['#ffd54a', .5, .8], ['#ff5a5a', .8, 1]].forEach(([c, a0, a1]) => { g.lineWidth = 16 * u; g.strokeStyle = c; g.beginPath(); g.arc(cx, cy, R, Math.PI + Math.PI * a0, Math.PI + Math.PI * a1); g.stroke(); });
+    g.strokeStyle = '#fff'; g.lineWidth = 3 * u;
+    for (let i = 0; i <= 10; i++) { const an = Math.PI + Math.PI * i / 10, l = (i % 5 ? 20 : 28) * u; g.beginPath(); g.moveTo(cx + Math.cos(an) * (R - 12 * u), cy + Math.sin(an) * (R - 12 * u)); g.lineTo(cx + Math.cos(an) * (R - l), cy + Math.sin(an) * (R - l)); g.stroke(); }
+    const r = Math.min(1, shownSpeed / MAX), an = Math.PI + Math.PI * r;
+    g.strokeStyle = '#ff3b3b'; g.lineWidth = 6 * u; g.lineCap = 'round'; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(an) * (R - 16 * u), cy + Math.sin(an) * (R - 16 * u)); g.stroke();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(cx, cy, 9 * u, 0, 7); g.fill();
+    g.fillStyle = '#071a0b'; g.fillRect(cx - 82 * u, cy + 16 * u, 164 * u, 54 * u);
+    g.font = `bold ${40 * u}px "Courier New",monospace`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = 'rgba(80,255,120,.15)'; g.fillText('88888', cx, cy + 44 * u);
+    g.fillStyle = r > .8 ? '#ff6b6b' : r > .5 ? '#ffd54a' : '#5aff7a'; g.fillText(String(Math.round(shownSpeed)).padStart(5, '0'), cx, cy + 44 * u);
+    g.textAlign = 'right'; g.font = `bold ${30 * u}px "Courier New",monospace`;
+    const bx = W - 70 * u;
+    g.fillStyle = 'rgba(0,0,20,.55)'; g.fillRect(bx - 180 * u, 12, 172 * u, 82 * u);
+    g.fillStyle = '#fff'; g.fillText('⬆' + String(Math.round(h)).padStart(5, '0'), bx - 8 * u, 12 + 26 * u);
+    g.fillStyle = '#9fd8ff'; g.fillText('⏱' + sec.toFixed(1).padStart(4, '0'), bx - 8 * u, 12 + 62 * u);
+    const mx = W - 22 * u, top = 20 + 100 * u, bot = H - 40 * u, yOf = v => bot - RL.hPos(v) * (bot - top);
+    g.textBaseline = 'alphabetic'; g.textAlign = 'center';
+    g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(mx - 4, top, 8, bot - top);
+    g.strokeStyle = '#9fd8ff'; g.lineWidth = 2; g.setLineDash([4, 3]); g.beginPath(); g.moveTo(mx - 14, yOf(RL.CFG.PHYS.ATMO_H)); g.lineTo(mx + 14, yOf(RL.CFG.PHYS.ATMO_H)); g.stroke(); g.setLineDash([]);
+    g.font = `${20 * u}px sans-serif`; g.fillStyle = '#fff'; RL.CFG.ZONES.forEach(z => g.fillText(z.icon, mx - 20 * u, yOf(z.h) + 7 * u));
+    g.font = `${26 * u}px sans-serif`; g.fillText('🚀', mx, yOf(h) + 9 * u);
+    if (best) g.fillText('🏆', mx + 2, yOf(best) + 9 * u);
+    g.restore();
+  }
+  // ちからの やじるし：上むき（オレンジ）＝ おす ちから、下むき（青）＝ おもさ
+  function arrow(g, x, y0, len, up, color, u) {
+    if (len < 4) return; const w = 18 * u, hd = Math.min(len, 22 * u), dir = up ? -1 : 1, y1 = y0 + dir * len;
+    g.fillStyle = color; g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(x - w / 2, y0); g.lineTo(x - w / 2, y1 - dir * hd); g.lineTo(x - w, y1 - dir * hd); g.lineTo(x, y1); g.lineTo(x + w, y1 - dir * hd); g.lineTo(x + w / 2, y1 - dir * hd); g.lineTo(x + w / 2, y0); g.closePath(); g.fill(); g.stroke();
+  }
+  function forceIcon(g, x, y, kind, u) {
+    g.save(); g.translate(x, y); g.scale(u, u);
+    if (kind === 'push') { g.fillStyle = '#ffd54a'; g.beginPath(); g.moveTo(-8, -10); g.quadraticCurveTo(0, 14, 0, 16); g.quadraticCurveTo(0, 14, 8, -10); g.closePath(); g.fill(); g.fillStyle = '#ff7a1a'; g.beginPath(); g.moveTo(-4, -10); g.quadraticCurveTo(0, 6, 0, 8); g.quadraticCurveTo(0, 6, 4, -10); g.fill(); }
+    else { g.fillStyle = '#3a4a8a'; g.fillRect(-12, -6, 24, 16); g.fillStyle = '#fff'; g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('kg', 0, 2); g.fillStyle = '#3a4a8a'; g.beginPath(); g.arc(0, -8, 5, 0, 7); g.fill(); }
+    g.restore();
+  }
+
+  // ---- ロケットの置き場所（v0.8.1）：のこっている部分の まんなかを 画面の まんなかへ ----
+  //  切りはなしで 中心が かわったら、いまの見た目の位置から なめらかに 目標へ うごかす（ぱっと とばない）
+  function rocketCam(cs) {
+    const c = { C: null, off: { x: 0, y: 0 }, S: { x: 0, y: 0 }, th: 0 };
+    c.place = (el, box, th, Tx, Ty, dt) => {
+      if (c.C && (box.cx !== c.C.cx || box.cy !== c.C.cy)) {
+        const dx = (box.cx - c.C.cx) * cs, dy = (box.cy - c.C.cy) * cs, co = Math.cos(c.th), si = Math.sin(c.th);
+        c.off.x = c.S.x + dx * co - dy * si - Tx; c.off.y = c.S.y + dx * si + dy * co - Ty;
+      }
+      c.C = { cx: box.cx, cy: box.cy }; c.th = th;
+      const k = Math.exp(-Math.max(0, dt) * 2.5); c.off.x *= k; c.off.y *= k;
+      c.S.x = Tx + c.off.x; c.S.y = Ty + c.off.y;
+      el.style.transformOrigin = `${box.cx * cs}px ${box.cy * cs}px`;
+      el.style.transform = `translate(${c.S.x - box.cx * cs}px,${c.S.y - box.cy * cs}px) rotate(${th}rad)`;
+    };
+    // ロケットの中の点（px）→ 画面の点
+    c.toScreen = (lx, ly) => { const dx = lx - c.C.cx * cs, dy = ly - c.C.cy * cs, co = Math.cos(c.th), si = Math.sin(c.th); return [c.S.x + dx * co - dy * si, c.S.y + dx * si + dy * co]; };
+    return c;
+  }
+  // のこっている部分の 外わく（マス単位）。gone(q) が true の部品は のぞく
+  function remainBox(cells, gone, prev) {
+    let r0 = 99, r1 = -1, c0 = 99, c1 = -1;
+    cells.forEach(q => { if (q.ctx.loose || gone(q)) return; r0 = Math.min(r0, q.r); r1 = Math.max(r1, q.r + 1); c0 = Math.min(c0, q.c); c1 = Math.max(c1, q.c + 1); });
+    return r1 < 0 ? prev : { cx: (c0 + c1) / 2, cy: (r0 + r1) / 2, r0, r1, c0, c1 };
+  }
+  let abortFn = null;
+  // 中止：とちゅうで やめて くみたて画面へ（結果は 出さない）
+  function abort() { if (abortFn) abortFn(); }
+  function run(a, s, onDone, onAbort) {
+    shownSpeed = 0;
+    abortFn = () => { abortFn = null; cancelAnimationFrame(raf); RL.Audio.stop(); $('fly').style.display = 'none'; document.body.classList.remove('flying'); onAbort && onAbort(); };
+    const fly = $('fly'), cv = $('cv'), g = cv.getContext('2d'), A = RL.Audio, dpr = devicePixelRatio || 1;
+    fly.style.display = 'block'; document.body.classList.add('flying');
+    const W = innerWidth, H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const u = Math.max(0.5, Math.min(1, Math.min(W, H * 0.75) / 700));   // スマホでは小さく
+    $('count').style.fontSize = (130 * u) + 'px';
+    const S0 = s.samples[0] || { thrust: 0, weight: 1 }, Fref = Math.max(S0.thrust, S0.weight, 1), Lmax = H * 0.22;
+    const cs = Math.min(36, W / 12, H / 20), rocket = buildRocket(a, cs), RW = RL.CFG.COLS * cs;
+    let lowest = 0, topRow = RL.CFG.ROWS; a.cells.forEach(q => { if (q.ctx.loose) return; lowest = Math.max(lowest, q.r + 1); topRow = Math.min(topRow, q.r); });
+    const px = H / 180, L = 150, Y = hh => px * L * Math.log(1 + Math.max(0, hh) / L);
+    const ground = H * 0.82, startY = ground - 10 - lowest * cs, room = startY - H * 0.3;
+    const pre = 2100, PL = RL.CFG.PLAY;
+    // 燃えている間は実時間（長すぎるときだけ早める）。燃料が なくなったら 早送り
+    const tb = Math.min(s.tTotal, (s.tBurnEnd || 0) + 0.3), sp1 = Math.max(1, tb / PL.MAX_SEC), r1 = tb / sp1;
+    const coast = s.tTotal - tb, sp2 = coast > 0.5 ? Math.max(PL.FF_MIN, coast / PL.COAST_SEC) : 1;
+    const toSim = r => r < r1 ? r * sp1 : tb + (r - r1) * sp2;
+    const flightMs = (r1 + coast / sp2) * 1000 + 600;
+    let ffOn = false;
+    const VK = RL.CFG.SPEED_SCALE * (s.k || 1);
+    const stars = Array.from({ length: 140 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.8 + 0.3 }));
+    const cam2 = rocketCam(cs); let box = null, prevTs = null;
+    const smoke = []; let t0 = null, sepDone = {}, saidSep = false, sepFlash = 0, saidSpace = false, saidHeavy = false, stDone = {}, ignDone = {};
+    const sepOf = {}; (s.seps || []).forEach(sp => sepOf[sp.id] = sp);
+    const SI = s.stageInfo || [];
+
+    A.say('さん、に、いち、はっしゃ！', null, { rate: 1.1 });
+    [0, 700, 1400].forEach(d => setTimeout(() => A.tone(880, 0.15), d));
+    setTimeout(() => { A.tone(1320, 0.4); A.rumble(3); }, pre);
+
+    function frame(ts) {
+      if (!t0) t0 = ts; const el = ts - t0;
+      let h = 0, burn = false, boost = false, wob = 0, tilt = 0, xd = 0, fuelNow = 1, vNow = 0, stNow = 0, accNow = 0, thrNow = S0.thrust, wNow = S0.weight, si = 0, vpow = 1;
+      $('count').textContent = el < pre ? String(3 - Math.floor(el / 700)) : '';
+      if (el > pre) {
+        const p = Math.min(1, (el - pre) / flightMs);
+        stNow = toSim((el - pre) / 1000); const SS = s.samples, sm = SS[Math.min(SS.length - 1, Math.floor(stNow / RL.CFG.PHYS.DT))];
+        h = sm.h; burn = sm.burn; boost = sm.boost; tilt = sm.tilt; xd = sm.x; fuelNow = sm.fuel; vNow = sm.v; accNow = sm.acc * s.k * s.k;
+        thrNow = sm.thrust; wNow = sm.weight; si = sm.si; vpow = sm.vpow;
+        if (h <= 0 && (burn || boost)) { wob = Math.sin(el / 30) * 4; if (!saidHeavy && stNow > 0.6) { saidHeavy = true; A.say('うーん、おもい！', null, { interrupt: false }); } }
+        if (p >= 1) { abortFn = null; s.shownVmax = (s.vMax || 0) * VK; cancelAnimationFrame(raf); fly.style.display = 'none'; document.body.classList.remove('flying'); onDone(); return; }
+      } else if (el > pre - 400) { burn = SI[0] && SI[0].eng + SI[0].veng > 0; boost = (s.seps || []).some(x => x.stage === 0); vpow = RL.CFG.PHYS.VAIR; }
+
+      const cam = Math.max(0, Y(h) - room), gy = ground + cam;
+      g.fillStyle = skyAt(h); g.fillRect(0, 0, W, H);
+      const sa = Math.min(1, Math.max(0, (h - 150) / 200));
+      if (sa > 0) { g.fillStyle = `rgba(255,255,255,${sa})`; stars.forEach(st => { g.beginPath(); g.arc(st.x, (st.y + cam * 0.3) % H, st.r, 0, 7); g.fill(); }); }
+      const ay = gy - Y(RL.CFG.PHYS.ATMO_H);
+      if (ay > -10 && ay < H + 10) { g.strokeStyle = 'rgba(160,220,255,.8)'; g.lineWidth = 4; g.setLineDash([16, 12]); g.beginPath(); g.moveTo(0, ay); g.lineTo(W, ay); g.stroke(); g.setLineDash([]); }
+      if (!saidSpace && s.tAtmo != null && stNow >= s.tAtmo) { saidSpace = true; [784, 1175].forEach((f, i) => setTimeout(() => A.tone(f, 0.3, 'sine', 0.15), i * 150)); RL.emit('space'); }
+      g.textAlign = 'center'; g.font = `${54 * u}px sans-serif`;
+      RL.CFG.ZONES.forEach((z, i) => { if (!z.h) return; const y = gy - Y(z.h); if (y > -60 && y < H + 60) g.fillText(z.icon, W * (i % 2 ? 0.2 : 0.78), y); });
+      if (gy < H + 50) { g.fillStyle = '#3c8f3c'; g.fillRect(0, gy, W, H); g.fillStyle = '#ffcc00'; g.fillRect(W / 2 - RW / 2 - 20, gy - 10, RW + 40, 10); }
+      // ロケット
+      const ry = startY - Math.min(Y(h), room);
+      const drift = Math.max(-W * 0.3, Math.min(W * 0.3, xd * px));
+      const shake = (burn || boost) ? Math.min(6, 1 + Math.max(0, accNow) / 10) : 0;
+      const rx = W / 2 - RW / 2 + drift + wob + (Math.random() - 0.5) * shake;
+      // のこっている部分を 画面の まんなかへ（切りはなした あとも 見えるように）
+      box = remainBox(a.cells, q => { const sp = q.stackId && sepOf[q.stackId];
+        if (sp && !sp.withStage) return sp.t != null && stNow > sp.t;
+        const inf = SI[q.stage]; return !!inf && inf.sepT != null && stNow > inf.sepT; }, box);
+      const dtF = prevTs ? (ts - prevTs) / 1000 : 0; prevTs = ts;
+      cam2.place(rocket, box, tilt * 0.6, rx + box.cx * cs, Math.max(ry + box.cy * cs, H * 0.42), dtF);
+      // ほのお：いまの段の エンジンだけ。宇宙用は くうきの中で 小さい
+      rocket.querySelectorAll('.flame').forEach(f => {
+        let on;
+        if (f.dataset.kind === 'b') { const sp = sepOf[f.dataset.stackFlame];
+          on = el <= pre ? (el > pre - 400 && !!sp && sp.stage === 0) : (!!sp && sp.ignT != null && stNow >= sp.ignT && !(sp.t != null && stNow > sp.t)); }
+        else on = el <= pre ? (el > pre - 400 && +f.dataset.stage === 0) : (+f.dataset.stage === si && burn);
+        f.style.display = on ? 'block' : 'none';
+        if (on && f.dataset.kind === 'v') { const w0 = +f.dataset.w, h0 = +f.dataset.h, kx = 0.5 + 0.5 * vpow, ky = 0.35 + 0.9 * vpow;   // くうきの中では 小さい
+          f.style.width = w0 * kx + 'px'; f.style.left = (+f.dataset.l + w0 * (1 - kx) / 2) + 'px'; f.style.height = h0 * ky + 'px'; }
+      });
+      // ブースターの切りはなし（はね ごと、燃えつきた順に）
+      rocket.querySelectorAll('[data-stack]').forEach(b => {
+        const sp = sepOf[b.dataset.stack]; if (!sp || sp.t == null || sp.withStage) return;
+        const ds = stNow - sp.t;
+        if (ds > 0) { const sd = +b.dataset.side, tt = ds / (s.k || 1) * 1.2;
+          b.style.transform = `translate(${sd * (12 + tt * 60)}px,${tt * tt * 180 + tt * 40}px) rotate(${sd * tt * 200}deg)`; b.style.opacity = Math.max(0, 1 - tt / 2.5);
+          if (!sepDone[sp.id]) { sepDone[sp.id] = true; A.tone(180, 0.25, 'square', 0.15); setTimeout(() => A.tone(120, 0.3, 'square', 0.1), 120); sepFlash = 30;
+            if (!saidSep) { saidSep = true; A.say('ブースター、きりはなし！', null, { interrupt: false }); } RL.emit('separate', sp); }
+        } else { b.style.transform = ''; b.style.opacity = 1; }
+      });
+      // 段の切りはなし：まっすぐ下へ おちていく
+      SI.forEach(info => {
+        if (info.sepT == null) return;
+        const ds = stNow - info.sepT;
+        rocket.querySelectorAll(`.p[data-stage="${info.i}"]`).forEach(b => {
+          const sp = b.dataset.stack && sepOf[b.dataset.stack];
+          if (sp && !sp.withStage) return;
+          if (ds > 0) { const tt = ds / (s.k || 1) * 1.2; b.style.transform = `translateY(${tt * tt * 160 + tt * 30}px) rotate(${(info.i % 2 ? -1 : 1) * tt * 25}deg)`; b.style.opacity = Math.max(0, 1 - tt / 3); }
+          else { b.style.transform = ''; b.style.opacity = 1; }
+        });
+        if (ds > 0 && !stDone[info.i]) { stDone[info.i] = true; sepFlash = 40; A.tone(220, 0.3, 'square', 0.18); setTimeout(() => A.tone(140, 0.4, 'square', 0.12), 140);
+          A.say((STAGE_NAME[info.i] || '') + 'だん、きりはなし！', null, { interrupt: false }); RL.emit('stage-sep', info); }
+      });
+      SI.forEach(info => {
+        if (info.i === 0 || info.ignT == null || stNow < info.ignT || ignDone[info.i]) return;
+        ignDone[info.i] = true; [523, 784].forEach((f, k2) => setTimeout(() => A.tone(f, 0.18, 'triangle', 0.15), k2 * 90));
+        if (info.eng + info.veng > 0) A.say((IGN_NAME[info.i] || '') + '、てんか！', null, { interrupt: false });
+        RL.emit('ignite', info);
+      });
+      // ちからの やじるし
+      if (el > pre - 400) {
+        const mid = cam2.S.y, ax = cam2.S.x - (box.cx - box.c0) * cs - 24 * u, wx = cam2.S.x + (box.c1 - box.cx) * cs + 24 * u;
+        arrow(g, ax, mid, Lmax * thrNow / Fref, true, '#ff8a1e', u); forceIcon(g, ax, mid + 18 * u, 'push', u);
+        arrow(g, wx, mid, Lmax * wNow / Fref, false, '#4fb3ff', u); forceIcon(g, wx, mid - 16 * u, 'weight', u);
+      }
+      // けむり（いま ほのおが出ている ところから。うちゅうでは うすい）
+      const rhoNow = el > pre && s.samples.length ? s.samples[Math.min(s.samples.length - 1, Math.floor(stNow / RL.CFG.PHYS.DT))].rho : 1;
+      rocket.querySelectorAll('.flame').forEach(f => {
+        if (f.style.display !== 'block') return;
+        const L0 = +f.dataset.l + +f.dataset.w / 2, T0 = parseFloat(f.style.top) + cs;
+        const [sx0, sy0] = cam2.toScreen(L0, T0);
+        for (let i = 0; i < 2; i++) smoke.push({ x: sx0, y: sy0, vx: (Math.random() - 0.5) * 2, vy: 2 + Math.random() * 3, l: Math.max(0.15, rhoNow) });
+      });
+      for (let i = smoke.length - 1; i >= 0; i--) { const p = smoke[i]; p.x += p.vx; p.y += p.vy; p.l -= 0.02; if (p.l <= 0) { smoke.splice(i, 1); continue; }
+        g.fillStyle = `rgba(235,235,235,${p.l * 0.6})`; g.beginPath(); g.arc(p.x, p.y, (1.3 - p.l) * 18, 0, 7); g.fill(); }
+      // メーター
+      drawMeters(g, W, H, Math.max(0, vNow) * VK, h, stNow, RL.Builder.state.best, u);
+      // 早送り中の しるし
+      const rNow = (el - pre) / 1000;
+      if (el > pre && sp2 > 1 && rNow >= r1) {
+        if (!ffOn) { ffOn = true; [600, 900, 1200].forEach((f, i) => setTimeout(() => A.tone(f, 0.08, 'triangle', 0.12), i * 70)); RL.emit('fastforward'); }
+        g.save(); g.globalAlpha = 0.65 + 0.35 * Math.sin(el / 120); g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillStyle = 'rgba(0,0,30,.55)'; g.beginPath(); g.arc(W / 2, 70 * u + 40, 46 * u, 0, 7); g.fill();
+        g.fillStyle = '#fff'; g.font = `${52 * u}px sans-serif`; g.fillText('⏩', W / 2, 62 * u + 40);
+        g.font = `bold ${22 * u}px "Courier New",monospace`; g.fillStyle = '#ffd54a'; g.fillText('×' + Math.round(sp2), W / 2, 98 * u + 40);
+        g.restore();
+      }
+      if (sepFlash > 0) { g.fillStyle = `rgba(255,255,255,${sepFlash / 60})`; g.fillRect(0, 0, W, H); sepFlash--; }
+      if (a.fuel > 0) {
+        const gx = 14 * u, gw = 34 * u, gh = 150 * u, gy2 = H - 230 * u - gh;
+        g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(gx, gy2, gw, gh);
+        g.fillStyle = fuelNow > 0.25 ? '#e5383b' : '#ffb02e'; g.fillRect(gx, gy2 + gh * (1 - fuelNow), gw, gh * fuelNow);
+        g.strokeStyle = '#fff'; g.lineWidth = 3; g.strokeRect(gx, gy2, gw, gh);
+        g.font = `${26 * u}px sans-serif`; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText('⛽', gx + gw / 2, gy2 - 10);
+      }
+      if (vNow > 15) { g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2; const Ln = Math.min(160, vNow * 1.2);
+        for (let i = 0; i < 8; i++) { const lx = (i * 97 + el * 0.3) % W, ly = (i * 233 + el * vNow * 0.02) % H; g.beginPath(); g.moveTo(lx, ly); g.lineTo(lx, ly - Ln); g.stroke(); } }
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  return { run, abort, buildRocket, skyAt, rocketCam, remainBox };
+})();
+===END: js/flight.js===
+===FILE: js/flight2d.js===
+// うちゅうモードの 飛行画面
+//  - ちかく（打ち上げ）：空・地面・雲。ロケットは SVG部品を そのまま かたむけて動かす。左上に 小さな地図
+//  - 地図（くうきの外）：地球を まんなかに、月・とんできた あと・予測の線（地面に ぶつかる＝オレンジ、まわる＝みどり、にげる＝むらさき）
+//  - 早送りは 自動（燃えている間は 実時間）
+//  - ボタン：エンジン とめる／つける（液体だけ）、地図／ちかく、おわる（安定した軌道のとき）、中止（長おし）
+RL.Flight2D = (function () {
+  const $ = id => document.getElementById(id), SP = RL.Space, TAU = Math.PI * 2;
+  const STAGE_NAME = ['だいいち', 'だいに', 'だいさん', 'だいよん', 'だいご'], IGN_NAME = ['', 'にだんめ', 'さんだんめ', 'よんだんめ', 'ごだんめ'];
+  const COL = { hit: '#ff9a3d', orbit: '#5aff7a', escape: '#d58bff' };
+  const ORBIT_CLS = ['low', 'high', 'toMoon', 'moonOrbit'];
+  let raf = null, cur = null;
+  const earthImg = new Image(); earthImg.src = 'img/earth.webp';
+
+  // 予測の線の 色と、上に出す しるし（いまの まま とぶと どうなるか）
+  const SEG_COL = { hit: '#ff9a3d', orbit: '#5aff7a', escape: '#d58bff', moonPass: '#7fd3ff', moonOrbit: '#5aff7a', moonHit: '#ff9a3d' };
+  const BADGE = { hit: '💥', orbit: '🛰️', escape: '🚀', moonPass: '🌙➡️', moonOrbit: '🌙🛰️', moonHit: '🌙💥' };
+  const FATE_ICON = { escape: '🚀', orbit: '🔄', hit: '💥' };
+  const predict = sim => RL.Predict.fromSim(sim);
+
+  // ---- 月の絵（キャンバスで） ----
+  function drawMoon(g, x, y, r) {
+    const gr = g.createRadialGradient(x - r * 0.35, y - r * 0.35, r * 0.1, x, y, r);
+    gr.addColorStop(0, '#f2f2ee'); gr.addColorStop(1, '#9a9a96');
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+    if (r > 6) { g.fillStyle = 'rgba(90,90,100,.35)';
+      [[-.3, -.2, .22], [.35, .1, .18], [-.05, .45, .14], [.2, -.45, .1], [-.5, .25, .09]].forEach(([a, b2, c]) => { g.beginPath(); g.arc(x + a * r, y + b2 * r, c * r, 0, TAU); g.fill(); }); }
+    g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 1.5; g.beginPath(); g.arc(x, y, r, 0, TAU); g.stroke();
+  }
+  function drawEarth(g, x, y, r, rot, atmoR) {
+    g.fillStyle = 'rgba(120,200,255,.28)'; g.beginPath(); g.arc(x, y, Math.max(atmoR, r + 2.5), 0, TAU); g.fill();
+    if (earthImg.complete && earthImg.naturalWidth) { g.save(); g.translate(x, y); g.rotate(-rot); g.drawImage(earthImg, -r, -r, r * 2, r * 2); g.restore(); }
+    else { g.fillStyle = '#2f7bd9'; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); }
+  }
+  function drawShip(g, x, y, ang, burning, u) {
+    g.save(); g.translate(x, y); g.rotate(ang); g.scale(u, u);
+    if (burning) { g.fillStyle = '#ffb02e'; g.beginPath(); g.moveTo(-9, -4); g.lineTo(-20 - Math.random() * 6, 0); g.lineTo(-9, 4); g.fill(); }
+    g.fillStyle = '#fff'; g.strokeStyle = '#2b3245'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(12, 0); g.lineTo(-9, -6); g.lineTo(-9, 6); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#e5383b'; g.beginPath(); g.moveTo(12, 0); g.lineTo(4, -3.3); g.lineTo(4, 3.3); g.closePath(); g.fill();
+    g.restore();
+  }
+
+  // ---- 地図を描く（全画面 または 小窓） ----
+  function drawMap(g, V, sim, pr, trail, box, small) {
+    const W = sim.bodies, E = W.earth, M = W.moon, ms = SP.bodyState(M, sim.t);
+    const { x0, y0, w, h } = box, cx = x0 + w / 2, cy = y0 + h / 2, sc = Math.min(w, h) / 2 / V.r;
+    const X = x => cx + (x - V.cx) * sc, Y = y => cy - (y - V.cy) * sc;
+    g.save(); g.beginPath(); g.rect(x0, y0, w, h); g.clip();
+    g.fillStyle = small ? 'rgba(0,0,25,.82)' : '#02030f'; g.fillRect(x0, y0, w, h);
+    if (!small) { g.fillStyle = 'rgba(255,255,255,.7)'; V.stars.forEach(s => g.fillRect(x0 + s.x * w, y0 + s.y * h, s.r, s.r)); }
+    // 月の通り道・月・月の重力圏
+    g.setLineDash([4, 6]); g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 1;
+    g.beginPath(); g.arc(X(0), Y(0), M.orbitR * sc, 0, TAU); g.stroke();
+    if (sim.body === M || V.r > M.orbitR * 0.3) { g.strokeStyle = 'rgba(200,200,255,.25)'; g.beginPath(); g.arc(X(ms.x), Y(ms.y), M.soi * sc, 0, TAU); g.stroke(); }
+    g.setLineDash([]);
+    drawMoon(g, X(ms.x), Y(ms.y), Math.max(small ? 3 : 5, M.R * sc));
+    drawEarth(g, X(0), Y(0), Math.max(small ? 4 : 7, E.R * sc), E.rot * sim.t, (E.R + E.atmo) * sc);
+    // 発射場
+    if (E.R * sc > 25) { const ph = RL.CFG.ORBIT.SITE + E.rot * sim.t; g.font = `${small ? 12 : 18}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText('🏠', X(Math.cos(ph) * E.R * 1.03), Y(Math.sin(ph) * E.R * 1.03)); }
+    // とんできた あと
+    if (trail.length > 1) { g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = small ? 1 : 1.5; g.beginPath();
+      trail.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[1])) : g.moveTo(X(p[0]), Y(p[1]))); g.stroke(); }
+    // 予測の線（月と であうなら、であう ときの 月＝うすい月 と その まわりの線も）
+    if (pr) {
+      const u = V.u, emo = (t, x, y, sz) => { g.font = `${sz}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x, y); };
+      if (pr.enc) {
+        g.globalAlpha = 0.45; drawMoon(g, X(pr.enc.x), Y(pr.enc.y), Math.max(small ? 3 : 5, M.R * sc)); g.globalAlpha = 1;
+        g.setLineDash([3, 5]); g.strokeStyle = 'rgba(127,211,255,.5)'; g.lineWidth = 1; g.beginPath(); g.arc(X(pr.enc.x), Y(pr.enc.y), M.soi * sc, 0, TAU); g.stroke(); g.setLineDash([]);
+      }
+      pr.segs.forEach(sg => {
+        if (sg.pts.length < 2) return;
+        g.strokeStyle = SEG_COL[sg.kind] || '#fff'; g.lineWidth = small ? 2 : 3; g.setLineDash(small ? [] : sg.moon ? [4, 5] : [10, 7]); g.beginPath();
+        sg.pts.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[1])) : g.moveTo(X(p[0]), Y(p[1]))); g.stroke(); g.setLineDash([]);
+        const e = sg.pts[sg.pts.length - 1];
+        if (sg.kind === 'hit' || sg.kind === 'moonHit') emo('💥', X(e[0]), Y(e[1]), small ? 12 : 20);
+      });
+      // 月の そばを 通りぬけた あと どうなるか（にげる／もどる／おちる）
+      const fate = pr.enc ? pr.enc.fate : pr.fate, fs = pr.segs[pr.segs.length - 1];
+      if (fate && !small && fs.pts.length) { const e = fs.pts[fs.pts.length - 1]; emo(FATE_ICON[fate.kind], X(e[0]), Y(e[1]), 22 * u); }
+      if (!small) {
+        const dot = (x, y, c, label) => { g.fillStyle = c; g.beginPath(); g.arc(x, y, 5 * u, 0, TAU); g.fill();
+          g.font = `bold ${16 * u}px "Courier New",monospace`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(label, x + 8 * u, y); };
+        // 近点・遠点（いちばん ひくい／たかい ところ）の 高さ：まわる 軌道のとき
+        const el = pr.el, b = sim.body;
+        if (el.e < 1 && (pr.kind === 'orbit' || pr.kind === 'moonOrbit') && !pr.enc) {
+          [[1, el.rp, '#5aff7a', '▼'], [-1, el.ra, '#ffd54a', '▲']].forEach(([d, rr, c, m]) =>
+            dot(X(pr.off.x + Math.cos(el.w) * rr * d), Y(pr.off.y + Math.sin(el.w) * rr * d), c, m + Math.round(rr - b.R)));
+        }
+        // 月に いちばん ちかづく ところ
+        if (pr.enc && pr.kind !== 'moonHit') {
+          const ms = pr.segs[pr.segs.length - 1].pts; let best = null, bd = Infinity;
+          ms.forEach(p => { const d = Math.hypot(p[0] - pr.enc.x, p[1] - pr.enc.y); if (d < bd) { bd = d; best = p; } });
+          if (best) dot(X(best[0]), Y(best[1]), '#7fd3ff', '▼' + Math.max(0, Math.round(bd - M.R)));
+        }
+      }
+    }
+    // ロケット
+    const off = sim.body === M ? ms : { x: 0, y: 0 }, px = X(sim.x + off.x), py = Y(sim.y + off.y);
+    const r = Math.hypot(sim.x, sim.y), ux = sim.x / r, uy = sim.y / r;
+    let dx, dy;
+    if (sim.isPowered() || !sim.lifted) { dx = Math.cos(sim.point) * -uy + Math.sin(sim.point) * ux; dy = Math.cos(sim.point) * ux + Math.sin(sim.point) * uy; }
+    else { dx = sim.vx; dy = sim.vy; }
+    drawShip(g, px, py, -Math.atan2(dy, dx), sim.isPowered() && sim.lifted, small ? 0.7 : V.u * 1.2);
+    g.restore();
+    if (small) { g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2; g.strokeRect(x0, y0, w, h); }
+  }
+
+  // ---- 速さメーター：第1・第2宇宙速度の しるし つき ----
+  function drawSpeed(g, W, H, sim, u) {
+    const r = Math.hypot(sim.x, sim.y), mu = sim.body.mu, vc = Math.sqrt(mu / r), ve = vc * Math.SQRT2, v = Math.hypot(sim.vx, sim.vy);
+    const bw = Math.min(W * 0.62, 520 * u), bh = 22 * u, bx = W / 2 - bw / 2, by = H - 64 * u, MAX = vc * 1.7, X = s => bx + bw * Math.min(1, s / MAX);
+    g.save();
+    g.fillStyle = 'rgba(0,0,20,.6)'; g.fillRect(bx - 12 * u, by - 40 * u, bw + 24 * u, bh + 74 * u);
+    const gr = g.createLinearGradient(bx, 0, bx + bw, 0);
+    gr.addColorStop(0, '#ff9a3d'); gr.addColorStop(0.58, '#ffd54a'); gr.addColorStop(0.6, '#5aff7a'); gr.addColorStop(0.82, '#5aff7a'); gr.addColorStop(0.84, '#d58bff'); gr.addColorStop(1, '#d58bff');
+    g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(bx, by, bw, bh);
+    g.fillStyle = gr; g.fillRect(bx, by, X(v) - bx, bh);
+    g.strokeStyle = '#fff'; g.lineWidth = 2; g.strokeRect(bx, by, bw, bh);
+    g.textAlign = 'center'; g.textBaseline = 'bottom'; g.font = `${22 * u}px sans-serif`;
+    [[vc, '🛰️', '1'], [ve, '🚀', '2']].forEach(([s, ic, n]) => {
+      const x = X(s); g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.moveTo(x, by - 4 * u); g.lineTo(x, by + bh + 4 * u); g.stroke();
+      g.fillStyle = '#fff'; g.fillText(ic, x, by - 6 * u);
+      g.font = `bold ${14 * u}px sans-serif`; g.fillStyle = '#ffd54a'; g.fillText(n, x + 14 * u, by - 22 * u); g.font = `${22 * u}px sans-serif`;
+    });
+    g.font = `bold ${24 * u}px "Courier New",monospace`; g.textBaseline = 'top'; g.fillStyle = '#5aff7a';
+    g.fillText('🚀' + String(Math.round(v)).padStart(4, '0'), W / 2, by + bh + 6 * u);
+    g.restore();
+  }
+  function drawFuel(g, H, sim, u) {
+    const f = sim.fuelRatio(), gx = 14 * u, gw = 30 * u, gh = 130 * u, gy = H * 0.42;
+    g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(gx, gy, gw, gh);
+    g.fillStyle = f > 0.25 ? '#e5383b' : '#ffb02e'; g.fillRect(gx, gy + gh * (1 - f), gw, gh * f);
+    g.strokeStyle = '#fff'; g.lineWidth = 3; g.strokeRect(gx, gy, gw, gh);
+    g.font = `${24 * u}px sans-serif`; g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText('⛽', gx + gw / 2, gy - 8);
+  }
+  function drawTop(g, W, sim, warp, u) {
+    const h = Math.hypot(sim.x, sim.y) - sim.body.R, bx = W - 16 * u;
+    g.save(); g.textAlign = 'right'; g.textBaseline = 'top';
+    g.fillStyle = 'rgba(0,0,20,.55)'; g.fillRect(bx - 200 * u, 10, 200 * u, (warp > 1.5 ? 100 : 70) * u);
+    g.font = `bold ${28 * u}px "Courier New",monospace`; g.fillStyle = '#fff';
+    g.fillText((sim.body.id === 'moon' ? '🌙' : '⬆') + String(Math.max(0, Math.round(h))).padStart(6, '0'), bx - 8 * u, 16 * u);
+    g.fillStyle = '#9fd8ff'; g.font = `bold ${22 * u}px "Courier New",monospace`;
+    const t = sim.t, mm = Math.floor(t / 60), ss = Math.floor(t % 60);
+    g.fillText('⏱' + mm + ':' + String(ss).padStart(2, '0'), bx - 8 * u, 50 * u);
+    if (warp > 1.5) { g.fillStyle = '#ffd54a'; g.fillText('⏩×' + Math.round(warp), bx - 8 * u, 78 * u); }
+    g.restore();
+  }
+
+  // ---- いまの まま とぶと どうなるか の しるし（上の まんなか） ----
+  function drawBadge(g, W, pr, u, big) {
+    const t = BADGE[pr.kind]; if (!t) return;
+    const x = W / 2, y = (big ? 40 : 46) * u + 30, w = (t.length > 2 ? 120 : 84) * u, h = 56 * u;
+    g.save(); g.fillStyle = 'rgba(0,0,20,.7)'; g.strokeStyle = SEG_COL[pr.kind]; g.lineWidth = 4;
+    g.beginPath(); g.roundRect ? g.roundRect(x - w / 2, y - h / 2, w, h, h / 2) : g.rect(x - w / 2, y - h / 2, w, h); g.fill(); g.stroke();
+    g.font = `${34 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.fillText(t, x, y + 2);
+    g.restore();
+  }
+  // ---- 中止ボタン（長おし） ----
+  function holdButton(el, ms, fn) {
+    let t0 = null, rq = null; const ring = el.querySelector('.ring');
+    const paint = p => { ring.style.background = p > 0 ? `conic-gradient(#ffd54a ${p * 360}deg, rgba(255,255,255,.15) 0)` : ''; };
+    const tick = () => { const p = (performance.now() - t0) / ms; if (p >= 1) { stop(); RL.Audio.tone(200, 0.2, 'square', 0.1); fn(); return; } paint(p); rq = requestAnimationFrame(tick); };
+    const start = e => { e.preventDefault(); if (t0 !== null) return; t0 = performance.now(); RL.Audio.tone(330, 0.06); tick(); };
+    function stop() { t0 = null; cancelAnimationFrame(rq); paint(0); }
+    el.addEventListener('pointerdown', start); ['pointerup', 'pointerleave', 'pointercancel'].forEach(n => el.addEventListener(n, stop));
+  }
+  let abortCb = null;
+  $('btnAbort').insertAdjacentHTML('beforeend', RL.ICON.hand);
+  holdButton($('btnAbort'), 900, () => { if (abortCb) abortCb(); else RL.Flight.abort(); });
+
+  function run(a, profile, onDone, onAbort) {
+    const fly = $('fly'), cv = $('cv'), g = cv.getContext('2d'), A = RL.Audio, dpr = devicePixelRatio || 1;
+    fly.style.display = 'block'; fly.classList.add('orbit'); document.body.classList.add('flying');
+    const W = innerWidth, H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const u = Math.max(0.5, Math.min(1, Math.min(W, H * 0.75) / 700));
+    $('count').style.fontSize = (130 * u) + 'px';
+    const sim = RL.Orbit.create(a, { profile }), O = RL.CFG.ORBIT, E = sim.bodies.earth;
+    const cs = Math.min(36, W / 12, H / 20), rocket = RL.Flight.buildRocket(a, cs), RW = RL.CFG.COLS * cs;
+    rocket.style.display = 'block';
+    let lowest = 0; a.cells.forEach(q => { if (!q.ctx.loose) lowest = Math.max(lowest, q.r + 1); });
+    const px = H / 180, L = 150, Yh = hh => px * L * Math.log(1 + Math.max(0, hh) / L);
+    const ground = H * 0.82, startY = ground - 10 - lowest * cs, room = startY - H * 0.3;
+    const stars = Array.from({ length: 140 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.8 + 0.3 }));
+    const clouds = Array.from({ length: 14 }, (_, i) => ({ h: 25 + Math.random() * 160, x: Math.random() * 1.6, s: 0.6 + Math.random() * 0.8 }));
+    const V = { r: E.R * 1.6, cx: 0, cy: 0, u, stars: Array.from({ length: 160 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + 0.6 })) };
+    const trail = []; const smoke = [];
+    const sepReal = {}, stageReal = {};
+    let prCache = null, prAt = 0, prKind = null, saidEnc = false;
+    let t0 = null, prev = null, warp = 1, view = 'auto', sepFlash = 0, saidSep = false, ended = null, endAt = 0, saidOrbit = false;
+    const pre = 2100;
+    // ボタン
+    const bEng = $('btnEng'), bMap = $('btnMap'), bDone = $('btnDone');
+    let engShown = null;
+    const engUI = () => { const ok = sim.liquidLeft() && !sim.done; bEng.classList.toggle('off', !ok); if (engShown !== sim.engineOn) { engShown = sim.engineOn; bEng.innerHTML = sim.engineOn ? RL.ICON.engStop : RL.ICON.engGo; } bEng.classList.toggle('on', sim.engineOn); };
+    bEng.onclick = () => { RL._engClick = (RL._engClick || 0) + 1; if (!sim.lifted || !sim.liquidLeft() || sim.done) { A.tone(150, 0.15, 'square', 0.08); return; } sim.setEngine(!sim.engineOn); engUI(); };
+    bMap.onclick = () => { view = (view === 'map' || (view === 'auto' && autoMap())) ? 'near' : 'map'; A.tone(660, 0.06); };
+    bDone.onclick = () => { sim.finishNow(); };
+    bDone.style.display = 'none'; engUI(); bMap.innerHTML = RL.ICON.map;
+    const cleanup = () => { cancelAnimationFrame(raf); abortCb = null; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
+    abortCb = () => { if (ended) return; ended = 'abort'; cleanup(); A.stop(); A.tone(300, 0.15, 'square', 0.1); onAbort && onAbort(); };
+    A.say('さん、に、いち、はっしゃ！', null, { rate: 1.1 });
+    [0, 700, 1400].forEach(d => setTimeout(() => { if (!ended) A.tone(880, 0.15); }, d));
+    setTimeout(() => { if (!ended) { A.tone(1320, 0.4); A.rumble(3); } }, pre);
+    const autoMap = () => sim.body !== E || (Math.hypot(sim.x, sim.y) - E.R) > E.atmo * 1.15;
+
+    function events() {
+      sim.events.splice(0).forEach(e => {
+        if (e.type === 'booster-sep') { sepReal[e.id] = performance.now(); sepFlash = 25; A.tone(180, 0.25, 'square', 0.15); if (!saidSep) { saidSep = true; A.say('ブースター、きりはなし！', null, { interrupt: false }); } }
+        if (e.type === 'stage-sep') { stageReal[e.i] = performance.now(); sepFlash = 40; A.tone(220, 0.3, 'square', 0.18); setTimeout(() => A.tone(140, 0.4, 'square', 0.12), 140);
+          A.say((STAGE_NAME[e.i] || '') + 'だん、きりはなし！', null, { interrupt: false });
+          setTimeout(() => { if (!ended && sim.stages[e.i + 1] && sim.stages[e.i + 1].eng + sim.stages[e.i + 1].veng > 0) { [523, 784].forEach((f, k) => setTimeout(() => A.tone(f, 0.18, 'triangle', 0.15), k * 90)); A.say((IGN_NAME[e.i + 1] || '') + '、てんか！', null, { interrupt: false }); } }, 400); }
+        if (e.type === 'space') { [784, 1175].forEach((f, i) => setTimeout(() => A.tone(f, 0.3, 'sine', 0.15), i * 150)); A.say('うちゅうに でたよ！', null, { interrupt: false }); }
+        if (e.type === 'engine-off') { A.tone(400, 0.12, 'square', 0.1); setTimeout(() => A.tone(260, 0.2, 'square', 0.1), 110); }
+        if (e.type === 'engine-on') { A.tone(523, 0.1, 'triangle'); setTimeout(() => A.tone(784, 0.15, 'triangle'), 90); }
+        if (e.type === 'soi') A.say(e.body === 'moon' ? 'つきの じゅうりょくけんに はいったよ！' : 'ちきゅうの じゅうりょくけんに もどったよ。', null, { interrupt: false });
+        if (e.type === 'class') {
+          const wasOrbit = ORBIT_CLS.includes(e.old);
+          if (['low', 'high'].includes(e.cls) && !wasOrbit && !saidOrbit) { saidOrbit = true; [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
+            A.say('やった！ ちきゅうを まわる きどうに のったよ！' + (sim.isPowered() && sim.liquidLeft() ? ' エンジンを とめると、ずっと まわりつづけるよ。' : ''), null, { interrupt: false });
+            if (sim.isPowered()) { bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 4000); } }
+          if (e.cls === 'toMoon' && e.old !== 'toMoon' && !saidEnc) A.say('つきの たかさまで とどくよ！ つきに であえるかな？', null, { interrupt: false });
+          if (e.cls === 'escape' && sim.body === E) A.say('ちきゅうから にげだせる はやさに なった！', null, { interrupt: false });
+        }
+      });
+    }
+    function nearView(h, rangeD) {
+      const cam = Math.max(0, Yh(h) - room), gy = ground + cam;
+      g.fillStyle = RL.Flight.skyAt(h); g.fillRect(0, 0, W, H);
+      const sa = Math.min(1, Math.max(0, (h - 150) / 200));
+      if (sa > 0) { g.fillStyle = `rgba(255,255,255,${sa})`; stars.forEach(st => { g.beginPath(); g.arc(st.x, (st.y + cam * 0.3) % H, st.r, 0, 7); g.fill(); }); }
+      // 雲：横に すすんだ ぶん 左へ ながれる
+      g.font = `${48 * u}px sans-serif`; g.textAlign = 'center';
+      clouds.forEach(c => { const y = gy - Yh(c.h); if (y < -60 || y > H + 60) return; const x = (((c.x * W + rangeD * px * 1.4) % (W * 1.6)) + W * 1.6) % (W * 1.6) - W * 0.3;
+        g.globalAlpha = 0.9; g.font = `${48 * u * c.s}px sans-serif`; g.fillText('☁️', x, y); g.globalAlpha = 1; });
+      const ay = gy - Yh(E.atmo);
+      if (ay > -10 && ay < H + 10) { g.strokeStyle = 'rgba(160,220,255,.8)'; g.lineWidth = 4; g.setLineDash([16, 12]); g.beginPath(); g.moveTo(0, ay); g.lineTo(W, ay); g.stroke(); g.setLineDash([]); }
+      if (gy < H + 50) { g.fillStyle = '#3c8f3c'; g.fillRect(0, gy, W, H);
+        const padX = W / 2 - RW / 2 - 20 + rangeD * px * 1.4; g.fillStyle = '#ffcc00'; g.fillRect(padX, gy - 10, RW + 40, 10); }
+      return { ry: startY - Math.min(Yh(h), room) };
+    }
+    const cam = RL.Flight.rocketCam(cs); let box = null;
+    function rocketDOM(ry, burnAny, dtR) {
+      const tilt = -(Math.PI / 2 - sim.point);   // 東（地図で 左）へ かたむく
+      const shake = burnAny ? 1.5 : 0;
+      // のこっている部分の まんなかを 中心に かたむけ、画面の まんなかへ（切りはなしの あとも 全体が 見える）
+      box = RL.Flight.remainBox(a.cells, q => {
+        if (q.stackId) { const s = sim.stacks.find(x => x.id === q.stackId); if (s && !s.withStage) return s.sepT !== null; }
+        return q.stage < sim.si; }, box);
+      const natural = ry + box.cy * cs;
+      cam.place(rocket, box, tilt, W / 2 + (Math.random() - 0.5) * shake, sim.lifted ? Math.max(natural, H * 0.45) : natural, dtR);
+      const now = performance.now();
+      rocket.querySelectorAll('.flame').forEach(f => {
+        let on;
+        if (f.dataset.kind === 'b') { const s = sim.stacks.find(x => x.id === f.dataset.stackFlame); on = !!s && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0; }
+        else on = +f.dataset.stage === sim.si && sim.burnC;
+        if (!sim.lifted && sim.t < 0.01) on = false;
+        f.style.display = on ? 'block' : 'none';
+        if (on && f.dataset.kind === 'v') { const w0 = +f.dataset.w, h0 = +f.dataset.h, kx = 0.5 + 0.5 * sim.vpow, ky = 0.35 + 0.9 * sim.vpow;
+          f.style.width = w0 * kx + 'px'; f.style.left = (+f.dataset.l + w0 * (1 - kx) / 2) + 'px'; f.style.height = h0 * ky + 'px'; }
+      });
+      rocket.querySelectorAll('[data-stack]').forEach(b => {
+        const s = sim.stacks.find(x => x.id === b.dataset.stack); if (!s || s.sepT === null || s.withStage || !sepReal[s.id]) return;
+        const sd = +b.dataset.side, tt = (now - sepReal[s.id]) / 1000 * 1.2;
+        b.style.transform = `translate(${sd * (12 + tt * 60)}px,${tt * tt * 180 + tt * 40}px) rotate(${sd * tt * 200}deg)`; b.style.opacity = Math.max(0, 1 - tt / 2.5);
+      });
+      Object.keys(stageReal).forEach(i => {
+        const tt = (now - stageReal[i]) / 1000 * 1.2;
+        rocket.querySelectorAll(`.p[data-stage="${i}"]`).forEach(b => {
+          const s = b.dataset.stack && sim.stacks.find(x => x.id === b.dataset.stack); if (s && !s.withStage) return;
+          b.style.transform = `translateY(${tt * tt * 160 + tt * 30}px) rotate(${(i % 2 ? -1 : 1) * tt * 25}deg)`; b.style.opacity = Math.max(0, 1 - tt / 3);
+        });
+      });
+      // けむり
+      rocket.querySelectorAll('.flame').forEach(f => {
+        if (f.style.display !== 'block') return;
+        const L0 = +f.dataset.l + +f.dataset.w / 2, T0 = parseFloat(f.style.top) + cs;
+        const [sx0, sy0] = cam.toScreen(L0, T0);
+        for (let i = 0; i < 2; i++) smoke.push({ x: sx0, y: sy0, vx: (Math.random() - 0.5) * 2 + Math.cos(sim.point) * 2, vy: 2 + Math.random() * 3, l: Math.max(0.15, sim.rho) });
+      });
+      for (let i = smoke.length - 1; i >= 0; i--) { const p = smoke[i]; p.x += p.vx; p.y += p.vy; p.l -= 0.02; if (p.l <= 0) { smoke.splice(i, 1); continue; }
+        g.fillStyle = `rgba(235,235,235,${p.l * 0.6})`; g.beginPath(); g.arc(p.x, p.y, (1.3 - p.l) * 18, 0, 7); g.fill(); }
+    }
+    function updateView(pr, dtR) {
+      // 地図の大きさ：予測の線と いまの位置が おさまるように（なめらかに）
+      const ms = SP.bodyState(sim.bodies.moon, sim.t);
+      let cx = 0, cy = 0, need;
+      if (sim.body !== E) { cx = ms.x; cy = ms.y; need = Math.max(Math.hypot(sim.x, sim.y) * 1.3, sim.body.R * 2.5);
+        if (pr) pr.segs.forEach(sg => sg.pts.forEach(p => { need = Math.max(need, Math.min(Math.hypot(p[0] - ms.x, p[1] - ms.y) * 1.1, sim.body.soi * 1.2)); })); }
+      else {
+        const r = Math.hypot(sim.x, sim.y); need = Math.max(E.R * 1.35, r * 1.2);
+        if (pr) { let m = 0; pr.segs.forEach(sg => sg.pts.forEach(p => { m = Math.max(m, Math.hypot(p[0], p[1])); })); if (pr.enc) m = Math.max(m, Math.hypot(pr.enc.x, pr.enc.y) + sim.bodies.moon.soi); need = Math.max(need, Math.min(m * 1.1, E.soi)); }
+      }
+      const k = Math.min(1, dtR * 2.5);
+      V.r = Math.exp(Math.log(V.r) + (Math.log(need) - Math.log(V.r)) * k);
+      V.cx += (cx - V.cx) * k; V.cy += (cy - V.cy) * k;
+    }
+    function frame(ts) {
+      if (ended === 'abort') return;
+      if (!t0) { t0 = ts; prev = ts; }
+      const el = ts - t0, dtR = Math.min(0.05, (ts - prev) / 1000); prev = ts;
+      $('count').textContent = el < pre ? String(3 - Math.floor(el / 700)) : '';
+      if (el > pre && !sim.done) {
+        const target = sim.autoWarp();
+        warp = target > warp ? Math.min(target, warp * 1.06 + 0.05) : target;
+        sim.advance(dtR * warp);
+      }
+      events(); engUI();
+      // とんできた あと（地球から見た 位置）
+      if (sim.lifted) { const ms = sim.body === E ? { x: 0, y: 0 } : SP.bodyState(sim.bodies.moon, sim.t), p = [sim.x + ms.x, sim.y + ms.y], lp = trail[trail.length - 1];
+        if (!lp || Math.hypot(p[0] - lp[0], p[1] - lp[1]) > V.r * 0.006) { trail.push(p); if (trail.length > 3000) trail.splice(0, 500); } }
+      // 予測：エンジンを使っている間は 毎こま、惰性の間は 0.1秒ごと
+      if (sim.lifted && (sim.isPowered() || !prCache || ts - prAt > 100)) { prCache = predict(sim); prAt = ts; }
+      const pr = sim.lifted ? prCache : null;
+      if (pr && pr.kind !== prKind) {
+        const moonNow = /^moon/.test(pr.kind), moonOld = /^moon/.test(prKind || '');
+        if (moonNow && !moonOld && sim.body === E && !saidEnc) { saidEnc = true; [659, 880, 1175].forEach((f, i) => setTimeout(() => A.tone(f, 0.18, 'triangle'), i * 100)); A.say('つきに とどく きどうだ！', null, { interrupt: false }); }
+        prKind = pr.kind;
+      }
+      updateView(pr, dtR);
+      const h = Math.hypot(sim.x, sim.y) - sim.body.R, useMap = view === 'map' || (view === 'auto' && autoMap());
+      bDone.style.display = (!sim.done && ORBIT_CLS.includes(sim.cls) && !sim.isPowered()) ? 'flex' : 'none';
+      if (useMap) {
+        rocket.style.display = 'none';
+        drawMap(g, V, sim, pr, trail, { x0: 0, y0: 0, w: W, h: H }, false);
+      } else {
+        rocket.style.display = 'block';
+        const ph = Math.atan2(sim.y, sim.x) - (O.SITE + E.rot * sim.t), rangeD = Math.atan2(Math.sin(ph), Math.cos(ph)) * E.R;
+        const { ry } = nearView(sim.body === E ? h : 9999, rangeD);
+        rocketDOM(ry, sim.burnC || sim.boost, dtR);
+        // 小さな地図（予測の線が 地球を ひとまわり するのが 見える）
+        const sz = Math.min(W, H) * 0.34, VV = { r: Math.max(E.R * 1.3, Math.min(V.r, E.R * 3)), cx: 0, cy: 0, u: u * 0.6, stars: [] };
+        drawMap(g, VV, sim, pr, trail, { x0: 12, y0: 86, w: sz, h: sz }, true);
+      }
+      drawTop(g, W, sim, el > pre ? warp : 1, u);
+      if (pr && !ended) drawBadge(g, W, pr, u, useMap);
+      drawSpeed(g, W, H, sim, u);
+      if (a.fuel > 0) drawFuel(g, H, sim, u);
+      if (sepFlash > 0) { g.fillStyle = `rgba(255,255,255,${sepFlash / 60})`; g.fillRect(0, 0, W, H); sepFlash--; }
+      // おわり
+      if (sim.done && !ended) {
+        ended = sim.done.type; endAt = ts;
+        if (['ground', 'hit'].includes(ended)) { A.tone(120, 0.5, 'sawtooth', 0.15); A.rumble(1); }
+      }
+      if (ended && ended !== 'abort') {
+        if (['ground', 'hit'].includes(ended)) { g.font = `${120 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('💥', W / 2, H / 2); }
+        if (ts - endAt > 1300) { cleanup(); onDone(sim); return; }
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    cur = sim;
+    raf = requestAnimationFrame(frame);
+    return sim;
+  }
+  return { run, predict, get sim() { return cur; } };
+})();
+===END: js/flight2d.js===
+===FILE: js/icons.js===
+RL.ICON = {
+  rocket: '<svg viewBox="0 0 60 100"><path d="M30 4 Q50 25 50 60 L10 60 Q10 25 30 4Z" fill="#fff"/><circle cx="30" cy="36" r="8" fill="#4fb3ff" stroke="#c81e1e" stroke-width="3"/><path d="M10 48 L0 74 L12 66Z M50 48 L60 74 L48 66Z" fill="#ffd54a"/><path d="M18 60 L42 60 L36 74 L24 74Z" fill="#888"/><path d="M24 76 Q30 100 36 76Z" fill="#ffb02e"/></svg>',
+  trash: '<svg viewBox="0 0 100 100"><rect x="22" y="30" width="56" height="62" rx="8" fill="#fff"/><rect x="14" y="16" width="72" height="12" rx="6" fill="#fff"/><rect x="40" y="6" width="20" height="12" rx="4" fill="#fff"/><path d="M38 42 V82 M50 42 V82 M62 42 V82" stroke="#3a4a8a" stroke-width="6" stroke-linecap="round"/></svg>',
+  soundOn: '<svg viewBox="0 0 100 100"><path d="M14 38 H34 L58 16 V84 L34 62 H14Z" fill="#fff"/><path d="M68 34 Q80 50 68 66 M78 24 Q98 50 78 76" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/></svg>',
+  soundOff: '<svg viewBox="0 0 100 100"><path d="M14 38 H34 L58 16 V84 L34 62 H14Z" fill="#fff"/><path d="M70 36 L94 64 M94 36 L70 64" stroke="#ff6b6b" stroke-width="8" stroke-linecap="round"/></svg>',
+  again: '<svg viewBox="0 0 100 100"><path d="M78 50 A28 28 0 1 1 64 26" stroke="#fff" stroke-width="12" fill="none" stroke-linecap="round"/><path d="M56 8 L84 22 L58 40Z" fill="#fff"/></svg>',
+  home: '<svg viewBox="0 0 100 100"><path d="M50 12 L90 48 H76 V88 H24 V48 H10Z" fill="#fff"/><rect x="42" y="62" width="16" height="26" fill="#3a4a8a"/></svg>',
+  ear: '<svg viewBox="0 0 100 100"><path d="M30 40 Q30 12 56 12 Q82 12 80 40 Q78 56 64 64 Q56 70 56 82 Q56 92 44 92" stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M46 42 Q46 28 58 28 Q68 28 66 42" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/></svg>',
+  learn: '<svg viewBox="0 0 100 100"><path d="M50 14 L96 36 L50 58 L4 36Z" fill="#223"/><path d="M24 46 V70 Q50 86 76 70 V46 L50 58Z" fill="#223"/><path d="M90 40 V68" stroke="#223" stroke-width="5"/><circle cx="90" cy="72" r="6" fill="#c81e1e"/></svg>',
+  play: '<svg viewBox="0 0 100 100"><path d="M30 16 L84 50 L30 84Z" fill="#fff"/></svg>',
+  // ---- v0.8 うちゅうモード ----
+  orbit: '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="44" ry="18" transform="rotate(-25 50 50)" fill="none" stroke="#ffd54a" stroke-width="6"/><circle cx="50" cy="50" r="22" fill="#2f7bd9"/><path d="M36 42 Q44 34 52 40 Q58 46 50 52 Q42 54 36 42Z M56 58 Q64 54 68 62 Q62 68 56 58Z" fill="#5ac85a"/><path d="M78 26 L92 22 L86 34Z" fill="#fff"/></svg>',
+  engStop: '<svg viewBox="0 0 100 100"><path d="M50 10 Q74 40 66 62 Q60 80 50 86 Q40 80 34 62 Q26 40 50 10Z" fill="#ffb02e"/><path d="M50 34 Q60 52 56 64 Q52 74 50 76 Q48 74 44 64 Q40 52 50 34Z" fill="#ffd54a"/><circle cx="72" cy="72" r="22" fill="#c81e1e" stroke="#fff" stroke-width="4"/><rect x="62" y="62" width="20" height="20" rx="3" fill="#fff"/></svg>',
+  engGo: '<svg viewBox="0 0 100 100"><path d="M50 10 Q74 40 66 62 Q60 80 50 86 Q40 80 34 62 Q26 40 50 10Z" fill="#7a849a"/><circle cx="72" cy="72" r="22" fill="#1f9a32" stroke="#fff" stroke-width="4"/><path d="M65 60 L84 72 L65 84Z" fill="#fff"/></svg>',
+  map: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="18" fill="#2f7bd9"/><ellipse cx="50" cy="50" rx="40" ry="30" fill="none" stroke="#5aff7a" stroke-width="6" stroke-dasharray="12 8"/><path d="M84 40 L96 50 L82 56Z" fill="#fff"/></svg>',
+  hand: '<svg viewBox="0 0 100 100"><path d="M30 56 V26 Q30 20 36 20 Q42 20 42 26 V48 V18 Q42 12 48 12 Q54 12 54 18 V48 V22 Q54 16 60 16 Q66 16 66 22 V50 V32 Q66 26 72 26 Q78 26 78 32 V64 Q78 88 54 88 Q38 88 30 76 L16 56 Q12 50 18 46 Q24 44 30 56Z" fill="#fff"/></svg>',
+  flag: '<svg viewBox="0 0 100 100"><path d="M24 10 V92" stroke="#fff" stroke-width="7" stroke-linecap="round"/><path d="M28 12 H84 V56 H28Z" fill="#fff"/><path d="M28 12 H42 V26 H28Z M56 12 H70 V26 H56Z M42 26 H56 V40 H42Z M70 26 H84 V40 H70Z M28 40 H42 V56 H28Z M56 40 H70 V56 H56Z" fill="#222"/></svg>',
+  ok: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="32" fill="none" stroke="#fff" stroke-width="12"/></svg>',
+  ng: '<svg viewBox="0 0 100 100"><path d="M24 24 L76 76 M76 24 L24 76" stroke="#fff" stroke-width="12" stroke-linecap="round"/></svg>',
+  // 打ち上げ方：まっすぐ／ななめ／よこ（ロケットの 通り道）
+  profUp: '<svg viewBox="0 0 100 100"><rect x="8" y="84" width="84" height="8" rx="3" fill="#5ac85a"/><path d="M50 82 V24" stroke="#ffd54a" stroke-width="7" stroke-dasharray="10 7" stroke-linecap="round"/><path d="M50 6 L62 26 H38Z" fill="#fff"/></svg>',
+  profTilt: '<svg viewBox="0 0 100 100"><rect x="8" y="84" width="84" height="8" rx="3" fill="#5ac85a"/><path d="M22 82 Q26 46 64 26" stroke="#ffd54a" stroke-width="7" stroke-dasharray="10 7" fill="none" stroke-linecap="round"/><path d="M84 14 L72 36 L60 18Z" fill="#fff"/></svg>',
+  profSide: '<svg viewBox="0 0 100 100"><path d="M-10 120 A70 70 0 0 1 110 120" fill="#5ac85a"/><path d="M14 78 Q20 34 68 28" stroke="#ffd54a" stroke-width="7" stroke-dasharray="10 7" fill="none" stroke-linecap="round"/><path d="M94 27 L70 38 L70 18Z" fill="#fff"/></svg>'
+};
+===END: js/icons.js===
+===FILE: js/main.js===
+// 画面のつなぎこみ（タイトル・じゆうモード・はっしゃ・けっか）
+(function () {
+  const $ = id => document.getElementById(id), A = RL.Audio, B = RL.Builder;
+  const NAMES = ['じめん', 'くも', 'ひこうき', 'うちゅう', 'じんこうえいせい', 'つき', 'すいせい', 'どせい'];
+  $('launch').innerHTML = RL.ICON.rocket; $('clear').innerHTML = RL.ICON.trash; $('home').innerHTML = RL.ICON.home;
+  $('mute').innerHTML = RL.ICON.soundOn; $('again').innerHTML = RL.ICON.again; $('tutEar').innerHTML = RL.ICON.ear;
+  $('btnTut').innerHTML = RL.ICON.learn; $('btnFree').innerHTML = RL.ICON.play; $('titleRocket').innerHTML = RL.ICON.rocket;
+  $('btnOrbit').innerHTML = RL.ICON.orbit; $('btnMap').innerHTML = RL.ICON.map; $('btnDone').innerHTML = RL.ICON.flag;
+  $('cfYes').innerHTML = RL.ICON.ok; $('cfNo').innerHTML = RL.ICON.ng;
+  // ---- モード：'free'（たかさ）／ 'orbit'（うちゅう） ----
+  let mode = 'free', profile = 'side';
+  const PROF = ['up', 'tilt', 'side'], PROF_ICON = { up: RL.ICON.profUp, tilt: RL.ICON.profTilt, side: RL.ICON.profSide };
+  const PROF_SAY = { up: 'まっすぐ うえに', tilt: 'ななめに', side: 'よこに たおして' };
+  function setProfile(p) { profile = p; $('prof').innerHTML = PROF_ICON[p]; }
+  setProfile('side');
+  $('prof').addEventListener('click', () => { setProfile(PROF[(PROF.indexOf(profile) + 1) % 3]); A.tone(660, 0.08); A.say(PROF_SAY[profile] + ' とぶよ。'); });
+  function setMode(m) { mode = m; document.body.classList.toggle('orbitMode', m === 'orbit'); }
+  // ---- 確認ダイアログ（絵 ＋ ⭕／❌）。文字は 使わない ----
+  let cfYes = null;
+  function confirmBox(iconHTML, say, yes) {
+    $('cfIcon').innerHTML = iconHTML; $('confirm').style.display = 'flex'; cfYes = yes; A.tone(500, 0.1); if (say) A.say(say);
+  }
+  RL.confirm = confirmBox;
+  $('cfYes').addEventListener('click', () => { $('confirm').style.display = 'none'; const f = cfYes; cfYes = null; f && f(); });
+  $('cfNo').addEventListener('click', () => { $('confirm').style.display = 'none'; cfYes = null; A.tone(300, 0.08); });
+  $('ver').textContent = 'Rocket Lab ' + RL.CFG.VERSION;
+
+  function launch() {
+    if (RL.Tutorial.active && !RL.Tutorial.canLaunch) { A.tone(150, 0.15, 'square', 0.08); return; }
+    const a = RL.analyze(B.grid);
+    if (!a.cells.length) { A.tone(200, 0.2, 'square', 0.1); return; }
+    const s = RL.simulate(a);
+    if (s.reason === 'noEngine') {
+      A.tone(200, 0.15, 'square', 0.1); setTimeout(() => A.tone(160, 0.25, 'square', 0.1), 150);
+      if (!RL.Tutorial.active) B.hint('engine');
+      RL.emit('launch-fail', 'noEngine'); return;
+    }
+    RL.emit('launch', s);
+    if (mode === 'orbit') { RL.Flight2D.run(a, profile, sim => result2d(sim), aborted); return; }
+    RL.Flight.run(a, s, () => result(s), aborted);
+  }
+  // 中止：結果は出さず、組み立てたロケットのまま もどる
+  function aborted() { A.say('ちゅうし！ つくりなおそう。'); RL.emit('abort'); }
+  // ---- うちゅうモードの結果 ----
+  function result2d(sim) {
+    const d = sim.done, O = RL.CFG.ORBIT, R = O.R, info = [];
+    let icon = '😅', stars = 0, say = '';
+    const alt = Math.round(d.maxAlt || 0);
+    switch (d.type) {
+      case 'ground': icon = '🎯'; stars = alt > 3000 ? 2 : alt > 300 ? 1 : 0;
+        say = (alt > 300 ? 'うちゅうまで いったけど、' : '') + 'おちてきちゃった。 もっと よこに はやく とぶと、ちきゅうを まわれるよ。';
+        info.push(`<span class="h">⬆${alt}</span>`, `<span class="h">➡${Math.round(d.range || 0)}</span>`); break;
+      case 'orbit': {
+        const el = d.el, pe = Math.round(el.rp - sim.bodies[d.body].R), ap = Math.round(el.ra - sim.bodies[d.body].R);
+        if (d.body === 'moon') { icon = '🌙'; stars = 5; say = 'すごい！ つきを まわる きどうに のったよ！'; }
+        else if (d.cls === 'toMoon') { icon = '🌙'; stars = 4; say = 'つきまで とどく きどうに のったよ！'; }
+        else if (d.cls === 'high') { icon = '🛰️'; stars = 4; say = 'たかい きどうを まわったよ！'; }
+        else { icon = '🛰️'; stars = 3; say = 'ちきゅうを まわったよ！ じんこうえいせい だ！'; }
+        info.push(`<span>▼${pe}</span>`, `<span class="h">▲${ap}</span>`); break; }
+      case 'escape': icon = '🚀'; stars = 5; say = 'ちきゅうの じゅうりょくから だっしゅつ したよ！'; info.push(`<span>🚀${Math.round(d.maxV)}</span>`); break;
+      case 'hit': icon = '🌙'; stars = 5; say = 'つきに とうちゃく！ でも、ドーンと ぶつかっちゃった。'; break;
+      case 'heavy': icon = '🏋️'; say = 'おもくて あがらなかった！'; break;
+      default: icon = '⏱️'; say = 'じかん ぎれ！';
+    }
+    if (d.type !== 'heavy') info.push(`<span>🚀${Math.round(d.maxV || 0)}</span>`);
+    $('resIcon').textContent = icon; $('resStars').textContent = stars ? '⭐'.repeat(stars) : '💨';
+    $('resInfo').innerHTML = [...new Set(info)].join('');
+    if (stars >= 3) [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.25, 'triangle'), i * 120)); else A.tone(523, 0.3, 'triangle');
+    A.say(say); $('result').style.display = 'flex';
+    RL.emit('result2d', sim);
+  }
+  function result(s) {
+    const S = B.state, z = RL.zoneOf(s.h), Z = RL.CFG.ZONES, newBest = s.lift && s.h > S.best;
+    $('resIcon').textContent = s.lift ? Z[z].icon : (s.reason === 'heavy' ? '🏋️' : '😅');
+    $('resStars').textContent = s.lift ? '⭐'.repeat(z) + (newBest && S.best > 0 ? ' 🏆' : '') : '💨';
+    $('resInfo').innerHTML = s.lift ? `<span class="h">⬆${Math.round(s.h)}</span><span>🚀${Math.round(s.shownVmax || 0)}</span>` : '';
+    if (s.lift) {
+      if (newBest) [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.25, 'triangle'), i * 120)); else A.tone(523, 0.3, 'triangle');
+      A.say((s.liftT > 1.5 ? 'おもくて なかなか とべなかったけど、' : '') + NAMES[z] + 'まで とどいた！' + (newBest && S.best > 0 ? ' しんきろく！' : ''));
+    } else { A.tone(300, 0.2, 'sawtooth', 0.08); setTimeout(() => A.tone(220, 0.35, 'sawtooth', 0.08), 180); A.say(s.reason === 'heavy' ? 'おもくて あがらなかった！ ねんりょうが なくなっちゃった。' : 'あれれ？'); }
+    s.prevBest = S.best;
+    if (newBest) S.best = s.h;
+    S.last = s.h; $('result').style.display = 'flex'; B.ladder();
+    RL.emit('result', s);
+  }
+  function closeResult() { $('result').style.display = 'none'; }
+  RL.closeResult = closeResult;
+
+  function showTitle() { RL.Tutorial.stop(); A.stop(); closeResult(); $('title').style.display = 'flex'; }
+  function startFree() { setMode('free'); document.body.classList.remove('tutorial'); $('title').style.display = 'none'; B.setAllowed(null); B.lockGrid(false); B.highlightCell(null); B.select('engine'); A.say('じゆうに ロケットを つくろう！'); }
+  RL.startFree = startFree;
+  function startOrbit() { startFree(); setMode('orbit'); A.say('うちゅうモード！ ちきゅうを まわる ロケットを つくろう！'); }
+
+  $('launch').addEventListener('click', launch);
+  $('clear').addEventListener('click', () => {
+    if (RL.Tutorial.active) { if (!RL.Tutorial.canClear) { A.tone(150, 0.15, 'square', 0.08); return; } B.clear(); return; }
+    if (!B.grid.some(row => row.some(Boolean))) { A.tone(200, 0.1, 'square', 0.08); return; }
+    confirmBox(RL.ICON.trash + '<span>🚀❓</span>', 'ぜんぶ けしても いい？', () => B.clear());   // まちがえて けさないように
+  });
+  $('home').addEventListener('click', showTitle);
+  $('mute').addEventListener('click', () => { $('mute').innerHTML = A.toggle() ? RL.ICON.soundOff : RL.ICON.soundOn; });
+  $('again').addEventListener('click', () => { if (RL.Tutorial.active) return; closeResult(); A.tone(660, 0.08); });
+  $('btnFree').addEventListener('click', startFree);
+  $('btnOrbit').addEventListener('click', startOrbit);
+  $('btnTut').addEventListener('click', () => { setMode('free'); $('title').style.display = 'none'; document.body.classList.add('tutorial'); RL.Tutorial.start(); });
+  // バージョン表示を3回タップ：見本のロケット（2段式）
+  let vt = 0; $('ver').addEventListener('click', () => {
+    if (++vt < 3) return; vt = 0;
+    const R = RL.CFG.ROWS, g = Array.from({ length: R }, () => Array(RL.CFG.COLS).fill(null)), b = R - 1;
+    ['engine', 'tank', 'tank', 'tank', 'ring', 'vengine', 'tank', 'nose'].forEach((k, i) => g[b - i][2] = k);
+    for (let r = b; r >= b - 4; r--) { g[r][1] = 'booster'; g[r][3] = 'booster'; } g[b][0] = 'fin'; g[b][4] = 'fin';
+    B.setGrid(g);
+  });
+  B.init();
+})();
+===END: js/main.js===
+===FILE: js/parts.js===
+// 部品の定義と、SVGでの描き方
+RL.PART_ORDER = ['engine', 'vengine', 'tank', 'ring', 'booster', 'fin', 'win', 'nose'];
+RL.BODY = { engine: 1, vengine: 1, tank: 1, win: 1, nose: 1, ring: 1 };   // 胴体としてつながる部品
+RL.ENGINES = { engine: 1, vengine: 1 };
+
+(function () {
+  const OL = '#2b3245', W = 5;
+  function body(x, w, up, down, rt, rb) {
+    const y0 = up ? 0 : 4, y1 = down ? 100 : 96;
+    rt = up ? 0 : rt; rb = down ? 0 : rb;
+    return `M${x + rt} ${y0} H${x + w - rt} Q${x + w} ${y0} ${x + w} ${y0 + rt} V${y1 - rb} Q${x + w} ${y1} ${x + w - rb} ${y1} H${x + rb} Q${x} ${y1} ${x} ${y1 - rb} V${y0 + rt} Q${x} ${y0} ${x + rt} ${y0}Z`;
+  }
+  const svg = inner => `<svg viewBox="0 0 100 100" preserveAspectRatio="none">${inner}</svg>`;
+
+  RL.drawPart = function (kind, ctx) {
+    ctx = ctx || {};
+    const up = !!ctx.up, down = !!ctx.down;
+    switch (kind) {
+      case 'engine':   // 地上用：太くて短い 灰色のノズル
+        return svg(`<rect x="26" y="${up ? 0 : 6}" width="48" height="${up ? 30 : 24}" fill="#cfd5e2" stroke="${OL}" stroke-width="${W}"/>` +
+          `<path d="M30 30 H70 L90 96 H10Z" fill="#7a849a" stroke="${OL}" stroke-width="${W}" stroke-linejoin="round"/>` +
+          `<path d="M24 66 H76" stroke="#ff9a3d" stroke-width="7"/><path d="M36 38 L28 88" stroke="#a7b0c4" stroke-width="5" stroke-linecap="round"/>`);
+      case 'vengine':  // 宇宙用：細い首と 大きく広がる 青いノズル
+        return svg(`<rect x="36" y="${up ? 0 : 6}" width="28" height="${up ? 22 : 16}" fill="#cfd5e2" stroke="${OL}" stroke-width="${W}"/>` +
+          `<path d="M40 22 H60 Q62 60 96 96 H4 Q38 60 40 22Z" fill="#3d7bd9" stroke="${OL}" stroke-width="${W}" stroke-linejoin="round"/>` +
+          `<path d="M22 80 Q50 72 78 80" stroke="#9fd8ff" stroke-width="6" fill="none"/><path d="M44 32 Q40 64 20 88" stroke="#8fb8f0" stroke-width="4" fill="none" stroke-linecap="round"/>`);
+      case 'tank':
+        return svg(`<path d="${body(14, 72, up, down, 22, 10)}" fill="#f4f6fb" stroke="${OL}" stroke-width="${W}"/>` +
+          `<rect x="16" y="40" width="68" height="20" fill="#e5383b"/>` +
+          `<path d="M28 ${up ? 6 : 16} V${down ? 94 : 84}" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".8"/>`);
+      case 'ring': {   // 切りはなしリング：黒と黄の しましまの うすい輪
+        let g = `<rect x="18" y="0" width="64" height="100" fill="${up || down ? '#f4f6fb' : 'none'}" stroke="none"/>`;
+        if (up) g += `<path d="M14 0 V30 M86 0 V30" stroke="${OL}" stroke-width="${W}"/>`;
+        if (down) g += `<path d="M14 70 V100 M86 70 V100" stroke="${OL}" stroke-width="${W}"/>`;
+        g += `<rect x="6" y="30" width="88" height="40" rx="6" fill="#ffd54a" stroke="${OL}" stroke-width="${W}"/>`;
+        g += `<path d="M20 32 L8 48 M38 32 L18 68 M56 32 L36 68 M74 32 L54 68 M92 34 L72 68 M92 56 L84 68" stroke="#222" stroke-width="7"/>`;
+        g += `<rect x="6" y="30" width="88" height="40" rx="6" fill="none" stroke="${OL}" stroke-width="${W}"/>`;
+        return svg(g);
+      }
+      case 'win':
+        return svg(`<path d="${body(14, 72, up, down, 22, 10)}" fill="#f4f6fb" stroke="${OL}" stroke-width="${W}"/>` +
+          `<circle cx="50" cy="50" r="27" fill="#bfe6ff" stroke="#e5383b" stroke-width="7"/>` +
+          `<g class="face"><circle cx="50" cy="52" r="15" fill="#ffd9b0"/><circle cx="44" cy="49" r="2.6" fill="${OL}"/><circle cx="56" cy="49" r="2.6" fill="${OL}"/>` +
+          `<path d="M43 57 Q50 63 57 57" stroke="${OL}" stroke-width="2.6" fill="none" stroke-linecap="round"/>` +
+          `<path d="M35 44 Q50 28 65 44" stroke="#fff" stroke-width="5" fill="none"/></g>`);
+      case 'nose':
+        return svg(`<path d="M50 4 Q86 46 86 ${down ? 100 : 94} H14 Q14 46 50 4Z" fill="#e5383b" stroke="${OL}" stroke-width="${W}" stroke-linejoin="round"/>` +
+          `<path d="M40 30 Q30 50 28 80" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" opacity=".6"/>`);
+      case 'booster': {
+        const top = up ? 0 : 22, bot = down ? 100 : 74;
+        let g = `<rect x="28" y="${top}" width="44" height="${bot - top}" fill="#f4f6fb" stroke="${OL}" stroke-width="${W}"/>`;
+        if (!up) g += `<path d="M28 24 Q50 -6 72 24Z" fill="#ffb02e" stroke="${OL}" stroke-width="${W}" stroke-linejoin="round"/>`;
+        if (!down) g += `<path d="M34 74 H66 L76 98 H24Z" fill="#7a849a" stroke="${OL}" stroke-width="${W}" stroke-linejoin="round"/>`;
+        g += `<rect x="30" y="${up ? 40 : 46}" width="40" height="10" fill="#ffb02e"/>`;
+        return svg(g);
+      }
+      case 'fin': {
+        const s = ctx.side || 'both';
+        if (s === 'left') return svg(`<path d="M100 18 L100 96 L8 96 Q22 60 100 18Z" fill="#ffd54a" stroke="${OL}" stroke-width="${W}" stroke-linejoin="round"/>`);
+        if (s === 'right') return svg(`<path d="M0 18 L0 96 L92 96 Q78 60 0 18Z" fill="#ffd54a" stroke="${OL}" stroke-width="${W}" stroke-linejoin="round"/>`);
+        return svg(`<path d="M50 10 L88 96 H12Z" fill="#ffd54a" stroke="${OL}" stroke-width="${W}" stroke-linejoin="round"/>`);
+      }
+    }
+    return '';
+  };
+  RL.paletteIcon = kind => RL.drawPart(kind, kind === 'fin' ? { side: 'left' } : kind === 'ring' ? { up: true, down: true } : {});
+  RL.FLAME = '<svg viewBox="0 0 100 140"><path d="M20 0 H80 Q90 60 50 140 Q10 60 20 0Z" fill="#ff7a1a"/><path d="M34 0 H66 Q72 45 50 100 Q28 45 34 0Z" fill="#ffd54a"/><path d="M44 0 H56 Q58 25 50 55 Q42 25 44 0Z" fill="#fff"/></svg>';
+  RL.VFLAME = '<svg viewBox="0 0 100 140"><path d="M8 0 H92 Q90 70 50 140 Q10 70 8 0Z" fill="#3d8bff" opacity=".85"/><path d="M28 0 H72 Q72 50 50 105 Q28 50 28 0Z" fill="#9fd8ff"/><path d="M42 0 H58 Q58 25 50 60 Q42 25 42 0Z" fill="#fff"/></svg>';
+
+  // 各マスの描き方（上下のつながり・はねの向きと、どこにくっつくか）
+  RL.layout = function (grid) {
+    const R = grid.length, C = grid[0].length, out = [];
+    const isBody = (r, c) => r >= 0 && r < R && c >= 0 && c < C && RL.BODY[grid[r][c]];
+    const okB = (r, c) => r >= 0 && r < R && c >= 0 && c < C && grid[r][c] === 'booster' && !RL.isLooseBooster(grid, r, c);
+    const att = (r, c) => isBody(r, c) || okB(r, c);
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      const k = grid[r][c]; if (!k) continue;
+      const ctx = { up: !!isBody(r - 1, c) && !!RL.BODY[k] && k !== 'nose', down: !!isBody(r + 1, c) && !!RL.BODY[k] && grid[r + 1][c] !== 'nose' };
+      if (k === 'fin') {
+        const L = att(r, c - 1), Rt = att(r, c + 1);
+        ctx.side = (Rt && !L) ? 'left' : (L && !Rt) ? 'right' : 'both';
+        ctx.attC = ctx.side === 'left' ? c + 1 : ctx.side === 'right' ? c - 1 : (L ? c - 1 : Rt ? c + 1 : null);
+      }
+      if (RL.ENGINES[k]) ctx.down = false;
+      if (k === 'booster') { ctx.loose = RL.isLooseBooster(grid, r, c); ctx.up = !ctx.loose && okB(r - 1, c); ctx.down = !ctx.loose && okB(r + 1, c); }
+      out.push({ r, c, k, ctx });
+    }
+    return out;
+  };
+  // 胴体の となりに ないブースター（くっついていない）
+  RL.isLooseBooster = function (grid, r, c) {
+    if (grid[r][c] !== 'booster') return false;
+    const C = grid[0].length, b = cc => cc >= 0 && cc < C && RL.BODY[grid[r][cc]];
+    return !b(c - 1) && !b(c + 1);
+  };
+  // 行 → 何段目か（リングの行は その下の段に ふくむ）
+  RL.stageRows = function (grid) {
+    const rr = [...new Set(grid.flatMap((row, r) => row.includes('ring') ? [r] : []))];
+    return { ringRows: rr, n: rr.length + 1, of: r => rr.filter(x => x > r).length };
+  };
+})();
+===END: js/parts.js===
+===FILE: js/physics.js===
+// 飛び方の計算：時間を少しずつ進める
+//  - 燃料がへると軽くなり、加速がどんどん大きくなる
+//  - ブースターは縦につながった1本ごと：長いほど力も燃える時間も √長さ 倍。燃えつきると ついている はねごと 切りはなし
+//  - 段：リングより下が1段目。いまの段の エンジンと ブースターが ぜんぶ燃えつきたら リングごと切りはなし、少しおいて つぎの段が点火
+//  - 宇宙用エンジン：くうきの中では VAIR の割合の力。くうきの外で 本来の力
+//  - くうき（ATMO_H まで、上ほどうすい）：空気のじゃま と はねの効果は くうきの中だけ
+RL.analyze = function (grid) {
+  const cfg = RL.CFG, P = cfg.PHYS, cells = RL.layout(grid), SR = RL.stageRows(grid);
+  const n = { engine: 0, vengine: 0, tank: 0, fin: 0, win: 0, nose: 0, booster: 0, ring: 0 };
+  const stages = Array.from({ length: SR.n }, (_, i) => ({ i, dry: 0, fuel: 0, eng: 0, veng: 0, coreFin: { L: 0, R: 0, M: 0 } }));
+  let mx = 0, total = 0;
+  const stacks = [], stackAt = {};
+  for (let c = 0; c < cfg.COLS; c++) {
+    let r = cfg.ROWS - 1;
+    while (r >= 0) {
+      const ok = rr => rr >= 0 && grid[rr][c] === 'booster' && !RL.isLooseBooster(grid, rr, c);
+      if (ok(r)) { const r1 = r; while (ok(r)) r--; stacks.push({ c, r0: r + 1, r1, seg: r1 - r, fins: [], stage: SR.of(r1) }); }
+      else r--;
+    }
+  }
+  stacks.forEach((s, i) => { s.id = s.c + ':' + s.r0; s.dry = s.seg * P.MASS.booster; s.fuel = s.seg * P.BOOST_FUEL; for (let r = s.r0; r <= s.r1; r++) stackAt[r + ',' + s.c] = i; });
+  cells.forEach(q => {
+    if (q.ctx.loose) return;            // くっついていない ブースターは ロケットに ふくめない
+    n[q.k]++; q.stage = SR.of(q.r);
+    const fuel = RL.ENGINES[q.k] ? P.FUEL_ENGINE : q.k === 'tank' ? P.FUEL_TANK : q.k === 'booster' ? P.BOOST_FUEL : 0, w = P.MASS[q.k] + fuel;
+    mx += w * (q.c - (cfg.COLS - 1) / 2); total += w;
+    if (q.k === 'booster') { const s = stacks[stackAt[q.r + ',' + q.c]]; q.stackId = s.id; q.stack = s; return; }
+    if (q.k === 'fin') {
+      const si = q.ctx.attC == null ? undefined : stackAt[q.r + ',' + q.ctx.attC];
+      if (si !== undefined) { const s = stacks[si]; s.fins.push(q.ctx.side); s.dry += P.MASS.fin; q.stackId = s.id; q.stack = s; return; }
+      const f = stages[q.stage].coreFin; if (q.ctx.side === 'left') f.L++; else if (q.ctx.side === 'right') f.R++; else f.M++;
+    }
+    const S = stages[q.stage]; S.dry += P.MASS[q.k]; S.fuel += fuel;
+    if (q.k === 'engine') S.eng++; if (q.k === 'vengine') S.veng++;
+  });
+  // 段ごとの 空気のじゃま（のこっている段の 胴体の列の数と 先っぽ）
+  const drag = stages.map((_, s) => {
+    const cols = new Set(), noseCols = new Set();
+    for (let c = 0; c < cfg.COLS; c++) {
+      let top = null; for (let r = 0; r < cfg.ROWS; r++) if (RL.BODY[grid[r][c]] && SR.of(r) >= s) { top = top || grid[r][c]; cols.add(c); }
+      if (top === 'nose') noseCols.add(c);
+    }
+    return { cols: cols.size, noseCover: cols.size ? noseCols.size / cols.size : 0 };
+  });
+  const sum = (arr, f) => arr.reduce((z, x) => z + f(x), 0);
+  const coreFin = { L: sum(stages, s => s.coreFin.L), R: sum(stages, s => s.coreFin.R), M: sum(stages, s => s.coreFin.M) };
+  return { n, stages, stacks, drag, coreFin, cells, nStages: SR.n,
+    fuel: sum(stages, s => s.fuel), bfuel: sum(stacks, s => s.fuel), dry: sum(stages, s => s.dry) + sum(stacks, s => s.dry),
+    boosterFins: sum(stacks, s => s.fins.length), asym: total ? Math.abs(mx / total) : 0, cols: drag[0].cols, noseCover: drag[0].noseCover };
+};
+
+RL.simulate = function (a) {
+  const P = RL.CFG.PHYS, k = P.TIME_STRETCH || 1, k2 = k * k, G = P.G / k2, DT = P.DT;
+  const hasProp = a.stages.some(s => s.eng + s.veng > 0) || a.stacks.length;
+  if (!hasProp) return { lift: false, h: 0, reason: 'noEngine', samples: [] };
+  const TE = P.THRUST / k2, TV = P.VTHRUST / k2, TbOf = seg => P.BOOST_THRUST * Math.pow(seg, P.BOOST_SEG_POW || 0) / k2;
+  const S = a.stages.map(s => ({ ...s, ignT: null, sepT: null, sepH: null }));
+  const st = a.stacks.map(s => ({ ...s, ignT: null, sepT: null, sepH: null, withStage: false }));
+  const last = S.length - 1;
+  let si = 0;
+  const ignite = (i, t) => { S[i].ignT = t; st.forEach(s => { if (s.stage === i) s.ignT = t; }); };
+  ignite(0, 0);
+  const attached = s => s.sepT === null && s.stage >= si;
+  const mass = () => sum(S.slice(si), x => x.dry + x.fuel) + sum(st.filter(attached), x => x.dry + x.fuel);
+  const sum = (arr, f) => arr.reduce((z, x) => z + f(x), 0);
+  const finsNow = () => { const f = { L: 0, R: 0, M: 0 };
+    S.slice(si).forEach(x => { f.L += x.coreFin.L; f.R += x.coreFin.R; f.M += x.coreFin.M; });
+    st.filter(attached).forEach(s => s.fins.forEach(sd => sd === 'left' ? f.L++ : sd === 'right' ? f.R++ : f.M++));
+    f.n = f.L + f.R + f.M; return f; };
+  const tiltTarget = f => (f.n === 0 ? P.TILT_NOFIN : 0.08 * Math.abs(f.L - f.R) / f.n) + Math.min(0.4, a.asym * P.TILT_ASYM / (1 + f.n));
+  let tilt = tiltTarget(finsNow());
+  const s0 = S[0];
+  const twr0 = (s0.eng * TE + s0.veng * TV * P.VAIR + sum(st.filter(s => s.stage === 0), s => TbOf(s.seg))) * Math.cos(tilt) / (mass() * G);
+
+  let v = 0, h = 0, x = 0, t = 0, tBurnEnd = 0, vMax = 0, tAtmo = null, liftT = null;
+  const samples = [];
+  while (t < P.MAX_T * k) {
+    const rho = Math.max(0, 1 - h / P.ATMO_H);
+    if (rho === 0 && tAtmo === null) tAtmo = t;
+    const cur = S[si], on = t >= cur.ignT;
+    const vpow = P.VAIR + (1 - P.VAIR) * (1 - rho);
+    const burnC = on && cur.fuel > 0 && cur.eng + cur.veng > 0;
+    let thrustC = 0;
+    if (burnC) { thrustC = cur.eng * TE + cur.veng * TV * vpow; cur.fuel = Math.max(0, cur.fuel - (cur.eng * P.BURN + cur.veng * P.VBURN) / k * DT); }
+    let thrustB = 0, boost = false;
+    st.forEach(s => {
+      if (s.sepT !== null || s.ignT === null || t < s.ignT) return;
+      if (s.fuel > 0) { s.fuel = Math.max(0, s.fuel - P.BOOST_BURN * Math.pow(s.seg, P.BOOST_SEG_POW || 0) / k * DT); thrustB += TbOf(s.seg); boost = true; }
+      if (s.fuel <= 0) { s.sepT = t; s.sepH = h; }
+    });
+    if (burnC || boost) tBurnEnd = t;
+    // 段の切りはなし：いまの段で 燃えるものが なくなったら
+    let stageSep = null;
+    if (si < last && on && !(cur.fuel > 0 && cur.eng + cur.veng > 0) && !st.some(s => s.stage === si && s.sepT === null && s.fuel > 0)) {
+      cur.sepT = t; cur.sepH = h; stageSep = si;
+      st.forEach(s => { if (s.stage === si && s.sepT === null) { s.sepT = t; s.sepH = h; s.withStage = true; } });
+      si++; ignite(si, t + P.IGN_DELAY * k);
+    }
+    const m = Math.max(0.1, mass()), f = finsNow(), dir = Math.sign(f.L - f.R) || 1;
+    if (h > 0) tilt = Math.min(1.2, tilt + tiltTarget(f) * P.TILT_GROW / k * rho * DT);
+    const dg = a.drag[si];
+    const cd = (P.DRAG * Math.max(1, dg.cols) * (1 - (1 - P.NOSE_DRAG) * dg.noseCover) + P.DRAG * P.BOOST_DRAG * st.filter(attached).length) * rho;
+    const thrust = thrustC + thrustB;
+    let acc = thrust * Math.cos(tilt) / m - G - cd * v * Math.abs(v) / m;
+    if (h <= 0 && v <= 0 && acc < 0) acc = 0;
+    v += acc * DT; h += v * DT; t += DT; vMax = Math.max(vMax, v);
+    if (h <= 0 && v <= 0) { h = 0; v = 0; } else if (liftT === null) liftT = t;
+    x += Math.sin(tilt) * dir * Math.max(0, v) * DT * 0.3;
+    samples.push({ t, h: Math.max(0, h), v, acc, rho, si, burn: burnC, vpow, boost, thrust: thrust * k2, weight: m * G * k2,
+      fuel: a.fuel ? sum(S.slice(si), y => y.fuel) / a.fuel : 0, tilt: tilt * dir, x, sep: stageSep });
+    if (!burnC && !boost && v <= 0 && on && stageSep === null) break;
+  }
+  const top = Math.max(0, ...samples.map(s => s.h));
+  return { lift: top >= 5, h: top, reason: top >= 5 ? null : 'heavy', liftT, twr0, tBurnEnd, tTotal: t, tAtmo, vMax, k, samples,
+    stageInfo: S.map(s => ({ i: s.i, ignT: s.ignT, sepT: s.sepT, sepH: s.sepH, eng: s.eng, veng: s.veng })),
+    seps: st.map(s => ({ id: s.id, c: s.c, r0: s.r0, r1: s.r1, stage: s.stage, t: s.sepT, h: s.sepH, ignT: s.ignT, withStage: s.withStage })) };
+};
+
+RL.zoneOf = function (h) { let i = 0; RL.CFG.ZONES.forEach((z, j) => { if (h >= z.h) i = j; }); return i; };
+===END: js/physics.js===
+===FILE: js/physics2d.js===
+// うちゅうモードの 飛び方（2D）。たかさモードと ちがい、1こまずつ 進める（とちゅうで エンジンを止める・中止 ができる）
+//  - 位置・速度は「いま いる重力圏の天体」から見た値（パッチドコニック）。重力は その天体だけ（距離の2乗に反比例）
+//  - エンジンを使っている間・くうきの中：小さな きざみで 数値積分
+//  - 惰性で うちゅうを飛ぶ間：ケプラー軌道の式で 位置を出す（レール上）。早送りしても 軌道が くずれない
+//  - 段・ブースター・宇宙用エンジン・はね は たかさモード（physics.js）と同じ きまり
+//  - 液体エンジン（地上用・宇宙用）は 止めて また つけられる。ブースター（固体）は 止められない
+RL.Orbit = (function () {
+  const SP = RL.Space, D2R = Math.PI / 180;
+  const sum = (arr, f) => arr.reduce((z, x) => z + f(x), 0);
+
+  function create(a, opt) {
+    opt = opt || {};
+    const P = RL.CFG.PHYS, O = RL.CFG.ORBIT, W = SP.makeBodies(), earth = W.earth, moon = W.moon;
+    const prof = O.PROFILES[opt.profile || 'side'] || O.PROFILES.side;
+    const TbOf = seg => P.BOOST_THRUST * Math.pow(seg, P.BOOST_SEG_POW || 0);
+    const S = a.stages.map(s => ({ ...s, ignT: null, sepT: null }));
+    const st = a.stacks.map(s => ({ ...s, ignT: null, sepT: null, withStage: false }));
+    const last = S.length - 1;
+    const ev = [];                                   // 演出用の できごと（flight2d が 取り出す）
+    const emit = (type, d) => ev.push({ type, t: sim.t, ...(d || {}) });
+    const ignite = (i, t) => { S[i].ignT = t; st.forEach(s => { if (s.stage === i) s.ignT = t; }); };
+    const attached = s => s.sepT === null && s.stage >= sim.si;
+    const fins = () => { const f = { L: 0, R: 0, M: 0 };
+      S.slice(sim.si).forEach(x => { f.L += x.coreFin.L; f.R += x.coreFin.R; f.M += x.coreFin.M; });
+      st.filter(attached).forEach(s => s.fins.forEach(sd => sd === 'left' ? f.L++ : sd === 'right' ? f.R++ : f.M++));
+      f.n = f.L + f.R + f.M; return f; };
+    const devTarget = f => (f.n === 0 ? P.TILT_NOFIN : 0.08 * Math.abs(f.L - f.R) / f.n) + Math.min(0.4, a.asym * P.TILT_ASYM / (1 + f.n));
+
+    const site = O.SITE;
+    const sim = {
+      t: 0, body: earth, bodies: W, x: earth.R * Math.cos(site), y: earth.R * Math.sin(site), vx: 0, vy: 0,
+      landed: true, lifted: false, si: 0, engineOn: true, dev: 0, devDir: 1, el: null, rails: false,
+      maxAlt: 0, maxV: 0, done: null, cls: null, coastT: 0, stableT: 0, inSpace: false,
+      thrust: 0, mass: 0, weight: 0, pitch: 90, point: Math.PI / 2, rho: 1, vpow: P.VAIR, burnC: false, boost: false,
+      profile: opt.profile || 'side', stages: S, stacks: st, a,
+      dvUsed: 0
+    };
+    sim.vx = -earth.rot * sim.y; sim.vy = earth.rot * sim.x;    // 地面と いっしょに まわっている
+    ignite(0, 0);
+    { const f = fins(); sim.dev = devTarget(f); sim.devDir = Math.sign(f.L - f.R) || 1; }
+    const hasProp = S.some(s => s.eng + s.veng > 0) || st.length;
+    if (!hasProp) sim.done = { type: 'noEngine' };
+
+    const mass = () => Math.max(0.1, sum(S.slice(sim.si), x => x.dry + x.fuel) + sum(st.filter(attached), x => x.dry + x.fuel));
+    const alt = () => Math.hypot(sim.x, sim.y) - sim.body.R;
+    const rhoAt = h => sim.body.atmo ? Math.max(0, 1 - h / sim.body.atmo) : 0;
+    const coreFuel = () => sum(S.slice(sim.si), y => y.fuel);
+    const canBurnCore = () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0 && sim.t >= c.ignT; };
+    const boosting = () => st.some(s => s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0);
+    sim.isPowered = () => (sim.engineOn && canBurnCore()) || boosting() || (S[sim.si].ignT > sim.t);
+
+    // ---- ピッチ（地平線からの角度）を自動で きめる ----
+    function guidance(h, r, vr, vt, aT, g) {
+      if (h < O.TURN_START || prof.pitch >= 90) return 90;
+      const top = sim.body.atmo, k = Math.min(1, (h - O.TURN_START) / Math.max(1, prof.turnH - O.TURN_START));
+      if (!prof.hold) return 90 - (90 - prof.pitch) * Math.sqrt(k);
+      // よこ：上下の速さが めあてに なるように 角度を えらぶ（力が よわいほど 上むきに）
+      //   上むきに 要る加速 ＝ 重力 − 横の速さによる 遠心力 ＋ めあての上下の速さとの差
+      const inAir = top && h < top, gain = inAir ? 0.5 : O.HOLD_GAIN;
+      const vrT = inAir ? O.CLIMB_V : Math.max(-10, Math.min(25, 0.2 * (top * O.HOLD_H - h)));   // くうきの外：少し上の高さを たもつ
+      const need = g - vt * vt / r + gain * (vrT - vr);
+      const th = aT > 0 ? Math.asin(Math.max(0, Math.min(1, need / aT))) / D2R : 90;
+      return inAir ? Math.max(th, 90 - (90 - prof.pitch) * k) : th;
+    }
+
+    // ---- 推力・燃料（dt 秒ぶん） ----
+    function burn(dt, rho) {
+      const cur = S[sim.si], on = sim.t >= cur.ignT;
+      const vpow = P.VAIR + (1 - P.VAIR) * (1 - rho); sim.vpow = vpow;
+      let thrustC = 0;
+      const burnC = sim.engineOn && on && cur.fuel > 0 && cur.eng + cur.veng > 0;
+      if (burnC) {
+        thrustC = cur.eng * P.THRUST + cur.veng * P.VTHRUST * vpow;
+        cur.fuel = Math.max(0, cur.fuel - (cur.eng * P.BURN + cur.veng * P.VBURN) * dt);
+      }
+      let thrustB = 0, boost = false;
+      st.forEach(s => {
+        if (s.sepT !== null || s.ignT === null || sim.t < s.ignT) return;
+        if (s.fuel > 0) { s.fuel = Math.max(0, s.fuel - P.BOOST_BURN * Math.pow(s.seg, P.BOOST_SEG_POW || 0) * dt); thrustB += TbOf(s.seg); boost = true; }
+        if (s.fuel <= 0) { s.sepT = sim.t; emit('booster-sep', { id: s.id }); }
+      });
+      // 段の切りはなし：いまの段で 燃えるものが なくなったら（エンジンを止めただけでは 切りはなさない）
+      if (sim.si < last && on && !(cur.fuel > 0 && cur.eng + cur.veng > 0) && !st.some(s => s.stage === sim.si && s.sepT === null && s.fuel > 0)) {
+        cur.sepT = sim.t;
+        st.forEach(s => { if (s.stage === sim.si && s.sepT === null) { s.sepT = sim.t; s.withStage = true; } });
+        emit('stage-sep', { i: sim.si });
+        sim.si++; ignite(sim.si, sim.t + P.IGN_DELAY);
+        const f = fins(); sim.dev = Math.min(sim.dev, 1.2);
+        if (f.n === 0 && rho > 0) sim.devDir = sim.devDir || 1;
+      }
+      sim.burnC = burnC; sim.boost = boost;
+      return thrustC + thrustB;
+    }
+
+    // ---- 1きざみ（数値積分） ----
+    function numStep(dt) {
+      const b = sim.body, r = Math.hypot(sim.x, sim.y), ux = sim.x / r, uy = sim.y / r, ex = -uy, ey = ux;   // 上・横（反時計まわり＝東）
+      const h = r - b.R, rho = rhoAt(h); sim.rho = rho;
+      const m0 = mass(), T = burn(dt, rho), m = mass();
+      const g = b.mu / (r * r);
+      const vr = sim.vx * ux + sim.vy * uy, vt = sim.vx * ex + sim.vy * ey;
+      sim.pitch = guidance(h, r, vr, vt, T / m, g);
+      // はねが たりないと かたむく（くうきの中だけ）
+      const f = fins();
+      if (sim.lifted) sim.dev = Math.min(1.2, sim.dev + devTarget(f) * P.TILT_GROW * rho * dt);
+      const pt = sim.pitch * D2R - sim.dev * sim.devDir; sim.point = pt;
+      const tx = Math.cos(pt) * ex + Math.sin(pt) * ux, ty = Math.cos(pt) * ey + Math.sin(pt) * uy;
+      // 空気のじゃま（地面といっしょに まわる 空気に対して）
+      const ax0 = -b.rot * sim.y, ay0 = b.rot * sim.x, wx = sim.vx - ax0, wy = sim.vy - ay0, wv = Math.hypot(wx, wy);
+      const dg = a.drag[sim.si];
+      const cd = (P.DRAG * Math.max(1, dg.cols) * (1 - (1 - P.NOSE_DRAG) * dg.noseCover) + P.DRAG * P.BOOST_DRAG * st.filter(attached).length) * rho;
+      let accx = T * tx / m - g * ux - cd * wv * wx / m, accy = T * ty / m - g * uy - cd * wv * wy / m;
+      sim.thrust = T; sim.mass = m; sim.weight = m * g;
+      if (m0 > m && T > 0) sim.dvUsed += T / m * dt;
+      if (sim.landed) {
+        // 発射台の上：上むきの力が 重さに かつまで うごかない（地面と いっしょに まわる）
+        const up = accx * ux + accy * uy + (b.rot * b.rot) * r;
+        if (up <= 0) {
+          sim.t += dt; const ph = Math.atan2(sim.y, sim.x) + b.rot * dt;
+          sim.x = b.R * Math.cos(ph); sim.y = b.R * Math.sin(ph); sim.vx = -b.rot * sim.y; sim.vy = b.rot * sim.x;
+          if (!sim.isPowered() && sim.t > 0.5) sim.done = { type: 'heavy' };
+          return;
+        }
+        sim.landed = false; sim.lifted = true; emit('liftoff');
+      }
+      // 中点法
+      sim.vx += accx * dt; sim.vy += accy * dt;
+      sim.x += (sim.vx - accx * dt / 2) * dt; sim.y += (sim.vy - accy * dt / 2) * dt;
+      sim.t += dt;
+    }
+
+    // ---- 惰性（レール上）：t まで すすめる ----
+    function railTo(t1) {
+      if (!sim.el) sim.el = SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t);
+      const s1 = SP.stateAt(sim.el, t1);
+      Object.assign(sim, { x: s1.x, y: s1.y, vx: s1.vx, vy: s1.vy, t: t1 });
+    }
+
+    function rk4(dt) {
+      const mu = sim.body.mu, f = (x, y) => { const r3 = Math.pow(x * x + y * y, 1.5); return [-mu * x / r3, -mu * y / r3]; };
+      const { x, y, vx, vy } = sim;
+      const a1 = f(x, y), a2 = f(x + vx * dt / 2, y + vy * dt / 2);
+      const v2x = vx + a1[0] * dt / 2, v2y = vy + a1[1] * dt / 2, a3 = f(x + v2x * dt / 2, y + v2y * dt / 2);
+      const v3x = vx + a2[0] * dt / 2, v3y = vy + a2[1] * dt / 2, a4 = f(x + v3x * dt, y + v3y * dt);
+      const v4x = vx + a3[0] * dt, v4y = vy + a3[1] * dt;
+      sim.x += dt / 6 * (vx + 2 * v2x + 2 * v3x + v4x); sim.y += dt / 6 * (vy + 2 * v2y + 2 * v3y + v4y);
+      sim.vx += dt / 6 * (a1[0] + 2 * a2[0] + 2 * a3[0] + a4[0]); sim.vy += dt / 6 * (a1[1] + 2 * a2[1] + 2 * a3[1] + a4[1]);
+      sim.t += dt;
+    }
+    // 重力圏の いれかわり
+    function changeBody(nb) {
+      const ob = sim.body;
+      if (nb.parent === ob) {   // 子の天体（月）へ 入る
+        const bs = SP.bodyState(nb, sim.t);
+        sim.x -= bs.x; sim.y -= bs.y; sim.vx -= bs.vx; sim.vy -= bs.vy;
+      } else {                  // 親の天体へ もどる
+        const bs = SP.bodyState(ob, sim.t);
+        sim.x += bs.x; sim.y += bs.y; sim.vx += bs.vx; sim.vy += bs.vy;
+      }
+      sim.body = nb; sim.el = null; sim.stableT = 0; emit('soi', { body: nb.id });
+    }
+    function checkSOI() {
+      const b = sim.body, r = Math.hypot(sim.x, sim.y);
+      if (b.parent && r > b.soi) { changeBody(b.parent); return true; }
+      for (const c of b.children) {
+        const cs = SP.bodyState(c, sim.t);
+        if (Math.hypot(sim.x - cs.x, sim.y - cs.y) < c.soi) { changeBody(c); return true; }
+      }
+      if (!b.parent && r > b.soi) { finish({ type: 'escape' }); return true; }
+      return false;
+    }
+    function finish(d) {
+      if (sim.done) return;
+      sim.done = Object.assign({ maxAlt: sim.maxAlt, maxV: sim.maxV, t: sim.t, body: sim.body.id, cls: sim.cls }, d);
+      emit('done', sim.done);
+    }
+
+    // ---- 外から呼ぶ：dt 秒（ゲームの時間）すすめる ----
+    function advance(dtAll) {
+      let left = dtAll, guard = 0;
+      while (left > 1e-9 && !sim.done && guard++ < 20000) {
+        const b = sim.body, r = Math.hypot(sim.x, sim.y), h = r - b.R;
+        const powered = sim.isPowered(), inAir = b.atmo && h < b.atmo;
+        if (powered || inAir || sim.landed || !sim.lifted) {
+          sim.rails = false; sim.el = null;
+          const dt = Math.min(left, O.SUB_DT); numStep(dt); left -= dt;
+        } else {
+          if (!sim.el) sim.el = SP.toElements(sim.x, sim.y, sim.vx, sim.vy, b.mu, sim.t);
+          const v = Math.hypot(sim.vx, sim.vy), top = b.R + (b.atmo || 0);
+          if (!sim.el.good) {
+            // 細長すぎる軌道（ほぼ真上に うったとき）：重力だけの 数値積分（RK4・きざみは 自動）
+            sim.rails = false;
+            const dt = Math.min(left, Math.max(1e-3, 0.004 * Math.min(r / Math.max(v, 1e-6), Math.sqrt(r * r * r / b.mu))));
+            rk4(dt); left -= dt; sim.el = null;
+          } else {
+            // レール上：きざみは 動く距離が 小さくなるように（重力圏の出入り・地面・くうきを 見のがさない）
+            sim.rails = true;
+            let lim = 0.02 * Math.min(r, ...b.children.map(c => c.soi), b.parent ? b.soi : Infinity) / Math.max(v, 1e-6);
+            if (sim.el.e < 1) lim = Math.min(lim, sim.el.T / 300);
+            const dt = Math.max(Math.min(left, lim), 1e-4);
+            const save = { x: sim.x, y: sim.y, vx: sim.vx, vy: sim.vy, t: sim.t };
+            railTo(sim.t + dt);
+            if (Math.hypot(sim.x, sim.y) < top) {
+              // くうき／地面に 入った：二分法で その瞬間を さがして、そこから 数値積分に きりかえ
+              let lo = 0, hi = dt; for (let i = 0; i < 30; i++) { const md = (lo + hi) / 2, s1 = SP.stateAt(sim.el, save.t + md); if (Math.hypot(s1.x, s1.y) < top) hi = md; else lo = md; }
+              Object.assign(sim, save); railTo(save.t + hi); sim.el = null; sim.rails = false; left -= hi;
+            } else left -= dt;
+          }
+        }
+        // 記録・地面・重力圏
+        const r2 = Math.hypot(sim.x, sim.y), h2 = r2 - sim.body.R, sp = Math.hypot(sim.vx, sim.vy);
+        if (sim.body === earth) sim.maxAlt = Math.max(sim.maxAlt, h2);
+        sim.maxV = Math.max(sim.maxV, sp);
+        if (sim.lifted && h2 <= 1e-6) { finish({ type: sim.body === earth ? 'ground' : 'hit', speed: sp, range: sim.body === earth ? downrange() : 0 }); break; }
+        if (!sim.inSpace && sim.body.atmo && h2 > sim.body.atmo) { sim.inSpace = true; emit('space'); }
+        checkSOI();
+      }
+      // 軌道の種類と「安定して まわった」の判定
+      if (!sim.done && sim.lifted) {
+        const el = sim.el || SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t);
+        const cls = sim.body === earth ? SP.classify(el, earth, moon.orbitR) : (el.e < 1 && el.rp > sim.body.R ? 'moonOrbit' : el.e < 1 ? 'moonFall' : 'moonPass');
+        if (cls !== sim.cls) { const old = sim.cls; sim.cls = cls; emit('class', { cls, old }); }
+        const stable = ['low', 'high', 'toMoon', 'moonOrbit'].includes(cls) && !sim.isPowered() && el.e < 1;
+        if (stable) { sim.stableT += dtAll; if (sim.stableT > el.T * O.ORBIT_DONE) finish({ type: 'orbit', el }); } else sim.stableT = 0;
+      }
+      if (!sim.done && sim.t > 400000) finish({ type: 'timeout' });
+    }
+    // 地面に そって どれだけ遠くへ行ったか（地面の まわる分を ひく）
+    function downrange() {
+      const ph = Math.atan2(sim.y, sim.x) - (O.SITE + earth.rot * sim.t);
+      const d = Math.atan2(Math.sin(ph), Math.cos(ph));
+      return Math.abs(d) * earth.R;
+    }
+    function elements() { return sim.el || (sim.lifted ? SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t) : null); }
+    // 早送りの おすすめ倍率（燃えている間は 実時間）
+    function autoWarp() {
+      if (sim.done) return 1;
+      const r = Math.hypot(sim.x, sim.y), v = Math.max(1, Math.hypot(sim.vx, sim.vy)), h = r - sim.body.R;
+      if (sim.isPowered() || sim.landed) return 1;
+      if (sim.body.atmo && h < sim.body.atmo) return Math.max(1, Math.min(8, h / 60));
+      let wmax = r / v / 1.6;
+      // 月に ちかづいたら ゆっくりに（であいを 見のがさない・見せる）
+      sim.body.children.forEach(c => { const cs = SP.bodyState(c, sim.t), d = Math.hypot(sim.x - cs.x, sim.y - cs.y) - c.soi, rv = Math.max(1, Math.hypot(sim.vx - cs.vx, sim.vy - cs.vy));
+        if (d > 0) wmax = Math.min(wmax, Math.max(20, d / rv / 1.2)); });
+      return Math.max(1, Math.min(O.WARP_MAX, wmax));
+    }
+    return Object.assign(sim, {
+      advance, elements, autoWarp, downrange, events: ev, alt, coreFuel,
+      setEngine(on) { if (sim.engineOn === on) return; sim.engineOn = on; sim.el = null; emit(on ? 'engine-on' : 'engine-off'); },
+      abort() { finish({ type: 'abort' }); },
+      finishNow() { if (sim.cls && ['low', 'high', 'toMoon', 'moonOrbit'].includes(sim.cls) && !sim.isPowered()) finish({ type: 'orbit', el: elements() }); },
+      liquidLeft: () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0; },
+      fuelRatio: () => (a.fuel ? coreFuel() / a.fuel : 0)
+    });
+  }
+  // ツール用：最後まで 一気に計算する（エンジンは 自動のまま）
+  function runToEnd(a, opt) {
+    const s = create(a, opt), cap = (opt && opt.maxT) || 200000;
+    while (!s.done && s.t < cap) {
+      s.advance(Math.max(0.02, s.autoWarp() * 0.05));
+      // autoCut：予測の線が 地球を ひとまわり したら（近地点が くうきの外）エンジンを止める ＝ 子どもが ちょうどよく止めた場合
+      if (opt && opt.autoCut && s.engineOn && s.lifted && s.body === s.bodies.earth) {
+        const el = s.elements(); if (el && el.e < 1 && el.rp > s.body.R + s.body.atmo + 20) { s.setEngine(false); s.cutFuel = s.fuelRatio(); }
+      }
+    }
+    return s;
+  }
+  return { create, runToEnd };
+})();
+===END: js/physics2d.js===
+===FILE: js/predict.js===
+// 予測の線（v0.8.1 改修3）：このまま エンジンを使わずに 飛ぶと どうなるか
+//  - いまの重力圏の 軌道を たどり、地面にぶつかる／重力圏を出る／月の重力圏に入る（であい）を さがす
+//  - 月との であいが あれば、月から見た 軌道に のりかえて 続きを たどる（月に ぶつかる／月を まわる／月の そばを 通りぬける）
+//  - 月の線は「であう ときの 月の位置」（うすい月）を 中心に 描く
+//  - 物理（physics2d）と 同じ 式・同じ天体を つかうので、予測と 実際が そろう（tools/predict_test.js）
+RL.Predict = (function () {
+  const SP = RL.Space, TAU = Math.PI * 2;
+  const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+
+  // 近点からの 時間（だ円は 周回ぶんも つなげて 単調にする）
+  function tOfNu(el, nu) {
+    if (el.e < 1) { const w = wrap(nu); return SP.timeFromPeri(el, w) + (nu - w) / el.n; }
+    return SP.timeFromPeri(el, nu);
+  }
+  // 重力だけの 数値積分（ほぼ真上に とぶ 細長い軌道用）
+  function rk4Path(st, mu, t0, stop, maxT) {
+    let { x, y, vx, vy } = st, t = t0; const out = [{ t, x, y, vx, vy }];
+    const f = (x, y) => { const r3 = Math.pow(x * x + y * y, 1.5); return [-mu * x / r3, -mu * y / r3]; };
+    for (let i = 0; i < 4000 && t < t0 + maxT; i++) {
+      const r = Math.hypot(x, y), v = Math.max(1e-6, Math.hypot(vx, vy)), dt = Math.max(1e-3, 0.01 * Math.min(r / v, Math.sqrt(r * r * r / mu)));
+      const a1 = f(x, y), a2 = f(x + vx * dt / 2, y + vy * dt / 2);
+      const v2x = vx + a1[0] * dt / 2, v2y = vy + a1[1] * dt / 2, a3 = f(x + v2x * dt / 2, y + v2y * dt / 2);
+      const v3x = vx + a2[0] * dt / 2, v3y = vy + a2[1] * dt / 2, a4 = f(x + v3x * dt, y + v3y * dt);
+      const v4x = vx + a3[0] * dt, v4y = vy + a3[1] * dt;
+      x += dt / 6 * (vx + 2 * v2x + 2 * v3x + v4x); y += dt / 6 * (vy + 2 * v2y + 2 * v3y + v4y);
+      vx += dt / 6 * (a1[0] + 2 * a2[0] + 2 * a3[0] + a4[0]); vy += dt / 6 * (a1[1] + 2 * a2[1] + 2 * a3[1] + a4[1]); t += dt;
+      out.push({ t, x, y, vx, vy });
+      if (stop(out[out.length - 1])) break;
+    }
+    return out;
+  }
+
+  // 1つの重力圏の中を たどる
+  //  返す: { pts:[[x,y]], el, end:{ type:'hit'|'exit'|'enc'|'loop', t, st } }
+  function trace(st, body, t0, N) {
+    N = N || 240;
+    const el = SP.toElements(st.x, st.y, st.vx, st.vy, body.mu, t0), soi = body.soi;
+    const child = (body.children || [])[0];
+    let samp = [], end = { type: 'loop' }, at;
+    if (el.good) {
+      let nuEnd = el.nu + TAU;
+      if (el.e >= 1 || el.ra > soi) { const n2 = SP.nuAtR(el, soi); nuEnd = n2 == null ? el.nu + TAU : Math.max(el.nu, n2); end = { type: 'exit' }; }
+      const tn0 = tOfNu(el, el.nu);
+      for (let i = 0; i <= N; i++) { const nu = el.nu + (nuEnd - el.nu) * i / N, s = SP.stateAtNu(el, nu); s.t = t0 + tOfNu(el, nu) - tn0; samp.push(s); }
+      at = t => SP.stateAt(el, t);
+    } else {
+      samp = rk4Path(st, body.mu, t0, s => Math.hypot(s.x, s.y) < body.R || Math.hypot(s.x, s.y) > soi, 4 * Math.PI * Math.sqrt(Math.pow(Math.hypot(st.x, st.y) * 2, 3) / body.mu));
+      const last = samp[samp.length - 1]; end = { type: Math.hypot(last.x, last.y) > soi ? 'exit' : 'loop' };
+      at = t => { let i = samp.findIndex(s => s.t >= t); if (i <= 0) return samp[Math.max(0, i)]; const a = samp[i - 1], b = samp[i], k = (t - a.t) / (b.t - a.t);
+        return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k, vx: a.vx + (b.vx - a.vx) * k, vy: a.vy + (b.vy - a.vy) * k }; };
+    }
+    const tEnd0 = samp[samp.length - 1].t;
+    if (end.type === 'exit') { end.t = tEnd0; end.st = samp[samp.length - 1]; }
+    // 地面に ぶつかる 時刻
+    let tHit = Infinity;
+    for (let i = 1; i < samp.length; i++) if (Math.hypot(samp[i].x, samp[i].y) < body.R) {
+      let lo = samp[i - 1].t, hi = samp[i].t; for (let k = 0; k < 40; k++) { const md = (lo + hi) / 2, s = at(md); if (Math.hypot(s.x, s.y) < body.R) hi = md; else lo = md; }
+      tHit = hi; break; }
+    // 月（子の天体）との であい：月の重力圏に入る 最初の時刻（時間で こまかく しらべる）
+    let tEnc = Infinity;
+    if (child && el.rp < child.orbitR + child.soi && (el.e >= 1 || el.ra > child.orbitR - child.soi)) {
+      const tA = t0, tB = Math.min(tEnd0, tHit), M = 900, inSoi = t => { const s = at(t), c = SP.bodyState(child, t); return Math.hypot(s.x - c.x, s.y - c.y) < child.soi; };
+      let prevT = tA;
+      for (let i = 1; i <= M; i++) { const t = tA + (tB - tA) * i / M;
+        if (inSoi(t)) { let lo = prevT, hi = t; for (let k = 0; k < 40; k++) { const md = (lo + hi) / 2; if (inSoi(md)) hi = md; else lo = md; } tEnc = hi; break; }
+        prevT = t; }
+    }
+    if (tHit < Infinity || tEnc < Infinity) {
+      const t = Math.min(tHit, tEnc); end = { type: tEnc < tHit ? 'enc' : 'hit', t, st: at(t) };
+      samp = samp.filter(s => s.t < t); samp.push(Object.assign({ t }, end.st));
+    }
+    return { pts: samp.map(s => [s.x, s.y]), el, end };
+  }
+
+  // sim（physics2d）から 予測をつくる
+  function fromSim(sim) {
+    if (!sim || !sim.lifted) return null;
+    const W = sim.bodies, E = W.earth, M = W.moon, b = sim.body;
+    const off = b.parent ? SP.bodyState(b, sim.t) : { x: 0, y: 0 };
+    const tr = trace(sim, b, sim.t);
+    const segs = [], res = { segs, el: tr.el, off, body: b.id, enc: null };
+    const shift = (pts, o) => pts.map(p => [p[0] + o.x, p[1] + o.y]);
+    let kind;
+    if (b === E) {
+      kind = tr.end.type === 'hit' ? 'hit' : tr.end.type === 'exit' ? 'escape' : (tr.el.rp < E.R + E.atmo ? 'hit' : 'orbit');
+      if (tr.end.type === 'enc') kind = 'moon';
+    } else kind = tr.end.type === 'hit' ? 'moonHit' : tr.end.type === 'exit' ? 'moonPass' : 'moonOrbit';
+    segs.push({ pts: shift(tr.pts, off), kind: b === E ? (kind === 'moon' ? 'orbit' : kind) : kind });
+    if (tr.end.type === 'enc') {
+      // 月から見た 続き（であう ときの 月の位置を 中心に）
+      const tE = tr.end.t, ms = SP.bodyState(M, tE), s = tr.end.st;
+      const rel = { x: s.x - ms.x, y: s.y - ms.y, vx: s.vx - ms.vx, vy: s.vy - ms.vy };
+      const tm = trace(rel, M, tE, 200);
+      kind = tm.end.type === 'hit' ? 'moonHit' : tm.end.type === 'exit' ? 'moonPass' : 'moonOrbit';
+      segs.push({ pts: shift(tm.pts, ms), kind, moon: true });
+      res.enc = { t: tE, x: ms.x, y: ms.y, el: tm.el, peAlt: tm.el.rp - M.R, hitPt: tm.end.type === 'hit' ? tm.pts[tm.pts.length - 1] : null };
+      if (tm.end.type === 'exit') res.enc.fate = fateAfter(tm.end.st, tm.end.t, M, E);
+    } else if (b === M && tr.end.type === 'exit') res.fate = fateAfter(tr.end.st, tr.end.t, M, E);
+    res.kind = kind;
+    return res;
+  }
+  // 月の重力圏を出た あと、地球から見て どうなるか（スイングバイの 結果）
+  function fateAfter(st, t, M, E) {
+    const ms = SP.bodyState(M, t), x = st.x + ms.x, y = st.y + ms.y, vx = st.vx + ms.vx, vy = st.vy + ms.vy;
+    const el = SP.toElements(x, y, vx, vy, E.mu, t);
+    return { at: [x, y], kind: el.e >= 1 || el.ra > E.soi ? 'escape' : el.rp < E.R + E.atmo ? 'hit' : 'orbit' };
+  }
+  return { fromSim, trace };
+})();
+===END: js/predict.js===
+===FILE: js/space.js===
+// うちゅうの しくみ（2D）：天体と ケプラー軌道の計算
+//  - すべての天体は 同じ平面。公転は 円軌道で固定（反時計回り）
+//  - 天体は 木の形（地球 → 月 …）。乗り物は いつも「いま いる重力圏の天体」から見た 位置・速度で持つ（パッチドコニック）
+//  - 軌道要素 { mu, a, e, w, s, n, tp } … w=近点の向き、s=回る向き(+1 反時計 / -1 時計)、tp=近点を通る時刻
+//  - 打ち上げた衛星などは 将来、この軌道要素だけを保存すれば いつでも位置が出せる（レール上）
+RL.Space = (function () {
+  const TAU = Math.PI * 2;
+  const len = (x, y) => Math.hypot(x, y);
+
+  // ---- 天体 ----
+  function makeBodies() {
+    const O = RL.CFG.ORBIT, R = O.R, mu = O.G0 * R * R;
+    const earth = { id: 'earth', icon: '🌍', R, mu, atmo: O.ATMO_H, rot: O.ROT * Math.sqrt(mu / R) / R, soi: O.EARTH_SOI * R, parent: null };
+    const M = O.MOON, D = M.DIST * R, mmu = mu * M.MU;
+    const moon = { id: 'moon', icon: '🌙', R: M.R * R, mu: mmu, atmo: 0, rot: 0, parent: earth, orbitR: D,
+      w: Math.sqrt(mu / (D * D * D)), ph0: M.PHASE, soi: D * Math.pow(M.MU, 0.4) };
+    earth.children = [moon]; moon.children = [];
+    return { earth, moon, list: [earth, moon] };
+  }
+  // 親から見た 天体の位置・速度（時刻 t）
+  function bodyState(b, t) {
+    if (!b.parent) return { x: 0, y: 0, vx: 0, vy: 0 };
+    const a = b.ph0 + b.w * t, r = b.orbitR, v = b.w * r;
+    return { x: r * Math.cos(a), y: r * Math.sin(a), vx: -v * Math.sin(a), vy: v * Math.cos(a) };
+  }
+
+  // ---- 状態 → 軌道要素 ----
+  function toElements(x, y, vx, vy, mu, t) {
+    const r = len(x, y), v2 = vx * vx + vy * vy, h = x * vy - y * vx, rv = x * vx + y * vy;
+    const en = v2 / 2 - mu / r;
+    let ex = ((v2 - mu / r) * x - rv * vx) / mu, ey = ((v2 - mu / r) * y - rv * vy) / mu, e = len(ex, ey);
+    const s = h >= 0 ? 1 : -1, p = h * h / mu;
+    if (Math.abs(e - 1) < 1e-7) { e = e < 1 ? 1 - 1e-7 : 1 + 1e-7; }   // ぴったり放物線は さける
+    const w = e > 1e-9 ? Math.atan2(ey, ex) : 0;
+    const a = -mu / (2 * en);
+    const nu = Math.atan2(s * ((Math.cos(w) * y - Math.sin(w) * x)), Math.cos(w) * x + Math.sin(w) * y);
+    const el = { mu, a, e, w, s, p, en, h };
+    if (e < 1) {
+      const E = 2 * Math.atan(Math.sqrt((1 - e) / (1 + e)) * Math.tan(nu / 2)), M = E - e * Math.sin(E);
+      el.n = Math.sqrt(mu / (a * a * a)); el.tp = t - M / el.n; el.T = TAU / el.n;
+      el.rp = a * (1 - e); el.ra = a * (1 + e);
+    } else {
+      const H = 2 * Math.atanh(Math.sqrt((e - 1) / (e + 1)) * Math.tan(nu / 2)), M = e * Math.sinh(H) - H;
+      el.n = Math.sqrt(mu / (-a * -a * -a)); el.tp = t - M / el.n; el.T = Infinity;
+      el.rp = a * (1 - e); el.ra = Infinity; el.nuMax = Math.acos(-1 / e);
+    }
+    el.nu = nu;
+    // ほぼ真上・真下に とぶ軌道（放物線に ちかい細長い軌道）は 式が ふあんてい → 数値積分にまかせる
+    el.good = Math.abs(e - 1) > 2e-3 && p > 2e-3 * r && isFinite(el.tp);
+    return el;
+  }
+  // ケプラー方程式
+  function solveE(M, e) {
+    M = ((M + Math.PI) % TAU + TAU) % TAU - Math.PI;
+    let E = e < 0.8 ? M : Math.PI * Math.sign(M || 1);
+    for (let i = 0; i < 50; i++) { const d = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E)); E -= d; if (Math.abs(d) < 1e-12) break; }
+    return E;
+  }
+  function solveH(M, e) {
+    let H = Math.asinh(M / e);
+    for (let i = 0; i < 60; i++) { const d = (e * Math.sinh(H) - H - M) / (e * Math.cosh(H) - 1); H -= d; if (Math.abs(d) < 1e-12) break; }
+    return H;
+  }
+  // 真近点角 nu での 位置・速度
+  function stateAtNu(el, nu) {
+    const { mu, e, w, s, p } = el, r = p / (1 + e * Math.cos(nu)), ph = w + s * nu;
+    const k = Math.sqrt(mu / p), vr = k * e * Math.sin(nu), vt = k * (1 + e * Math.cos(nu));
+    const c = Math.cos(ph), sn = Math.sin(ph);
+    return { x: r * c, y: r * sn, vx: vr * c - s * vt * sn, vy: vr * sn + s * vt * c, r, nu };
+  }
+  // ---- 軌道要素 → 時刻 t の 位置・速度（レール上） ----
+  function nuAt(el, t) {
+    const M = el.n * (t - el.tp);
+    if (el.e < 1) { const E = solveE(M, el.e); return 2 * Math.atan2(Math.sqrt(1 + el.e) * Math.sin(E / 2), Math.sqrt(1 - el.e) * Math.cos(E / 2)); }
+    const H = solveH(M, el.e); return 2 * Math.atan(Math.sqrt((el.e + 1) / (el.e - 1)) * Math.tanh(H / 2));
+  }
+  const stateAt = (el, t) => stateAtNu(el, nuAt(el, t));
+  // 真近点角 → 近点からの 時間
+  function timeFromPeri(el, nu) {
+    const e = el.e;
+    if (e < 1) { const E = 2 * Math.atan(Math.sqrt((1 - e) / (1 + e)) * Math.tan(nu / 2)); return (E - e * Math.sin(E)) / el.n; }
+    const H = 2 * Math.atanh(Math.sqrt((e - 1) / (e + 1)) * Math.tan(nu / 2)); return (e * Math.sinh(H) - H) / el.n;
+  }
+  // 半径 r になる 真近点角（なければ null）
+  function nuAtR(el, r) { const c = (el.p / r - 1) / el.e; return Math.abs(c) <= 1 ? Math.acos(c) : null; }
+
+  // 軌道の種類（地球の まわり）。結果画面と ことばで 使う
+  function classify(el, body, moonR) {
+    const top = body.R + body.atmo;
+    if (el.e >= 1 || el.en >= 0) return 'escape';
+    if (el.rp < top) return el.ra < top ? 'air' : 'ballistic';
+    if (!body.parent && moonR && el.ra >= moonR * 0.9) return 'toMoon';
+    return el.ra < body.R * (1 + RL.CFG.ORBIT.LEO_TOP) ? 'low' : 'high';
+  }
+  return { makeBodies, bodyState, toElements, stateAt, stateAtNu, nuAt, timeFromPeri, nuAtR, classify, TAU };
+})();
+===END: js/space.js===
+===FILE: js/tutorial.js===
+// チュートリアル：声で あんない。文字は 使わない。
+// 1ステップ ＝ { say:[話すこと], icon:[絵], preset:列の配置（左から、下→上）, allow:[使える部品],
+//               hl:どこを光らせるか（pal / cell:[行,列] / cols:[列,…]（各列の いちばん下の あき）/ el:ボタンのid）,
+//               wait:{type, ...}, after:(結果)=>[話すこと] }
+// wait.type: speech / select / grid（test が みたされたら）/ remove / clear / launchFail / result
+RL.Tutorial = (function () {
+  const $ = id => document.getElementById(id), A = RL.Audio, B = () => RL.Builder;
+  const T = n => Array(n).fill('tank'), BS = n => Array(n).fill('booster');
+  const RB = RL.CFG.ROWS - 1;                     // いちばん下の行
+  const an = () => RL.analyze(B().grid);
+  const inStage = (a, i, k) => a.cells.filter(q => q.k === k && q.stage === i && !q.ctx.loose).length;
+  let results = [];
+  const last = (n = 1) => results[results.length - n];
+  const prevH = () => (last(2) ? last(2).h : 0);
+
+  const STEPS = [
+    // ---- 1 そうさ
+    { say: ['ロケットラボへ ようこそ！', 'いっしょに ロケットを つくって、うちゅうを めざそう！', 'わからなく なったら、みみの ボタンを おしてね。 もういちど おはなし するよ。'],
+      icon: ['🚀'], preset: [], wait: { type: 'speech' } },
+    { say: ['うえに ならんでいるのが、ロケットの ぶひん だよ。', 'まどを タップして えらんでみよう。'],
+      icon: ['win'], allow: ['win'], deselect: true, hl: { pal: 'win' }, wait: { type: 'select', part: 'win' } },
+    { say: ['いいね！ つぎは、したの マスを タップしてね。 ぶひんが おけるよ。'],
+      icon: ['win'], allow: ['win'], hl: { cell: [RB, 2] }, wait: { type: 'grid', test: a => a.n.win >= 1 } },
+    { say: ['じょうず！ おいた ぶひんを もういちど タップすると、けせるよ。 けしてみよう。'],
+      icon: ['win', '👆'], allow: ['win'], hl: { cell: [RB, 2] }, wait: { type: 'remove' } },
+    { say: ['ぶひんは、したから じゅんばんに つみかさなるよ。', 'まどを みっつ、たてに つんでみよう。'],
+      icon: ['win', 'win', 'win'], allow: ['win'], hl: { cols: [2] }, wait: { type: 'grid', test: a => a.n.win >= 3 } },
+    // ---- 2 ぶひんの いみ
+    { say: ['かっこいい！ でも、まど だけで とべるかな？', 'あかい ボタンを おして、はっしゃ してみよう！'],
+      icon: ['win', '❓'], allow: [], hl: { el: 'launch' }, wait: { type: 'launchFail' },
+      after: () => ['あれれ？ とばないね。', 'ロケットを おしあげる、エンジンが ないからだよ。'] },
+    { say: ['ゴミばこの ボタンを おすと、ぜんぶ けせるよ。 おしてみて。'],
+      icon: ['🗑️'], allow: [], hl: { el: 'clear' }, wait: { type: 'clear' } },
+    { say: ['これが エンジン。 ほのおを だして、ロケットを おしあげるよ。', 'エンジンを えらんで、いちばん したに おいてね。'],
+      icon: ['engine'], allow: ['engine'], deselect: true, hl: { pal: 'engine' }, wait: { type: 'grid', test: a => a.n.engine >= 1 } },
+    { say: ['エンジンの うえに、まどを のせよう。 うちゅうひこうしが のるよ。'],
+      icon: ['engine', 'win'], allow: ['win'], deselect: true, hl: { pal: 'win' }, wait: { type: 'grid', test: a => a.n.engine >= 1 && a.n.win >= 1 } },
+    { say: ['さあ、はっしゃ！'], icon: ['🚀'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: () => ['とんだね！ でも、すぐに おちちゃった。', 'エンジンの なかには、ねんりょうが すこし しか ないんだ。'] },
+    { say: ['しろと あかの タンクは、ねんりょうの いれもの だよ。', 'エンジンの うえに、タンクを ひとつ のせてね。'],
+      icon: ['tank'], preset: [[], [], ['engine'], [], []], allow: ['tank'], deselect: true, hl: { pal: 'tank' }, wait: { type: 'grid', test: a => a.n.tank >= 1 } },
+    { say: ['はっしゃ してみよう！'], icon: ['engine', 'tank'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: () => ['さっきより たかく とんだね！ ねんりょうが あると、エンジンが ながく もえるんだ。', 'でも ロケットが かたむいて、ぐらぐら してたの、きづいた？'] },
+    { say: ['きいろい はねを、エンジンの りょうがわに つけよう。', 'はねが あると、くうきの なかで まっすぐ とべるよ。'],
+      icon: ['fin', 'engine', 'fin'], allow: ['fin'], deselect: true, hl: { cols: [1, 3] }, wait: { type: 'grid', test: a => a.coreFin.L >= 1 && a.coreFin.R >= 1 } },
+    { say: ['はっしゃ！'], icon: ['fin', 'engine', 'fin'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: s => [s.h > prevH() ? 'まっすぐ とんで、もっと たかく なったね！' : 'まっすぐ とんだね！'] },
+    { say: ['あかい さきっぽを、いちばん うえに のせてね。', 'とがっていると、くうきを きりさいて、はやく とべるよ。'],
+      icon: ['nose'], allow: ['nose'], deselect: true, hl: { pal: 'nose' }, wait: { type: 'grid', test: a => a.noseCover > 0 } },
+    { say: ['はっしゃ！'], icon: ['nose', 'tank', 'engine'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: s => [s.h >= RL.CFG.PHYS.ATMO_H ? 'すごい！ てんせんを こえて、うちゅうに でたよ！' : 'もうすこしで うちゅう だね！', 'これで、りっぱな ロケットの かんせいだ！'] },
+    // ---- 3 ねんりょうを ふやす
+    { say: ['つぎは、ねんりょうを ふやすと どうなるか、しらべよう。', 'タンクを あと ふたつ つんで、ぜんぶで みっつに してね。'],
+      icon: ['tank', 'tank', 'tank'], preset: [[], ['fin'], ['engine', 'tank'], ['fin'], []], allow: ['tank'], deselect: true, hl: { pal: 'tank' },
+      wait: { type: 'grid', test: a => a.n.tank >= 3 } },
+    { say: ['こんどは、ひだりしたの スピードメーターを よく みててね。 はっしゃ！'], icon: ['⏱️'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: () => ['ぐーんと たかく なったね！', 'でだしは ゆっくり だったけど、だんだん はやく なったでしょう？', 'ねんりょうは おもいんだ。 もえて かるく なると、どんどん はやく なるんだよ。'] },
+    { say: ['もっと ふやしたら、もっと たかく とべるかな？', 'タンクを ぜんぶで むっつに してみよう。'],
+      icon: ['tank', '✖️', '6️⃣'], allow: ['tank'], deselect: true, hl: { pal: 'tank' }, wait: { type: 'grid', test: a => a.n.tank >= 6 } },
+    { say: ['はっしゃ！ でだしを よく みてね。'], icon: ['🐢'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: s => ['でだしが、とっても ゆっくり だったね。', s.h > prevH() * 1.15 ? 'たかくは なったけど、ねんりょうが おおいほど、ロケットは おもく なるんだ。' : 'あまり たかく ならなかったね。 ねんりょうが おおいと、そのぶん おもく なるんだ。'] },
+    { say: ['もっと つんじゃおう！ はねの うえに、タンクを ひとつずつ おいてね。 りょうがわ だよ。'],
+      icon: ['tank', 'tank'], allow: ['tank'], deselect: true, hl: { cols: [1, 3] }, wait: { type: 'grid', test: a => a.n.tank >= 8 } },
+    { say: ['はっしゃ！ オレンジの やじるしと、あおい やじるしを みててね。'], icon: ['🏋️'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: s => ['オレンジは エンジンが おす ちから。 あおは ロケットの おもさ だよ。',
+        s.lift ? 'さいしょは あおの ほうが ながくて、うごけなかったね。 ねんりょうが もえて かるく なったら、やっと とびはじめた！' : 'あおの ほうが ずっと ながくて、さいごまで うごけなかった！',
+        'おもすぎると、とぶまえに ねんりょうを むだに つかっちゃうんだ。'] },
+    // ---- 4 エンジンを ふやす
+    { say: ['じゃあ、エンジンを ふやしたら どうなるかな？', 'ひかっている ところに、エンジンを おいてみよう。'],
+      icon: ['engine', '➕', 'engine'], preset: [['fin'], [], ['engine', ...T(6)], ['tank', 'tank'], ['fin']], allow: ['engine'], deselect: true,
+      hl: { cell: [RB, 1] }, wait: { type: 'grid', test: a => a.n.engine >= 2 } },
+    { say: ['はっしゃ！'], icon: ['engine', 'engine'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: () => ['すぐに とんだ！ オレンジの やじるしが ながく なったでしょう？ エンジンが ふたつ だと、おす ちからも ふたつぶん。 おもい ロケットも もちあげられるんだ。', 'でも、エンジンも おもいし、ねんりょうも はやく つかっちゃう。 ちからと おもさの バランスが だいじ なんだよ。'] },
+    // ---- 5 ブースター
+    { say: ['こんどは、しろくて ほそい ブースター。', 'つよい ちからで いっきに もえる、とくべつな ロケットだよ。 ながく つむほど、つよく、ながく もえるよ。', 'ブースターは、どうたいの となりに つけるよ。 はねの うえに、ふたつずつ つもう。 りょうがわ だよ。'],
+      icon: ['booster', 'booster'], preset: [[], ['fin'], ['engine', ...T(5), 'nose'], ['fin'], []], allow: ['booster'], deselect: true,
+      hl: { cols: [1, 3] }, wait: { type: 'grid', test: a => a.stacks.length >= 2 && a.stacks.every(s => s.seg >= 2) } },
+    { say: ['はっしゃ！ ブースターが どうなるか、みててね。'], icon: ['booster', '👀'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: () => ['ブースターは もえつきると、かってに はずれたね！ オレンジの やじるしが みじかく なって、あおい やじるしも みじかく なったよ。', 'からっぽの いれものを すてると、かるく なって、もっと たかく いけるんだ。'] },
+    { say: ['ところで、はねは くうきの なかで まっすぐ とぶための もの。', 'てんせんの うえは、くうきの ない うちゅう。 うちゅうでは、はねは ただの おもりに なっちゃうんだ。'],
+      icon: ['fin', '🌌', '🪨'], allow: [], wait: { type: 'speech' } },
+    { say: ['それなら、はねを ブースターに つけて、いっしょに すてちゃおう！', 'ブースターを ながく したよ。 そとがわに はねを つけてね。'],
+      icon: ['fin', 'booster'], preset: [[], BS(4), ['engine', ...T(5), 'nose'], BS(4), []], allow: ['fin'], deselect: true,
+      hl: { cols: [0, 4] }, wait: { type: 'grid', test: a => a.boosterFins >= 2 && a.stacks.every(s => s.fins.length >= 1) } },
+    { say: ['はっしゃ！ くうきが なくなる ころに、はねも いっしょに はずれるよ。'], icon: ['fin', '👋'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: s => [s.h > prevH() ? 'いらなく なった はねも すてたら、さっきより たかく とべたね！' : 'はねも いっしょに すてられたね！'] },
+    // ---- 6 だんに わける
+    { say: ['ブースターは かってに はずれたね。 こんどは、はずれる ばしょを じぶんで きめよう！', 'くろと きいろの リングで、ロケットを ふたつの だんに わけられるよ。', 'ねんりょうの うえに、リングを のせてね。'],
+      icon: ['ring'], preset: [[], ['fin'], ['engine', ...T(3)], ['fin'], []], allow: ['ring'], deselect: true, hl: { cols: [2] },
+      wait: { type: 'grid', test: a => a.n.ring >= 1 && a.nStages >= 2 } },
+    { say: ['いろが かわったね。 オレンジが いちだんめ、みずいろが にだんめ だよ。', 'リングの うえに、エンジンを のせよう。'],
+      icon: ['ring', 'engine'], allow: ['engine'], deselect: true, hl: { cols: [2] }, wait: { type: 'grid', test: a => a.nStages >= 2 && inStage(a, 1, 'engine') >= 1 } },
+    { say: ['エンジンの うえに、タンクを ふたつ のせてね。'],
+      icon: ['tank', 'tank'], allow: ['tank'], deselect: true, hl: { cols: [2] }, wait: { type: 'grid', test: a => a.nStages >= 2 && inStage(a, 1, 'tank') >= 2 } },
+    { say: ['はっしゃ！ いちだんめが はずれるところを みててね。'], icon: ['ring', '👀'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: () => ['いちだんめは もえつきると、リングごと はずれたね！', 'からっぽの いれものと エンジンを すてて、かるく なった にだんめが とんでいったんだ。'] },
+    { say: ['あたらしい エンジンを しょうかい するよ。 あおい エンジンは、うちゅうよう エンジン。', 'くうきの なかでは よわいけど、うちゅうでは つよくて、ねんりょうが ながもち するんだ。', 'にだんめを、うちゅうよう エンジンで つくろう。 リングの うえに おいてね。'],
+      icon: ['vengine'], preset: [[], ['fin'], ['engine', ...T(3), 'ring'], ['fin'], []], allow: ['vengine'], deselect: true, hl: { cols: [2] },
+      wait: { type: 'grid', test: a => a.nStages >= 2 && inStage(a, 1, 'vengine') >= 1 } },
+    { say: ['うえに タンクを ふたつ のせてね。'],
+      icon: ['tank', 'tank'], allow: ['tank'], deselect: true, hl: { cols: [2] }, wait: { type: 'grid', test: a => a.nStages >= 2 && inStage(a, 1, 'tank') >= 2 } },
+    { say: ['はっしゃ！ あおい ほのおを よく みててね。'], icon: ['vengine', '👀'], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: s => [s.h > prevH() ? 'さっきより ずっと たかく とんだ！' : 'とんだね！', 'うちゅうに でたら、あおい ほのおが おおきく なって、オレンジの やじるしも のびたでしょう？'] },
+    { say: ['ぎゃくに したら どうなるかな？', 'したの だんを うちゅうよう、うえの だんを ちじょうよう エンジンに したよ。 はっしゃ！'],
+      icon: ['vengine', '❓', 'engine'], preset: [[], ['fin'], ['vengine', 'tank', 'ring', 'engine', ...T(2)], ['fin'], []], allow: [], hl: { el: 'launch' }, wait: { type: 'result' },
+      after: () => ['いちだんめは、ぜんぜん うごけなかったね。 うちゅうよう エンジンは、くうきの なかでは よわいんだ。', 'したの だんは ちから もち、うえの だんは ながもち。 これが ロケットの ひみつ だよ。'] },
+    // ---- おわり
+    { say: ['これで きみも、ロケット はかせ！', 'さいごの ヒント。 したの だんに ブースターを つけて、うえに うちゅうよう の だんを のせると…', 'どせいまで、とどく かも！ さあ、じゆうに つくって みよう！'],
+      icon: ['🎓', '🪐'], allow: [], wait: { type: 'speech' } }
+  ];
+
+  let i = -1, step = null, active = false, spoken = false, met = false, canLaunch = false, canClear = false, metData = null, token = 0;
+
+  function toGrid(cols) { const R = RL.CFG.ROWS, g = Array.from({ length: R }, () => Array(RL.CFG.COLS).fill(null)); cols.forEach((s, c) => s.forEach((k, j) => g[R - 1 - j][c] = k)); return g; }
+  function iconHTML(list) { return (list || []).map(k => RL.PART_ORDER.includes(k) ? RL.paletteIcon(k) : `<span class="em">${k}</span>`).join(''); }
+
+  function colCells() {
+    const g = B().grid, R = RL.CFG.ROWS, part = (step.allow || [])[0];
+    return step.hl.cols.map(c => { let r = -1; for (let x = R - 1; x >= 0; x--) if (!g[x][c]) { r = x; break; }
+      return { c, r, n: g.reduce((z, row) => z + (row[c] === part ? 1 : 0), 0) }; }).filter(x => x.r >= 0);
+  }
+  function updateHL() {
+    if (!step || !step.hl) { B().highlightCell(null); return; }
+    if (step.hl.cols) B().highlightCell(met ? null : colCells().map(x => [x.r, x.c]));
+    else B().highlightCell(step.hl.cell && !met ? step.hl.cell : null);
+  }
+  function placeBubble() {
+    const l = $('ladder').getBoundingClientRect(), bb = $('tutBubble');
+    bb.style.left = (l.left + l.width / 2 - 32) + 'px'; bb.style.top = (l.top + 4) + 'px'; bb.style.maxHeight = (l.height - 8) + 'px';
+  }
+  function clearHL() { document.querySelectorAll('.hl').forEach(e => { if (!e.classList.contains('cell')) e.classList.remove('hl'); }); $('tutHand').style.display = 'none'; }
+  function target() {
+    const h = step && step.hl; if (!h) return null;
+    if (h.cols) { const cs = colCells(); if (!cs.length) return null; const m = cs.reduce((a, b) => b.n < a.n ? b : a); return document.querySelector(`.cell[data-r="${m.r}"][data-c="${m.c}"]`); }
+    if (h.pal) return document.querySelector(`.pal[data-k="${h.pal}"]`);
+    if (h.cell) return document.querySelector(`.cell[data-r="${h.cell[0]}"][data-c="${h.cell[1]}"]`);
+    if (h.el) return $(h.el);
+  }
+  function placeHand() {
+    if (!active || !step || met) { $('tutHand').style.display = 'none'; return; }
+    clearHL(); const el = target(); if (!el) return;
+    if (!el.classList.contains('cell')) el.classList.add('hl');
+    const r = el.getBoundingClientRect(), hd = $('tutHand');
+    hd.style.display = 'block'; hd.style.left = (r.left + r.width / 2) + 'px'; hd.style.top = (r.top + r.height * 0.55) + 'px';
+  }
+  function talk(lines, cb) {
+    const my = ++token; $('tutBubble').classList.add('talk');
+    let n = 0; const nx = () => { if (my !== token) return; if (n >= lines.length) { $('tutBubble').classList.remove('talk'); cb && cb(); return; } A.say(lines[n++], nx, { interrupt: n === 1 }); };
+    nx();
+  }
+
+  function go(n) {
+    i = n; step = STEPS[i];
+    if (!step) return finish();
+    spoken = false; met = false; metData = null;
+    if (step.preset) B().setGrid(toGrid(step.preset));
+    B().setAllowed(step.allow || []); if (step.deselect) B().select(null);
+    B().lockGrid(!(step.allow && step.allow.length));
+    canLaunch = ['result', 'launchFail'].includes(step.wait.type); canClear = step.wait.type === 'clear';
+    $('launch').classList.toggle('off', !canLaunch); $('clear').classList.toggle('off', !canClear);
+    $('tutIcon').innerHTML = iconHTML(step.icon); $('tutBubble').style.display = 'flex'; placeBubble();
+    if (step.wait.type === 'grid' && step.wait.test(an())) met = true;
+    updateHL();
+    setTimeout(placeHand, 50);
+    talk(step.say, afterSpeech);
+  }
+  function afterSpeech() { if (!step) return; spoken = true; if (step.wait.type === 'speech') met = true; proceed(); }
+  function complete(data) {
+    if (!active || met) return;
+    met = true; metData = data; canLaunch = false; $('launch').classList.add('off'); placeHand();
+    // 発射の声が 説明を とめるので、発射した時点で「話しおわった」とみなす
+    if (['result', 'launchFail'].includes(step.wait.type)) { spoken = true; token++; $('tutBubble').classList.remove('talk'); }
+    updateHL();
+    if (step.wait.type === 'result') results.push(data);
+    proceed();
+  }
+  function proceed() {
+    if (!met || !spoken) return;
+    const cur = i, after = step.after ? step.after(metData) : null;
+    const next = () => { if (cur === i) go(i + 1); };
+    if (step.wait.type === 'result') setTimeout(() => { RL.closeResult(); after ? talk(after, next) : next(); }, 2300);
+    else if (after) setTimeout(() => talk(after, next), 300);
+    else setTimeout(next, 250);
+  }
+
+  RL.on('select', k => { if (step && step.wait.type === 'select' && k === step.wait.part) complete(); });
+  RL.on('change', d => {
+    if (!step) return;
+    if (step.wait.type === 'grid') { if (step.wait.test(an())) complete(); else updateHL(); }
+    if (step.wait.type === 'remove' && d.action === 'remove') complete();
+    if (step.wait.type === 'clear' && d.action === 'clear') complete();
+  });
+  RL.on('launch-fail', r => { if (step && step.wait.type === 'launchFail') complete(r); });
+  RL.on('result', s => { if (step && step.wait.type === 'result') complete(s); });
+  RL.on('rendered', () => setTimeout(placeHand, 0));
+  addEventListener('resize', () => setTimeout(() => { placeHand(); if (active) placeBubble(); }, 50));
+  // みみボタン：話しなおしても、おわったら 次へ すすむ
+  $('tutEar').addEventListener('click', () => { if (active && step && !(met && spoken)) talk(step.say, afterSpeech); });
+
+  function start() { active = true; results = []; B().resetRecords(); go(0); }
+  function hideUI() { $('tutBubble').style.display = 'none'; clearHL(); B().highlightCell(null); $('launch').classList.remove('off'); $('clear').classList.remove('off'); }
+  function finish() { active = false; step = null; hideUI(); RL.startFree(); }
+  function stop() { if (!active) return; active = false; step = null; token++; hideUI(); }
+
+  return { start, stop, get active() { return active; }, get canLaunch() { return canLaunch; }, get canClear() { return canClear; }, get step() { return i; }, STEPS, _go: go };
+})();
+===END: js/tutorial.js===
+===FILE: README.md===
+# Rocket Lab（ロケット ラボ） v0.8.1
+
+5さい向け。ブロックをつんでロケットを作り、とばして高さをくらべる。文字は使わず、絵と声で遊ぶ。
+
+## 開き方
+index.html をブラウザで開く（サーバー不要）。GitHub Pages では `Rocket/` フォルダに置く。
+タイトル画面：黄色（ぼうし）＝れんしゅう（チュートリアル）、赤（▶）＝じゆうに あそぶ（たかさ）、青（地球）＝うちゅうモード【v0.8】。
+
+## v0.8 うちゅうモード（詳しくは docs/DESIGN_v0.8.md）
+- 2Dの重力（距離の2乗に反比例）、縮小した地球（第1宇宙速度 約346・第2 約490）と月
+- 打ち上げ方 3つ（まっすぐ／ななめ／よこ）を 組み立て画面のボタンで えらぶ
+- 飛行中：エンジン 止める／つける、地図と予測の線、第1・第2宇宙速度の しるしつき速さメーター
+- ✋中止（長おし）はどちらのモードでも。ゴミばこは 確認を出す
+- v0.8.1：予測の線が 月との であいまで たどる（js/predict.js）、切りはなし後も ロケットを 画面の まんなかに
+- 確かめ：`node tools/orbit_check.js`、`node tools/kepler_test.js`、`node tools/moon_test.js`、`node tools/predict_test.js`
+
+## 部品（8つ）
+| 部品 | はたらき |
+|---|---|
+| 地上用エンジン（灰） | 力がつよい。燃料をたくさん使う |
+| 宇宙用エンジン（青）【v0.7】 | くうきの中では力 30%。宇宙では本来の力で、燃料がながもち |
+| タンク | 燃料の いれもの |
+| 切りはなしリング【v0.7】 | リングより下が1段目、上が2段目（何本でも）。いまの段で燃えるものが なくなると リングごと はずれ、0.3秒後に 次の段が点火 |
+| ブースター | 胴体の すぐとなりにだけ つけられる【v0.7】。長いほど 力も燃える時間も √長さ 倍。燃えつきると はねごと はずれる |
+| はね | くうきの中で まっすぐ。宇宙では おもり |
+| まど | 宇宙ひこうしが 手をふる（ほぼ おもさなし） |
+| さきっぽ | 空気のじゃまを へらす |
+
+## ファイル
+| ファイル | 役割 |
+|---|---|
+| js/config.js | **調整する数値はここだけ** |
+| js/parts.js | 部品の絵（SVG）、つながり、はねの向き、段の分け方（stageRows）、くっついていないブースター |
+| js/physics.js | 飛び方の計算（時間を少しずつ進める。段・ブースター・くうき） |
+| js/builder.js | くみたて画面（段の色の帯、ブースターの つけ方の きまり） |
+| js/flight.js | はっしゃの演出（段の切りはなし、青い ほのお、メーター、力の矢印、早送り） |
+| js/tutorial.js | チュートリアル（STEPS の表。第6章＝段と宇宙用エンジン） |
+| js/audio.js / icons.js / main.js | 声・効果音 / ボタンの絵 / 画面のつなぎこみ |
+| tools/ | バランス確認（Node） |
+| docs/ | 設計書 |
+
+## 高さの目印
+☁️40 ✈️120 🌌300（くうきの おわり） 🛰️700 🌙1,800 ☄️4,000 🪐12,000
+
+## バランス（v0.7）
+- 1段（リングなし）の最大：左右対称の総当たり 9,065、変な積み方の探索 約9,400 → 土星に届かない
+- 2段：「地上用 → 宇宙用」でだけ 土星に届く（例：地上用＋燃料3｜宇宙用＋燃料1、ブースター5段＋はね外 = 12,133）
+- 「宇宙用 → 地上用」（逆）は 1段目が うごけない
+
+### 確かめ方（数値を変えたら必ず両方）
+1. `FAST=1 node tools/balance_check.js`：代表構成と 左右対称の総当たり（1段・2段）。結果例 tools/balance_v0.7.txt
+2. `PROGRESS=1 FAST=1 NORING=1 node tools/search_max.js 3`：リングなしで 変な積み方も含めた最大（何本か並行で）
+
+## v0.6.3 からの変化
+- 縦 7 → 9 マス
+- ブースターは胴体の となりで、胴体の高さまで（はみ出した分は 半とうめいになり、ロケットに ふくまれない）。そのため「短い胴体＋長いブースター」の高さは v0.6.3 より低くなる。それ以外の構成は v0.6.3 と同じ高さ
+
+## ひみつ
+右下の版表示を3回タップすると、土星に届く 2段式の見本が組み上がる。
+===END: README.md===
+===FILE: tools/balance_check.js===
+// 代表的な構成の一覧 ＋ 左右対称な構成の総当たり（1段・2段）
+// 使い方: FAST=1 node tools/balance_check.js [quick]   （FAST=1 で きざみを粗くして速く。数分かかる）
+const { RL, R, run, H } = require('./lib.js');
+const T = n => Array(n).fill('tank'), B = n => Array(n).fill('booster');
+const fmt = (k, s) => k.padEnd(28) + String(Math.round(s.h)).padStart(6) + ' ' + RL.CFG.ZONES[RL.zoneOf(s.h)].icon + (s.lift ? '' : ' ' + s.reason) +
+  '  段の切離し=' + ((s.stageInfo || []).filter(x => x.sepT != null).map(x => x.sepT.toFixed(1) + 's@' + Math.round(x.sepH)).join(',') || '-') +
+  '  宇宙' + (s.tAtmo != null ? s.tAtmo.toFixed(1) + 's' : '-') + '  飛行' + (s.tTotal || 0).toFixed(1) + 's';
+const C1 = (eng, t, nose = true) => [eng, ...T(t), ...(nose ? ['nose'] : [])];
+const cases = {
+  '1段 E': [[], ['fin'], C1('engine', 0, false), ['fin'], []],
+  '1段 E+T': [[], ['fin'], C1('engine', 1, false), ['fin'], []],
+  '1段 E+2T+N': [[], ['fin'], C1('engine', 2), ['fin'], []],
+  '1段 E+5T+N': [[], ['fin'], C1('engine', 5), ['fin'], []],
+  '1段 V+2T+N（宇宙用だけ）': [[], ['fin'], C1('vengine', 2), ['fin'], []],
+  '1段 E+5T+N B4×2 はね外': [['fin'], B(4), C1('engine', 5), B(4), ['fin']],
+  '2段 E3T｜E2T+N': [[], ['fin'], ['engine', ...T(3), 'ring', 'engine', ...T(2), 'nose'], ['fin'], []],
+  '2段 E3T｜V2T+N': [[], ['fin'], ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], ['fin'], []],
+  '2段 V3T｜E2T+N（逆）': [[], ['fin'], ['vengine', ...T(3), 'ring', 'engine', ...T(2), 'nose'], ['fin'], []],
+  '2段 V3T｜V2T+N': [[], ['fin'], ['vengine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], ['fin'], []],
+  '2段 E3T｜V2T+N B3 はねB': [['fin'], B(3), ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], B(3), ['fin']],
+  '2段 E4T｜V3T+N B4 はねB': [['fin'], B(4), ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], B(4), ['fin']],
+  '3段 E2T｜E1T｜V1T+N': [[], ['fin'], ['engine', ...T(2), 'ring', 'engine', 'tank', 'ring', 'vengine', 'tank', 'nose'], ['fin'], []],
+};
+for (const k in cases) console.log(fmt(k, run(cases[k])));
+if (process.argv[2] === 'quick') process.exit(0);
+// 左右対称の総当たり
+// ブースターは 胴体の となりで 胴体の高さまで（それ以上は くっつかない）なので、胴体の高さまでを しらべる
+const sidesFor = hc => { const s = [[], ['fin']]; for (let L = 1; L <= hc; L++) { s.push(B(L)); if (L < hc) s.push(['fin', ...B(L)]); } return s; };
+const cores1 = []; for (const e of ['engine', 'vengine']) for (let t = 0; t <= R - 2; t++) for (const nose of [1, 0]) cores1.push(C1(e, t, nose));
+const cores2 = []; for (const e1 of ['engine', 'vengine']) for (const e2 of ['engine', 'vengine']) for (let t1 = 0; t1 <= R - 4; t1++) for (let t2 = 0; t1 + t2 <= R - 4; t2++) cores2.push([e1, ...T(t1), 'ring', e2, ...T(t2), 'nose']);
+function sweep(cores) { let best = { h: 0 }, cnt = 0, sat = 0;
+  for (const c of cores) for (const s1 of sidesFor(c.length)) for (const s2 of [[], ['fin']]) { const cols = [s2, s1, c, s1, s2], h = H(cols); cnt++; if (h >= 12000) sat++; if (h > best.h) best = { h, cols }; }
+  return { best, cnt, sat }; }
+const r1 = sweep(cores1), r2 = sweep(cores2);
+console.log('\n1段・左右対称の総当たり 最大:', Math.round(r1.best.h), RL.CFG.ZONES[RL.zoneOf(r1.best.h)].icon, JSON.stringify(r1.best.cols));
+console.log('2段・左右対称の総当たり 最大:', Math.round(r2.best.h), RL.CFG.ZONES[RL.zoneOf(r2.best.h)].icon, '  土星に届く', r2.sat, '/', r2.cnt, JSON.stringify(r2.best.cols));
+===END: tools/balance_check.js===
+===FILE: tools/balance_v0.7.txt===
+1段 E                            50 ☁️  段の切離し=-  宇宙-  飛行3.6s
+1段 E+T                         207 ✈️  段の切離し=-  宇宙-  飛行8.3s
+1段 E+2T+N                     1384 🛰️  段の切離し=-  宇宙7.1s  飛行26.3s
+1段 E+5T+N                     2618 🌙  段の切離し=-  宇宙13.1s  飛行42.5s
+1段 V+2T+N（宇宙用だけ）                49 ☁️  段の切離し=-  宇宙-  飛行17.5s
+1段 E+5T+N B4×2 はね外            5342 ☄️  段の切離し=-  宇宙7.4s  飛行53.4s
+2段 E3T｜E2T+N                  3969 🌙  段の切離し=10.4s@106  宇宙14.9s  飛行51.4s
+2段 E3T｜V2T+N                  7061 ☄️  段の切離し=10.4s@117  宇宙16.3s  飛行69.4s
+2段 V3T｜E2T+N（逆）               1615 🛰️  段の切離し=21.7s@0  宇宙29.1s  飛行50.2s
+2段 V3T｜V2T+N                    71 ☁️  段の切離し=21.7s@0  宇宙-  飛行39.8s
+2段 E3T｜V2T+N B3 はねB          10786 ☄️  段の切離し=10.4s@398  宇宙8.8s  飛行78.7s
+2段 E4T｜V3T+N B4 はねB          11530 ☄️  段の切離し=10.4s@456  宇宙8.0s  飛行80.4s
+3段 E2T｜E1T｜V1T+N              7390 ☄️  段の切離し=7.3s@55,11.7s@180  宇宙14.5s  飛行66.5s
+
+1段・左右対称の総当たり 最大: 9065 ☄️ [["fin"],["booster","booster","booster","booster","booster"],["vengine","tank","tank","tank","nose"],["booster","booster","booster","booster","booster"],["fin"]]
+2段・左右対称の総当たり 最大: 14704 🪐   土星に届く 59 / 2632 [["fin"],["booster","booster","booster","booster","booster","booster","booster","booster","booster"],["engine","tank","tank","tank","tank","ring","vengine","tank","nose"],["booster","booster","booster","booster","booster","booster","booster","booster","booster"],["fin"]]
+===END: tools/balance_v0.7.txt===
+===FILE: tools/dv.js===
+// 理想のΔv（真空・重力なし）を 段ごとに 足し合わせる。ブースターは 1段目と いっしょに もえる（近似）
+const { RL, toGrid } = require('./lib2d.js');
+const P = RL.CFG.PHYS;
+function dv(cols) {
+  const a = RL.analyze(toGrid(cols)); let tot = 0;
+  const stg = a.stages.map(s => ({ ...s })), stk = a.stacks.map(s => ({ ...s }));
+  for (let i = 0; i < stg.length; i++) {
+    const upper = stg.slice(i + 1).reduce((z, s) => z + s.dry + s.fuel, 0);
+    const S = stg[i], bs = stk.filter(b => b.stage === i);
+    // ブースター：同時に もえる。ブースター分の燃料が なくなるまでを 1区間
+    let m = upper + S.dry + S.fuel + bs.reduce((z, b) => z + b.dry + b.fuel, 0);
+    const Te = S.eng * P.THRUST + S.veng * P.VTHRUST, mdE = S.eng * P.BURN + S.veng * P.VBURN;
+    let fuel = S.fuel;
+    if (bs.length) {
+      const tb = Math.min(...bs.map(b => b.fuel / (P.BOOST_BURN * Math.sqrt(b.seg))));
+      const Tb = bs.reduce((z, b) => z + P.BOOST_THRUST * Math.sqrt(b.seg), 0), mdB = bs.reduce((z, b) => z + P.BOOST_BURN * Math.sqrt(b.seg), 0);
+      const burnE = Math.min(fuel, mdE * tb), m1 = m - burnE - mdB * tb, ve = (Te + Tb) / (mdE + mdB);
+      tot += ve * Math.log(m / m1); fuel -= burnE; m = m1 - bs.reduce((z, b) => z + b.dry + Math.max(0, b.fuel - P.BOOST_BURN * Math.sqrt(b.seg) * tb), 0);
+    }
+    if (mdE > 0 && fuel > 0) tot += Te / mdE * Math.log(m / (m - fuel));
+  }
+  return { dv: tot, m0: a.stages.reduce((z, s) => z + s.dry + s.fuel, 0) + a.stacks.reduce((z, b) => z + b.dry + b.fuel, 0) };
+}
+module.exports = dv;
+if (require.main === module) {
+  const T = n => Array(n).fill('tank'), B = n => Array(n).fill('booster');
+  const cases = {
+    '1段 E+2T+N': [[], ['fin'], ['engine', ...T(2), 'nose'], ['fin'], []],
+    '1段 E+5T+N': [[], ['fin'], ['engine', ...T(5), 'nose'], ['fin'], []],
+    '1段 V+3T+N': [[], ['fin'], ['vengine', ...T(3), 'nose'], ['fin'], []],
+    '1段 E+5T B4': [['fin'], B(4), ['engine', ...T(5), 'nose'], B(4), ['fin']],
+    '2段 E3T｜E2T': [[], ['fin'], ['engine', ...T(3), 'ring', 'engine', ...T(2), 'nose'], ['fin'], []],
+    '2段 E3T｜V2T': [[], ['fin'], ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], ['fin'], []],
+    '2段 E4T｜V1T': [[], ['fin'], ['engine', ...T(4), 'ring', 'vengine', ...T(1), 'nose'], ['fin'], []],
+    '2段 E3T｜V2T B3': [['fin'], B(3), ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], B(3), ['fin']],
+    '2段 E3T｜V3T B5': [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine', ...T(3), 'nose'], B(5), ['fin']],
+    '2段 E4T｜V1T B9': [['fin'], B(9), ['engine', ...T(4), 'ring', 'vengine', 'tank', 'nose'], B(9), ['fin']],
+    '3段 E2T｜E1T｜V1T': [[], ['fin'], ['engine', ...T(2), 'ring', 'engine', 'tank', 'ring', 'vengine', 'tank', 'nose'], ['fin'], []],
+    '3段 E3T｜V2T｜V1T B5': [['fin'], B(5), ['engine', ...T(2), 'ring', 'vengine', 'tank', 'ring', 'vengine', 'tank', 'nose'], B(5), ['fin']],
+  };
+  for (const k in cases) { const r = dv(cases[k]); console.log(k.padEnd(22), 'Δv', Math.round(r.dv), ' 重さ', r.m0.toFixed(1)); }
+}
+===END: tools/dv.js===
+===FILE: tools/kepler_test.js===
+// ケプラー計算の確かめ：状態→要素→状態 の往復、数値積分との一致
+const { RL } = require('./lib2d.js'); const SP = RL.Space;
+let worst = 0, notGood = 0;
+const mu = 10 * 4000 * 4000;
+for (let i = 0; i < 2000; i++) {
+  const r = 4000 + Math.random() * 60000, ang = Math.random() * 6.283, vc = Math.sqrt(mu / r) * (0.05 + Math.random() * 1.7);
+  const dir = Math.random() * 6.283, x = r * Math.cos(ang), y = r * Math.sin(ang), vx = vc * Math.cos(dir), vy = vc * Math.sin(dir);
+  const el = SP.toElements(x, y, vx, vy, mu, 100);
+  if (!el.good) { notGood++; continue; }
+  const s = SP.stateAt(el, 100);
+  const err = Math.hypot(s.x - x, s.y - y) / r + Math.hypot(s.vx - vx, s.vy - vy) / vc;
+  if (err > worst) worst = err;
+}
+console.log('往復の最大誤差', worst.toExponential(2), ' （ほぼ真上の軌道で 数値積分に まかせた数', notGood, '/ 2000）');
+// 数値積分（細かい RK4）と レール上の比較
+function rk4(st, dt, n) { let [x, y, vx, vy] = st; const f = (x, y) => { const r3 = Math.pow(x * x + y * y, 1.5); return [-mu * x / r3, -mu * y / r3]; };
+  for (let i = 0; i < n; i++) { const a1 = f(x, y), k1 = [vx, vy, ...a1]; const a2 = f(x + k1[0] * dt / 2, y + k1[1] * dt / 2), k2 = [vx + k1[2] * dt / 2, vy + k1[3] * dt / 2, ...a2];
+    const a3 = f(x + k2[0] * dt / 2, y + k2[1] * dt / 2), k3 = [vx + k2[2] * dt / 2, vy + k2[3] * dt / 2, ...a3]; const a4 = f(x + k3[0] * dt, y + k3[1] * dt), k4 = [vx + k3[2] * dt, vy + k3[3] * dt, ...a4];
+    x += dt / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]); y += dt / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]); vx += dt / 6 * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2]); vy += dt / 6 * (k1[3] + 2 * k2[3] + 2 * k3[3] + k4[3]); }
+  return [x, y, vx, vy]; }
+for (const [nm, v] of [['円', 1], ['だ円', 1.25], ['双曲線', 1.6], ['ほぼ真上', 0.02]]) {
+  const r = 4400, st = [r, 0, 0, Math.sqrt(mu / r) * v]; if (nm === 'ほぼ真上') { st[2] = 300; }
+  const el = SP.toElements(...st, mu, 0), T = 300, a = SP.stateAt(el, T), b = rk4(st, 0.01, T / 0.01);
+  console.log(nm.padEnd(6), 'e=' + el.e.toFixed(4), '300秒後のずれ', Math.hypot(a.x - b[0], a.y - b[1]).toFixed(4));
+}
+===END: tools/kepler_test.js===
+===FILE: tools/lib.js===
+// ツール共通：ブラウザ用のコードを Node で読む
+global.window = global; const fs = require('fs'), d = __dirname + '/../js/';
+for (const f of ['config.js', 'parts.js', 'physics.js']) (0, eval)(fs.readFileSync(d + f, 'utf8'));
+if (process.env.FAST) RL.CFG.PHYS.DT = 0.06;     // 探索用に きざみを粗く（最後に細かく再計算）
+const R = RL.CFG.ROWS, C = RL.CFG.COLS;
+// cols: 列ごとの配列（左から、下→上）
+const toGrid = cols => { const g = Array.from({ length: R }, () => Array(C).fill(null)); cols.forEach((s, c) => s.slice(0, R).forEach((k, i) => g[R - 1 - i][c] = k)); return g; };
+const run = cols => RL.simulate(RL.analyze(toGrid(cols)));
+const H = cols => { const s = run(cols); return s.lift ? s.h : 0; };
+module.exports = { RL, R, C, toGrid, run, H };
+===END: tools/lib.js===
+===FILE: tools/lib2d.js===
+// ツール共通（うちゅうモード）：ブラウザ用のコードを Node で読む
+global.window = global; const fs = require('fs'), d = __dirname + '/../js/';
+for (const f of ['config.js', 'parts.js', 'physics.js', 'space.js', 'physics2d.js', 'predict.js']) (0, eval)(fs.readFileSync(d + f, 'utf8'));
+const R = RL.CFG.ROWS, C = RL.CFG.COLS;
+const toGrid = cols => { const g = Array.from({ length: R }, () => Array(C).fill(null)); cols.forEach((s, c) => s.slice(0, R).forEach((k, i) => g[R - 1 - i][c] = k)); return g; };
+const fly = (cols, profile, opt) => RL.Orbit.runToEnd(RL.analyze(toGrid(cols)), Object.assign({ profile }, opt || {}));
+module.exports = { RL, R, C, toGrid, fly };
+===END: tools/lib2d.js===
+===FILE: tools/make_rocket_bundle.ps1===
+# Rocket フォルダの中身を 1つのテキストにまとめる（Copilot が検索1回で全ファイルを読めるようにする）
+# 置き場所: <AI Games>\Rocket\tools\make_rocket_bundle.ps1
+# 出力   : <AI Games>\Rocket\_bundle\rocket_bundle_rklbzq.txt （実行のたびに上書き）
+# 合言葉 : rklbzq （ファイル名と先頭行に入れる。Copilot はこの語で検索する）
+
+$ErrorActionPreference = 'Stop'
+
+# --- Rocket フォルダの場所を決める ---
+if ($PSScriptRoot) {
+  $root = Split-Path $PSScriptRoot -Parent          # tools の1つ上 = Rocket
+} else {
+  # 画面に貼り付けて実行したとき
+  $root = Join-Path $env:OneDrive 'ドキュメント\Copilot\Created 1\AI Games\Rocket'
+}
+if (-not (Test-Path (Join-Path $root 'index.html'))) {
+  Write-Host "NG: Rocket フォルダが見つかりません: $root" -ForegroundColor Red
+  Write-Host "    tools フォルダに置いて、ファイルとして実行してください。"
+  exit 1
+}
+
+$outDir = Join-Path $root '_bundle'
+New-Item -ItemType Directory -Force $outDir | Out-Null
+$out = Join-Path $outDir 'rocket_bundle_rklbzq.txt'
+
+# --- 対象：テキストのファイルだけ。_bundle と画像などは除く ---
+$exts = '.html', '.css', '.js', '.md', '.txt', '.json', '.ps1'
+$files = Get-ChildItem $root -Recurse -File |
+  Where-Object {
+    $exts -contains $_.Extension.ToLower() -and
+    $_.FullName -notmatch '\\_bundle\\' -and
+    $_.FullName -notmatch '\\\.git\\'
+  } | Sort-Object FullName
+
+$enc = New-Object System.Text.UTF8Encoding($false)   # BOMなし UTF-8
+$sb = New-Object System.Text.StringBuilder
+
+[void]$sb.AppendLine("rklbzq ROCKET LAB BUNDLE")
+[void]$sb.AppendLine("created: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
+[void]$sb.AppendLine("root: Rocket")
+[void]$sb.AppendLine("files: $($files.Count)")
+[void]$sb.AppendLine("")
+[void]$sb.AppendLine("## INDEX (path / lines / bytes / modified)")
+$bodies = @()
+foreach ($f in $files) {
+  $rel = $f.FullName.Substring($root.Length).TrimStart('\').Replace('\', '/')
+  $text = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
+  $text = $text -replace "`r`n", "`n"                  # 改行を LF にそろえる
+  $text = $text.TrimStart([char]0xFEFF)                # 先頭の BOM を取る
+  $lines = ($text -split "`n").Count
+  [void]$sb.AppendLine("- $rel / $lines / $($f.Length) / $($f.LastWriteTime.ToString('yyyy-MM-dd HH:mm'))")
+  $bodies += ,@($rel, $text)
+}
+[void]$sb.AppendLine("")
+foreach ($b in $bodies) {
+  [void]$sb.AppendLine("===FILE: $($b[0])===")
+  [void]$sb.Append($b[1])
+  if (-not $b[1].EndsWith("`n")) { [void]$sb.AppendLine("") }
+  [void]$sb.AppendLine("===END: $($b[0])===")
+}
+[System.IO.File]::WriteAllText($out, $sb.ToString().Replace("`r`n", "`n"), $enc)
+Write-Host "OK: $($files.Count) files -> $out" -ForegroundColor Green
+===END: tools/make_rocket_bundle.ps1===
+===FILE: tools/moon_test.js===
+// 月へ行けるかの確かめ：低い軌道で エンジンを止め、いろいろな時刻に 再点火して 月の重力圏に入るか
+const { RL, toGrid } = require('./lib2d.js');
+const T = n => Array(n).fill('tank'), B = n => Array(n).fill('booster');
+const cols = [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine', ...T(3), 'nose'], B(5), ['fin']];
+let found = 0;
+for (let tr = 20; tr < 260 && found < 3; tr += 4) {
+  const s = RL.Orbit.create(RL.analyze(toGrid(cols)), { profile: 'side' });
+  let cut = false, re = false, soi = false;
+  while (!s.done && s.t < 30000) {
+    s.advance(s.isPowered() ? 0.05 : Math.max(0.05, s.autoWarp() * 0.05));
+    const el = s.elements();
+    if (!cut && el && el.e < 1 && el.rp > s.body.R + s.body.atmo + 20) { s.setEngine(false); cut = s.t; }
+    if (cut && !re && s.t > cut + tr) { s.setEngine(true); re = true; }
+    if (s.body.id === 'moon') soi = true;
+  }
+  if (soi) { found++; console.log('再点火', tr, '秒後 → 月の重力圏に入った。結果', s.done && s.done.type, s.done && s.done.cls, '時刻', Math.round(s.t)); }
+}
+if (!found) console.log('月に届く 再点火時刻は 見つからなかった');
+===END: tools/moon_test.js===
+===FILE: tools/orbit_check.js===
+// うちゅうモードの確かめ：代表的な構成 × 打ち上げ方（まっすぐ／ななめ／よこ）
+// 使い方: node tools/orbit_check.js [R=4000]
+const { RL, fly } = require('./lib2d.js');
+if (process.argv[2]) RL.CFG.ORBIT.R = +process.argv[2];
+const O = RL.CFG.ORBIT, v1 = Math.sqrt(O.G0 * O.R);
+const T = n => Array(n).fill('tank'), B = n => Array(n).fill('booster');
+const C1 = (eng, t, nose = true) => [eng, ...T(t), ...(nose ? ['nose'] : [])];
+const cases = {
+  '1段 E+2T+N': [[], ['fin'], C1('engine', 2), ['fin'], []],
+  '1段 E+5T+N': [[], ['fin'], C1('engine', 5), ['fin'], []],
+  '1段 E+5T+N B4 はね外': [['fin'], B(4), C1('engine', 5), B(4), ['fin']],
+  '2段 E3T｜E2T+N': [[], ['fin'], ['engine', ...T(3), 'ring', 'engine', ...T(2), 'nose'], ['fin'], []],
+  '2段 E3T｜V2T+N': [[], ['fin'], ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], ['fin'], []],
+  '2段 E3T｜V2T+N B3 はねB': [['fin'], B(3), ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], B(3), ['fin']],
+  '2段 E3T｜V3T+N B5 はねB': [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine', ...T(3), 'nose'], B(5), ['fin']],
+  '2段 E4T｜V1T+N B9 はねB': [['fin'], B(9), ['engine', ...T(4), 'ring', 'vengine', 'tank', 'nose'], B(9), ['fin']],
+  '3段 E2T｜E1T｜V1T+N': [[], ['fin'], ['engine', ...T(2), 'ring', 'engine', 'tank', 'ring', 'vengine', 'tank', 'nose'], ['fin'], []],
+};
+const NAME = { ground: '落下', orbit: '周回', escape: '脱出', heavy: '飛べず', hit: '月に衝突', timeout: '時間切れ' };
+const dv = require('./dv.js');
+console.log(`R=${O.R}  第1宇宙速度 v1=${v1.toFixed(0)}  第2=${(v1 * Math.SQRT2).toFixed(0)}  低軌道1周=${(2 * Math.PI * Math.sqrt(O.R / O.G0)).toFixed(0)}秒`);
+for (const k in cases) {
+  const row = ['up', 'tilt', 'side', 'side+'].map(p => {
+    const s = fly(cases[k], p.replace('+', ''), { autoCut: p.endsWith('+') }), d = s.done || {};
+    let t = (NAME[d.type] || d.type) + (d.cls && d.type === 'orbit' ? ':' + d.cls : '');
+    if (d.type === 'ground') t += ` 高${Math.round(d.maxAlt)} 距${Math.round(d.range)}`;
+    if (d.type === 'orbit') { const el = d.el; t += ` 近${Math.round(el.rp - O.R)} 遠${Math.round(el.ra - O.R)}`; }
+    if (s.cutFuel != null) t += ` 残${Math.round(s.cutFuel * 100)}%`;
+    return (p + ':' + t).padEnd(p === 'side+' ? 34 : 24);
+  });
+  console.log(k.padEnd(24), ('Δv' + Math.round(dv(cases[k]).dv)).padEnd(6), row.join(' '));
+}
+===END: tools/orbit_check.js===
+===FILE: tools/orbit_v0.8.txt===
+R=12000  第1宇宙速度 v1=346  第2=490  低軌道1周=218秒
+1段 E+2T+N                Δv264  up:落下 高1485 距104         tilt:落下 高871 距2095       side:落下 高697 距2062       side+:落下 高697 距2062               
+1段 E+5T+N                Δv343  up:落下 高3419 距380         tilt:落下 高2068 距6966      side:落下 高524 距4182       side+:落下 高524 距4182               
+1段 E+5T+N B4 はね外         Δv430  up:落下 高10116 距384        tilt:落下 高7776 距20116     side:落下 高473 距9695       side+:落下 高473 距9695               
+2段 E3T｜E2T+N             Δv410  up:落下 高5883 距595         tilt:落下 高3134 距12077     side:落下 高458 距5274       side+:落下 高458 距5274               
+2段 E3T｜V2T+N             Δv566  up:落下 高19248 距759        tilt:落下 高18159 距33851    side:周回:high 近362 遠19308 side+:周回:low 近323 遠2154 残2%       
+2段 E3T｜V2T+N B3 はねB      Δv619  up:落下 高301833 距21349     tilt:脱出                  side:脱出                  side+:周回:high 近321 遠8652 残8%      
+2段 E3T｜V3T+N B5 はねB      Δv669  up:脱出                    tilt:脱出                  side:脱出                  side+:周回:high 近322 遠4126 残11%     
+2段 E4T｜V1T+N B9 はねB      Δv669  up:脱出                    tilt:脱出                  side:脱出                  side+:周回:high 近350 遠4358 残9%      
+3段 E2T｜E1T｜V1T+N         Δv564  up:落下 高22059 距1468       tilt:落下 高8190 距29843     side:落下 高317 距1667       side+:落下 高317 距1667               
+===END: tools/orbit_v0.8.txt===
+===FILE: tools/predict_test.js===
+// 予測の線と 実際の飛び方が そろうかの確かめ
+//  低い軌道で止める → いろいろな時刻に 再点火（燃料を使いきる）→ 燃え終わった時点の 予測 と、その後の 実際の結果を くらべる
+const { RL, toGrid } = require('./lib2d.js');
+const T = n => Array(n).fill('tank'), B = n => Array(n).fill('booster');
+const cols = [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine', ...T(3), 'nose'], B(5), ['fin']];
+const actualKind = s => { const d = s.done; if (!d) return '?';
+  if (s.wentMoon) return d.type === 'hit' ? 'moonHit' : d.body === 'moon' && d.type === 'orbit' ? 'moonOrbit' : 'moonPass';
+  return d.type === 'ground' ? 'hit' : d.type === 'escape' ? 'escape' : d.type === 'orbit' ? 'orbit' : d.type; };
+let ok = 0, n = 0, encErr = [];
+for (let tr = 0; tr < 230; tr += 5) {
+  const s = RL.Orbit.create(RL.analyze(toGrid(cols)), { profile: 'side' });
+  let cut = null, re = false, pred = null, tSoi = null;
+  while (!s.done && s.t < 60000) {
+    s.advance(s.isPowered() ? 0.05 : Math.max(0.05, s.autoWarp() * 0.05));
+    const el = s.elements();
+    if (cut === null && el && el.e < 1 && el.rp > s.body.R + s.body.atmo + 20) { s.setEngine(false); cut = s.t; }
+    if (cut !== null && !re && s.t > cut + tr) { s.setEngine(true); re = true; }
+    if (re && !pred && !s.isPowered()) pred = RL.Predict.fromSim(s);
+    s.events.splice(0).forEach(e => { if (e.type === 'soi' && e.body === 'moon' && tSoi === null) { tSoi = e.t; s.wentMoon = true; } });
+  }
+  if (!pred) continue;
+  const a = actualKind(s), p = pred.kind === 'moon' ? '?' : pred.kind; n++;
+  const same = p === a; if (same) ok++;
+  if (pred.enc && tSoi) encErr.push(Math.abs(pred.enc.t - tSoi));
+  console.log(String(tr).padStart(4) + '秒後に再点火  予測:' + p.padEnd(10) + ' 実際:' + a.padEnd(10) + (same ? ' ○' : ' ×') + (pred.enc ? `  月とであう 予測${Math.round(pred.enc.t)} 実際${tSoi == null ? '-' : Math.round(tSoi)}` : ''));
+}
+console.log(`\n一致 ${ok}/${n}` + (encErr.length ? `  月にであう時刻の ずれ 最大 ${Math.max(...encErr).toFixed(1)}秒` : ''));
+
+// 2) 代表的な構成 × 打ち上げ方：燃え終わって くうきの外に出た 時点の 予測と 実際
+const C1 = (eng, t) => [eng, ...T(t), 'nose'];
+const cases = [
+  [[], ['fin'], C1('engine', 5), ['fin'], []],
+  [['fin'], B(4), C1('engine', 5), B(4), ['fin']],
+  [[], ['fin'], ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], ['fin'], []],
+  [['fin'], B(3), ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], B(3), ['fin']],
+  [['fin'], B(9), ['engine', ...T(4), 'ring', 'vengine', 'tank', 'nose'], B(9), ['fin']]];
+let ok2 = 0, n2 = 0;
+for (const c of cases) for (const prof of ['up', 'tilt', 'side']) for (const cutOn of [false, true]) {
+  const s = RL.Orbit.create(RL.analyze(toGrid(c)), { profile: prof }); let pred = null, tSoi = null;
+  while (!s.done && s.t < 60000) {
+    s.advance(s.isPowered() ? 0.05 : Math.max(0.05, s.autoWarp() * 0.05));
+    if (cutOn && s.engineOn && s.lifted) { const el = s.elements(); if (el && el.e < 1 && el.rp > s.body.R + s.body.atmo + 20) s.setEngine(false); }
+    if (!pred && s.lifted && !s.isPowered() && s.alt() > s.body.atmo) pred = RL.Predict.fromSim(s);
+    s.events.splice(0).forEach(e => { if (e.type === 'soi' && e.body === 'moon') s.wentMoon = true; });
+  }
+  if (!pred) continue; n2++;
+  const a = actualKind(s), p = pred.kind; if (p === a) ok2++; else console.log('×', prof, cutOn, '予測', p, '実際', a);
+}
+console.log(`代表構成 一致 ${ok2}/${n2}`);
+===END: tools/predict_test.js===
+===FILE: tools/search_max.js===
+// 変な積み方も含めて最大の高さを探す（焼きなまし法）。何回か別々に実行すること
+// 使い方: PROGRESS=1 FAST=1 [NORING=1] node tools/search_max.js [回数]
+//   NORING=1 … リングを使わない（1段の最大をしらべる）
+const { RL, R, C, H } = require('./lib.js');
+const K = ['engine', 'vengine', 'tank', 'booster', 'fin', 'win', 'nose', ...(process.env.NORING ? [] : ['ring'])];
+const rnd = a => a[Math.floor(Math.random() * a.length)];
+function mutate(cols) { const n = cols.map(s => s.slice()), s = n[Math.floor(Math.random() * C)], r = Math.random();
+  if (r < .35 && s.length < R) s.push(rnd(K)); else if (r < .5 && s.length) s.pop();
+  else if (r < .6 && s.length) s.splice(Math.floor(Math.random() * s.length), 0, rnd(K)), s.length > R && s.pop();
+  else if (s.length) s[Math.floor(Math.random() * s.length)] = rnd(K); else s.push(rnd(K)); return n; }
+const N = +process.argv[2] || 30; let best = { h: 0 };
+for (let i0 = 0; i0 < N; i0++) {
+  let cur = Array.from({ length: C }, () => []), hc = 0, T = 400;
+  for (let i = 0; i < 2500; i++) { const nx = mutate(cur), hn = H(nx); if (hn >= hc || Math.random() < Math.exp((hn - hc) / T)) { cur = nx; hc = hn; } T *= 0.998;
+    if (hc > best.h) best = { h: hc, cols: cur.map(s => s.slice()) }; }
+  if (process.env.PROGRESS) console.log('run', i0, Math.round(best.h), JSON.stringify(best.cols));
+}
+if (process.env.FAST) { RL.CFG.PHYS.DT = 0.02; best.h = H(best.cols); }
+console.log('最大', Math.round(best.h), RL.CFG.ZONES[RL.zoneOf(best.h)].icon, JSON.stringify(best.cols));
+===END: tools/search_max.js===
