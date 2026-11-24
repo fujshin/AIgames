@@ -58,7 +58,7 @@ RL.simulate = function (a) {
   const S = a.stages.map(s => ({ ...s, ignT: null, sepT: null, sepH: null }));
   const st = a.stacks.map(s => ({ ...s, ignT: null, sepT: null, sepH: null, withStage: false }));
   const last = S.length - 1;
-  let si = 0;
+  let si = 0, fuelBase = a.fuel;   // v0.11.1：燃料メーターは 切りはなしの たびに のこりを 100% に
   const ignite = (i, t) => { S[i].ignT = t; st.forEach(s => { if (s.stage === i) s.ignT = t; }); };
   ignite(0, 0);
   const attached = s => s.sepT === null && s.stage >= si;
@@ -95,7 +95,7 @@ RL.simulate = function (a) {
     if (si < last && on && !(cur.fuel > 0 && cur.eng + cur.veng > 0) && !st.some(s => s.stage === si && s.sepT === null && s.fuel > 0)) {
       cur.sepT = t; cur.sepH = h; stageSep = si;
       st.forEach(s => { if (s.stage === si && s.sepT === null) { s.sepT = t; s.sepH = h; s.withStage = true; } });
-      si++; ignite(si, t + P.IGN_DELAY * k);
+      si++; ignite(si, t + P.IGN_DELAY * k); fuelBase = sum(S.slice(si), y => y.fuel);
     }
     const m = Math.max(0.1, mass()), f = finsNow(), dir = Math.sign(f.L - f.R) || 1;
     if (h > 0) tilt = Math.min(1.2, tilt + tiltTarget(f) * P.TILT_GROW / k * rho * DT);
@@ -108,7 +108,7 @@ RL.simulate = function (a) {
     if (h <= 0 && v <= 0) { h = 0; v = 0; } else if (liftT === null) liftT = t;
     x += Math.sin(tilt) * dir * Math.max(0, v) * DT * 0.3;
     samples.push({ t, h: Math.max(0, h), v, acc, rho, si, burn: burnC, vpow, boost, thrust: thrust * k2, weight: m * G * k2,
-      fuel: a.fuel ? sum(S.slice(si), y => y.fuel) / a.fuel : 0, tilt: tilt * dir, x, sep: stageSep });
+      fuel: fuelBase > 0 ? sum(S.slice(si), y => y.fuel) / fuelBase : 0, tilt: tilt * dir, x, sep: stageSep });
     if (!burnC && !boost && v <= 0 && on && stageSep === null) break;
   }
   const top = Math.max(0, ...samples.map(s => s.h));

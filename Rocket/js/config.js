@@ -1,7 +1,7 @@
 // 全体設定。数値の調整はここだけで行う
 window.RL = window.RL || {};
 RL.CFG = {
-  COLS: 5, ROWS: 9, VERSION: 'v0.11',
+  COLS: 5, ROWS: 9, VERSION: 'v0.11.1',
   PHYS: {
     G: 10,
     THRUST: 188,      // 地上用エンジン1つの力

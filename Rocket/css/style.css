@@ -166,5 +166,4 @@ body.tutorial #btnRew{display:none}
 #flyRocket .legd{display:none}
 #flyRocket.legsOut .legf{display:none}
 #flyRocket.legsOut .legd{display:inline}
-.palette .pal{min-width:0}
 @media (max-width:420px){#btnRew{width:54px;height:54px;left:80px}}

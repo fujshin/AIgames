@@ -120,7 +120,7 @@
     const p = SV.cur; if (!p) return;
     $('medGrid').innerHTML = RL.MEDALS.map(m => `<div class="medal${p.medals[m.key] ? ' got' : ''}">${MEDAL_SVG(m.icon, !!p.medals[m.key])}</div>`).join('');
     const c = RL.World.counts(p);
-    $('wCount').innerHTML = `<span>🛰️×${c.sats}</span><span>🚩×${c.flags}</span>` + (c.landers ? `<span>🚀×${c.landers}</span>` : '');
+    $('wCount').innerHTML = `<span>🛰️×${c.sats}</span><span>🚩×${c.flags}</span>` + (c.landers ? `<span>\u{1F680}×${c.landers}</span>` : '');
     $('medals').style.display = 'flex'; A.tone(660, 0.06);
     A.say(`くんしょうは ${medalCount(p)}こ。` + (c.sats ? ` えいせいが ${c.sats}こ、うちゅうを まわっているよ。` : ''));
     drawWorld(p);

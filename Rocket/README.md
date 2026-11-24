@@ -1,4 +1,4 @@
-# Rocket Lab（ロケット ラボ） v0.11
+# Rocket Lab（ロケット ラボ） v0.11.1
 5さい向け。ブロックをつんでロケットを作り、とばして高さをくらべる。文字は使わず、絵と声で遊ぶ。
 ## 開き方
 index.html をブラウザで開く（サーバー不要）。GitHub Pages では `Rocket/` フォルダに置く。
@@ -11,7 +11,7 @@ index.html をブラウザで開く（サーバー不要）。GitHub Pages で�
 - v0.8.1：予測の線が 月との であいまで たどる（js/predict.js）、切りはなし後も ロケットを 画面の まんなかに
 - v0.8.2：切りはなしで 真上に もどらない、うちゅうで 燃やす間は スローモーション（🐢）、地図の ズーム（docs/DESIGN_v0.8.2.md）
 - v0.10：向きボタン（前へ／うしろへ＝ブレーキ）。月で うしろへ ふかすと 月を まわれる
-- v0.11：月着陸（着陸脚・ちょろちょろ噴射・ホバー・着陸メーター）と ⏪ ここからやり直し（docs/DESIGN_v0.11.md）
+- v0.11：月着陸（着陸脚・ちょろちょろ噴射・ホバー・着陸メーター）と ⏪ ここからやり直し。v0.11.1：月の 地面の 位置・⏪ の おぼえ方・燃料メーター（段ごとに 100%）を 手直し（docs/DESIGN_v0.11.md）
 - 確かめ：`node tools/orbit_check.js`、`node tools/kepler_test.js`、`node tools/moon_test.js`、`node tools/predict_test.js`、`node tools/landing_check.js`、`node tools/slow_check.js`
 ## 部品（8つ）
 | 部品 | はたらき |

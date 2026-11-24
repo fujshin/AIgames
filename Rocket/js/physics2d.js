@@ -37,7 +37,7 @@ RL.Orbit = (function () {
       maxAlt: 0, maxV: 0, done: null, cls: null, coastT: 0, stableT: 0, inSpace: false,
       thrust: 0, mass: 0, weight: 0, pitch: 90, point: Math.PI / 2, rho: 1, vpow: P.VAIR, burnC: false, boost: false,
       profile: opt.profile || 'side', dir: 'auto', stages: S, stacks: st, a,
-      dvUsed: 0, throttle: 1, near: false, hover: false, legsOut: false
+      dvUsed: 0, throttle: 1, near: false, hover: false, legsOut: false, fuelBase: 0
     };
     sim.vx = -earth.rot * sim.y; sim.vy = earth.rot * sim.x;    // 地面と いっしょに まわっている
     ignite(0, 0);
@@ -58,6 +58,7 @@ RL.Orbit = (function () {
     sim.legs = legs;
     // v0.11：いまの 段の 液体エンジンの 全力（しぼる 前）
     const coreFull = rho => { const c = S[sim.si], vpow = P.VAIR + (1 - P.VAIR) * (1 - rho); return c.eng * P.THRUST + c.veng * P.VTHRUST * vpow; };
+    sim.fuelBase = coreFuel();   // v0.11.1：燃料メーターの 100%（切りはなしの たびに その ときの のこりを 100% に）
     sim.isPowered = () => (sim.engineOn && canBurnCore()) || boosting() || (S[sim.si].ignT > sim.t);
     // ---- ピッチ（地平線からの角度）を自動で きめる ----
     function guidance(h, r, vr, vt, aT, g) {
@@ -102,6 +103,7 @@ RL.Orbit = (function () {
         st.forEach(s => { if (s.stage === sim.si && s.sepT === null) { s.sepT = sim.t; s.withStage = true; } });
         emit('stage-sep', { i: sim.si });
         sim.si++; ignite(sim.si, sim.t + P.IGN_DELAY);
+        sim.fuelBase = coreFuel();   // v0.11.1：のこりの 燃料を 100% に
         const f = fins(); sim.dev = Math.min(sim.dev, 1.2);
         if (f.n === 0 && rho > 0) sim.devDir = sim.devDir || 1;
       }
@@ -363,7 +365,9 @@ RL.Orbit = (function () {
       abort() { finish({ type: 'abort' }); },
       finishNow() { if (sim.cls && ['low', 'high', 'toMoon', 'moonOrbit'].includes(sim.cls) && !sim.isPowered()) finish({ type: 'orbit', el: elements() }); },
       liquidLeft,
-      fuelRatio: () => (a.fuel ? coreFuel() / a.fuel : 0)
+      // v0.11.1：燃料メーター（いまの 段から 上の のこり ÷ さいごに 切りはなした ときの のこり）。fuelAll＝ロケット ぜんぶ との 割合（ツール用）
+      fuelRatio: () => (sim.fuelBase > 0 ? Math.min(1, coreFuel() / sim.fuelBase) : 0),
+      fuelAll: () => (a.fuel ? coreFuel() / a.fuel : 0)
     });
   }
   // ツール用：最後まで 一気に計算する（エンジンは 自動のまま。燃料が のこっていても 安定した軌道なら おわる）
@@ -374,7 +378,7 @@ RL.Orbit = (function () {
       s.advance(Math.max(0.02, s.autoWarp() * 0.05));
       // autoCut：予測の線が 地球を ひとまわり したら（近地点が くうきの外）エンジンを止める ＝ 子どもが ちょうどよく止めた場合
       if (opt.autoCut && s.engineOn && s.lifted && s.body === s.bodies.earth) {
-        const el = s.elements(); if (el && el.e < 1 && el.rp > s.body.R + s.body.atmo + 20) { s.setEngine(false); s.cutFuel = s.fuelRatio(); }
+        const el = s.elements(); if (el && el.e < 1 && el.rp > s.body.R + s.body.atmo + 20) { s.setEngine(false); s.cutFuel = s.fuelAll(); }
       }
     }
     return s;

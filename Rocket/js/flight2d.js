@@ -10,6 +10,7 @@
 //  - v0.9：まえに うちあげた 衛星（うすい 線と 小さな 衛星）と 月の 🚩 を 地図に 出す（js/save.js の ワールド）
 //  - v0.10：向きボタン（前へ／うしろへ＝ブレーキ）。くうきの外で つかえる。月で うしろへ ふかすと 月を まわれる
 //  - v0.11：月着陸（月の ちかくの画面・着陸メーター・着陸脚・ホバー）と ⏪ ここからやり直し
+//  - v0.11.1：月の ちかくの画面で ロケットの 下はしを 地面に あわせる。⏪ は 着陸の とちゅうでは「まにあう」ときだけ おぼえる。燃料メーターは 段ごとに 100%
 RL.Flight2D = (function () {
   const $ = id => document.getElementById(id), SP = RL.Space, TAU = Math.PI * 2;
   const STAGE_NAME = ['だいいち', 'だいに', 'だいさん', 'だいよん', 'だいご'], IGN_NAME = ['', 'にだんめ', 'さんだんめ', 'よんだんめ', 'ごだんめ'];
@@ -181,6 +182,9 @@ RL.Flight2D = (function () {
     g.fillStyle = f > 0.25 ? '#e5383b' : '#ffb02e'; g.fillRect(gx, gy + gh * (1 - f), gw, gh * f);
     g.strokeStyle = '#fff'; g.lineWidth = 3; g.strokeRect(gx, gy, gw, gh);
     g.font = `${24 * u}px sans-serif`; g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText('⛽', gx + gw / 2, gy - 8);
+    // v0.11.1：のこりの 段（エンジンの ある 段）の 数を 下に ●。切りはなすと 1つ へって メーターは 100% に もどる
+    const left = sim.stages.slice(sim.si).filter(x => x.eng + x.veng > 0).length;
+    for (let k = 0; k < left; k++) { g.fillStyle = k === 0 ? '#ffd54a' : 'rgba(255,255,255,.55)'; g.beginPath(); g.arc(gx + gw / 2, gy + gh + 14 * u + k * 16 * u, 5.5 * u, 0, 7); g.fill(); }
   }
   function drawTop(g, W, sim, warp, u) {
     const h = Math.hypot(sim.x, sim.y) - sim.body.R, bx = W - 16 * u, ff = warp > 1.5, slow = warp < 0.9;
@@ -269,19 +273,25 @@ RL.Flight2D = (function () {
     let t0 = null, prev = null, warp = 1, view = 'auto', sepFlash = 0, saidSep = false, ended = null, endAt = 0, saidOrbit = false, saidSlow = false;
     const pre = resume ? 0 : 2100;
     // v0.10／v0.11 の おしえ（いちど だけ）
-    let saidPeri = true, saidNear = false, saidHover = false, warnAt = 0, saidLand = false;
+    let saidPeri = true, saidNear = false, saidHover = false, warnAt = 0, boomY = null;
     // v0.11 ここからやり直し
     let lastCp = resume ? resume.cp : null, rewinds = resume ? resume.rewinds + 1 : 0;
     if (resume) { sim.restore(resume.cp.snap); resume.trail.slice(0, resume.cp.trailLen).forEach(p => trail.push(p)); }
     sim.rewinds = rewinds;
-    const saveCp = tag => { if (!sim.lifted || sim.done) return; lastCp = { snap: sim.snapshot(), trailLen: trail.length, tag }; };
+    // v0.11.1：月の 地面ちかくでは「いまから エンジンで まにあう」ときだけ おぼえる（ぶつかる 直前を おぼえると、もどっても すぐ ぶつかる）
+    const canSave = () => {
+      if (!sim.near) return true;
+      const r = Math.hypot(sim.x, sim.y), h = r - sim.body.R, g2 = sim.body.mu / (r * r), vd = Math.max(0, -(sim.vx * sim.x + sim.vy * sim.y) / r);
+      return sim.liquidLeft() && h > 60 && vd * vd / (2 * (LD.TWR - 1) * g2) < h * 0.6;
+    };
+    const saveCp = tag => { if (!sim.lifted || sim.done || !canSave()) return; lastCp = { snap: sim.snapshot(), trailLen: trail.length, tag }; };
     Z.log = 0; Z.pins.clear();
     // ボタン（v0.8.3：🏁 は visibility で 出し入れ ＝ ほかの ボタンが うごかない）
     const bEng = $('btnEng'), bMap = $('btnMap'), bDone = $('btnDone'), zctl = $('zctl'), bDir = $('btnDir'), bRew = $('btnRew');
     let engShown = null;
     const engUI = () => { const ok = sim.liquidLeft() && !sim.done; bEng.classList.toggle('off', !ok); if (engShown !== sim.engineOn) { engShown = sim.engineOn; bEng.innerHTML = sim.engineOn ? RL.ICON.engStop : RL.ICON.engGo; } bEng.classList.toggle('on', sim.engineOn); };
     bEng.onclick = () => { RL._engClick = (RL._engClick || 0) + 1; if (!sim.lifted || !sim.liquidLeft() || sim.done) { A.tone(150, 0.15, 'square', 0.08); return; }
-      if (!sim.engineOn && sim.canDir()) saveCp('eng');   // v0.11：うちゅうで つける 直前を おぼえる
+      if (!sim.engineOn && sim.canDir()) saveCp('eng');   // v0.11：うちゅうで つける 直前を おぼえる（月の 地面ちかくは まにあう ときだけ）
       sim.setEngine(!sim.engineOn); engUI(); };
     // ---- v0.10 向きボタン：前へ ⇄ うしろへ（くうきの外だけ。いつも 同じ場所。つかえない ときは かくす） ----
     let dirShown = null;
@@ -296,7 +306,7 @@ RL.Flight2D = (function () {
       for (let i = 0; i < sim.si; i++) if (!stageReal[i]) stageReal[i] = now - 10000;
       sim.stacks.forEach(st => { if (st.sepT === null) delete sepReal[st.id]; else if (!st.withStage && !sepReal[st.id]) sepReal[st.id] = now - 10000; });
       rocket.querySelectorAll('.p').forEach(b => { b.style.transform = ''; b.style.opacity = ''; });
-      rocket.classList.toggle('legsOut', !!sim.legsOut);
+      rocket.classList.toggle('legsOut', !!sim.legsOut); rocket.classList.remove('landedOk');
     }
     rewCb = () => {
       if (!lastCp || ended) return;
@@ -351,6 +361,7 @@ RL.Flight2D = (function () {
         if (e.type === 'near') { saveCp('near'); view = 'auto';
           if (!saidNear) { saidNear = true; A.say('じめんが ちかいよ！ うしろむきで エンジン。ゆっくり おりよう。', null, { interrupt: true }); } }
         if (e.type === 'legs') { rocket.classList.add('legsOut'); [330, 440].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'square', 0.08), i * 120)); }
+        if (e.type === 'stage-sep') { fuelFlash = 1; }
         if (e.type === 'class' && e.cls === 'moonOrbit' && e.old !== 'moonOrbit') { [659, 880, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
           A.say('やった！ つきを まわる きどうに のったよ！' + (sim.isPowered() ? ' エンジンを とめよう。' : ''), null, { interrupt: true }); }
         if (e.type === 'class') {
@@ -379,24 +390,28 @@ RL.Flight2D = (function () {
       return { ry: startY - Math.min(Yh(h), room) };
     }
     // ---- v0.11 月の ちかくの画面：くろい 空・灰色の 地面・クレーター・とおくに 地球 ----
+    //  v0.11.1：ロケットの まんなかを MOON_Y に おき、のこっている 部分の 下はしから 高さぶん 下に 地面（高さ 0 で ぴったり つく）
     const craters = Array.from({ length: 12 }, (_, i) => ({ x: Math.random() * 1.6, y: 0.15 + Math.random() * 0.7, r: 8 + Math.random() * 26 }));
+    const MOON_Y = H * 0.42;
+    const bottomOff = () => box ? (box.r1 - box.cy) * cs : RL.CFG.ROWS * cs / 2;
     function moonView(h, rangeD) {
-      const cam = Math.max(0, Yh(h) - room), gy = ground + cam;
+      const gy = MOON_Y + bottomOff() + Yh(h);
       g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
-      g.fillStyle = '#fff'; stars.forEach(st => { g.beginPath(); g.arc(st.x, (st.y + cam * 0.3) % H, st.r, 0, 7); g.fill(); });
+      g.fillStyle = '#fff'; stars.forEach(st => { g.beginPath(); g.arc(st.x, st.y, st.r, 0, 7); g.fill(); });
       drawEarth(g, W * 0.78, H * 0.2, 26 * u, E.rot * sim.t, 29 * u);
       if (gy < H + 50) {
         const gr = g.createLinearGradient(0, gy, 0, H); gr.addColorStop(0, '#b9b9b4'); gr.addColorStop(1, '#6d6d6a');
         g.fillStyle = gr; g.fillRect(0, gy, W, Math.max(0, H - gy));
-        craters.forEach(c => { const x = (((c.x * W + rangeD * px * 1.4) % (W * 1.6)) + W * 1.6) % (W * 1.6) - W * 0.3, y = gy + c.y * Math.max(40, H - gy);
+        craters.forEach(c => { const x = (((c.x * W + rangeD * px * 1.4) % (W * 1.6)) + W * 1.6) % (W * 1.6) - W * 0.3, y = gy + 12 + c.y * Math.max(40, H - gy);
           if (y > H + 40) return; g.fillStyle = 'rgba(70,70,70,.45)'; g.beginPath(); g.ellipse(x, y, c.r * u * 1.6, c.r * u * 0.5, 0, 0, 7); g.fill();
           g.strokeStyle = 'rgba(230,230,225,.6)'; g.lineWidth = 2; g.beginPath(); g.ellipse(x, y + 2, c.r * u * 1.6, c.r * u * 0.5, 0, 0.1, 3); g.stroke(); });
         g.strokeStyle = '#dcdcd6'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke();
       }
-      return { ry: startY - Math.min(Yh(h), room) };
+      boomY = gy;
+      return { ty: MOON_Y };
     }
-    const cam = RL.Flight.rocketCam(cs); let box = null;
-    function rocketDOM(ry, burnAny, dtR, pip) {
+    const cam = RL.Flight.rocketCam(cs); let box = null, fuelFlash = 0, hideRocket = false;
+    function rocketDOM(ry, burnAny, dtR, pip, ty) {
       const tilt = -(Math.PI / 2 - (sim.visPt != null ? sim.visPt : sim.point));   // 東（地図で 左）へ かたむく（v0.10：見た目の 向き）
       const shake = burnAny ? 1.5 : 0;
       // のこっている部分の まんなかを 中心に かたむけ、画面の まんなかへ（切りはなしの あとも 全体が 見える）
@@ -404,7 +419,7 @@ RL.Flight2D = (function () {
         if (q.stackId) { const s = sim.stacks.find(x => x.id === q.stackId); if (s && !s.withStage) return s.sepT !== null; }
         return q.stage < sim.si; }, box);
       const natural = ry + box.cy * cs;
-      cam.place(rocket, box, tilt, W / 2 + (pip ? 0 : (Math.random() - 0.5) * shake), pip ? PIP_Y : sim.lifted ? Math.max(natural, H * 0.45) : natural, dtR);
+      cam.place(rocket, box, tilt, W / 2 + (pip ? 0 : (Math.random() - 0.5) * shake), pip ? PIP_Y : ty != null ? ty : sim.lifted ? Math.max(natural, H * 0.45) : natural, dtR);
       const now = performance.now();
       rocket.querySelectorAll('.flame').forEach(f => {
         let on;
@@ -524,29 +539,31 @@ RL.Flight2D = (function () {
         } else { rocket.style.display = 'none'; pipOff(); }
       } else {
         pipOff();
-        rocket.style.display = 'block';
+        rocket.style.display = hideRocket ? 'none' : 'block';   // v0.11.1：月で ぶつかったら ロケットは けして 💥 だけ
         const ph = Math.atan2(sim.y, sim.x) - (O.SITE + E.rot * sim.t), rangeD = Math.atan2(Math.sin(ph), Math.cos(ph)) * E.R;
         const onMoonNear = sim.body !== E && (sim.near || (sim.done && sim.done.type === 'landed'));
-        const { ry } = onMoonNear ? moonView(Math.max(0, h), Math.atan2(sim.y, sim.x) * sim.body.R) : nearView(sim.body === E ? h : 9999, rangeD);
-        rocketDOM(ry, sim.burnC || sim.boost, dtR);
+        boomY = null;
+        const { ry, ty } = onMoonNear ? moonView(Math.max(0, h), Math.atan2(sim.y, sim.x) * sim.body.R) : nearView(sim.body === E ? h : 9999, rangeD);
+        rocketDOM(ry, sim.burnC || sim.boost, dtR, false, ty);
         // 小さな地図（予測の線が 地球を ひとまわり するのが 見える）
         const sz = Math.min(W, H) * 0.34, VV = { r: Math.max(E.R * 1.3, V.ra), cx: V.cx, cy: V.cy, u: u * 0.6, stars: [] };
         drawMap(g, VV, sim, pr, trail, { x0: 12, y0: 86, w: sz, h: sz }, true, WD);
       }
       drawTop(g, W, sim, el > pre ? warp : 1, u);
       drawSpeed(g, W, H, sim, u);
-      if (a.fuel > 0) drawFuel(g, H, sim, u);
+      if (a.fuel > 0) { drawFuel(g, H, sim, u);
+        if (fuelFlash > 0) { g.fillStyle = `rgba(255,255,255,${fuelFlash * 0.7})`; g.fillRect(14 * u, H * 0.42, 30 * u, 130 * u); fuelFlash = Math.max(0, fuelFlash - dtR * 1.5); } }   // v0.11.1：満タンに もどる ぴかっ
       if (sim.near && sim.body !== E && !(sim.done && sim.done.type === 'landed')) drawLandMeter(g, H, sim, u);
       if (sepFlash > 0) { g.fillStyle = `rgba(255,255,255,${sepFlash / 60})`; g.fillRect(0, 0, W, H); sepFlash--; }
       // おわり
       if (sim.done && !ended) {
         ended = sim.done.type; endAt = ts;
-        if (['ground', 'hit'].includes(ended)) { A.tone(120, 0.5, 'sawtooth', 0.15); A.rumble(1); }
+        if (['ground', 'hit'].includes(ended)) { A.tone(120, 0.5, 'sawtooth', 0.15); A.rumble(1); if (boomY != null) { hideRocket = true; rocket.style.display = 'none'; } }
         if (ended === 'landed') { rocket.classList.add('legsOut', 'landedOk'); [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.22, 'triangle'), i * 120)); }
       }
       if (ended && ended !== 'abort') {
-        if (['ground', 'hit'].includes(ended)) { g.font = `${120 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('💥', W / 2, H / 2); }
-        if (ended === 'landed') { g.font = `${90 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('\u{1F9D1}\u200D\u{1F680}', W / 2, H * 0.22); }
+        if (['ground', 'hit'].includes(ended)) { g.font = `${120 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('💥', W / 2, boomY != null ? boomY - 40 * u : H / 2); }   // v0.11.1：月の 地面では 地面の ところで
+        if (ended === 'landed') { g.font = `${90 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('\u{1F9D1}\u200D\u{1F680}', W / 2, H * 0.15); }
         if (ts - endAt > (ended === 'landed' ? 3000 : 1300)) { cleanup(); onDone(sim); return; }
       }
       raf = requestAnimationFrame(frame);
