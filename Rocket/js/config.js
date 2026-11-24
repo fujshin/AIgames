@@ -1,13 +1,14 @@
 // 全体設定。数値の調整はここだけで行う
 window.RL = window.RL || {};
 RL.CFG = {
-  COLS: 5, ROWS: 9, VERSION: 'v0.11.1',
+  COLS: 5, ROWS: 9, VERSION: 'v0.12',
+  ROWS_FREE: 9, ROWS_ORBIT: 14, VIS_ROWS: 9,   // v0.12：うちゅうモードは 縦14行（見えるのは 9行。上下に うごかす）。ROWS は いまの モードの 行数
   PHYS: {
     G: 10,
     THRUST: 188,      // 地上用エンジン1つの力
     VTHRUST: 120,     // 宇宙用エンジン1つの力（くうきの外で）
     VAIR: 0.3,        // 宇宙用エンジンは くうきの中では この割合の力しか出ない
-    MASS: { engine: 1, vengine: 0.6, tank: 0.26, win: 0.22, nose: 0.11, fin: 0.15, booster: 0.2, ring: 0.3, leg: 0.06 }, // 燃料ぬきの重さ
+    MASS: { engine: 1, vengine: 0.6, tank: 0.26, win: 0.22, nose: 0.11, fin: 0.15, booster: 0.2, ring: 0.3, leg: 0.12, chute: 0.05 }, // 燃料ぬきの重さ
     FUEL_ENGINE: 0.6, FUEL_TANK: 2.3,
     BURN: 0.93,       // 地上用エンジン1つが使う燃料
     VBURN: 0.45,      // 宇宙用エンジン1つが使う燃料（ながもち）
@@ -45,15 +46,26 @@ RL.CFG = {
     SITE: Math.PI / 2, // 発射場の位置（rad。π/2 = 地図の上）。地球は 反時計まわり（北極の上から見た向き）なので、東＝地図の左
     SUB_DT: 0.02,      // エンジンを使う間・くうきの中の 計算のきざみ
     WARP_MAX: 3000,    // 早送りの上限
-    SLOW: { DV: 60, DV_NEAR: 6, LOOK: 20, MIN: 0.05, DV_MOON: 0.2, MIN_MOON: 0.002, LOOK_MOON: 10 },   // v0.8.2：うちゅうで 燃やす間の スローモーション（実時間1秒に ふえる速さ。NEAR＝軌道の種類が かわる 手前）
+    // v0.12：うちゅうで 燃やす間の スローモーション。DV＝ふだん 実時間1秒に ふえる速さの 上限
+    //   つぎの できごと（軌道の種類が かわる／月と であう）まで あと 何の 速さが 要るかを はかり（LOOK まで）、それが 実時間 AHEAD_SEC 秒で くるように する
+    //   いちばん おそくて 実時間1秒に DV_MIN。月と であう 予測が 出たら、エンジンを とめるまで DV_MIN の まま
+    SLOW: { DV: 60, AHEAD_SEC: 3, LOOK: 200, DV_MIN: 1.5, LOOK_MOON: 10 },
     ORBIT_DONE: 1.2,   // 燃料が もう ないとき：安定した軌道を この周回ぶん まわったら おしまい
     IDLE_TURNS: 12,    // v0.8.3：燃料が のこっていても、エンジンを つかわずに この周回ぶん まわったら おしまい（ずっと おわらない のを ふせぐ）
     MOON_WAIT: 4,      // v0.8.3：燃料が もう ないとき、月まで とどく軌道は 月と であうのを この周回ぶん まつ
     // v0.11 月着陸：下むき V_DOWN・よこ V_SIDE 以下で 着陸（HARD_K 倍までは「あぶなかった」）。着陸脚で LEG_K 倍
     //   NEAR：月の 地面ちかく（エンジンを 月の重力の TWR 倍まで しぼる・ちかくの画面・着陸メーター）
     //   V_HOVER：うしろへ で この速さより おそく なったら 真上に 浮く（ホバー）。SOFT：🦵 の 勲章
-    LAND: { V_DOWN: 4, V_SIDE: 3, HARD_K: 1.5, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 2000, TWR: 3,
-            V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5 },
+    //   v0.12：天体ごと（moon／earth）。地球は 地面に たいする 速さ（地面は まわっている）。MIN_ALT より たかく とんだ あとだけ 着陸に なる
+    LAND: {
+      moon:  { V_DOWN: 4, V_SIDE: 3, HARD_K: 1.5, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 2000, TWR: 3,
+               V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5 },
+      earth: { V_DOWN: 5, V_SIDE: 3, HARD_K: 1.5, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 600, TWR: 3,
+               V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5, MIN_ALT: 100 }
+    },
+    // v0.12 パラシュート：くうきの中で ひらく（OPEN_T 秒で ふくらむ）。くうきに たいする 速さが V_TEAR より はやいと やぶれる
+    //   空気の じゃまに CD × こ数 × ひらき具合 × 空気の こさ を たす
+    CHUTE: { CD: 2.2, V_TEAR: 80, OPEN_T: 1 },
     VAC_VBURN_K: 0.7,  // v0.11：うちゅうモードだけ、宇宙用エンジンは くうきの外で 燃料の へりが この割合（燃費が よい）。月着陸に 燃料が とどくように
     CHECKPOINT: { STAR_PENALTY: [0, 1, 1, 2] },   // ⏪ の 回数（0,1,2,3回〜）で へらす 星
     TURN_START: 20,    // この高さから かたむけ はじめる

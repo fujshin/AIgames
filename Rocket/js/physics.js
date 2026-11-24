@@ -6,12 +6,12 @@
 //  - くうき（ATMO_H まで、上ほどうすい）：空気のじゃま と はねの効果は くうきの中だけ
 RL.analyze = function (grid) {
   const cfg = RL.CFG, P = cfg.PHYS, cells = RL.layout(grid), SR = RL.stageRows(grid);
-  const n = { engine: 0, vengine: 0, tank: 0, fin: 0, win: 0, nose: 0, booster: 0, ring: 0, leg: 0 };
-  const stages = Array.from({ length: SR.n }, (_, i) => ({ i, dry: 0, fuel: 0, eng: 0, veng: 0, legL: 0, legR: 0, coreFin: { L: 0, R: 0, M: 0 } }));
+  const n = { engine: 0, vengine: 0, tank: 0, fin: 0, win: 0, nose: 0, booster: 0, ring: 0, leg: 0, chute: 0 };
+  const stages = Array.from({ length: SR.n }, (_, i) => ({ i, dry: 0, fuel: 0, eng: 0, veng: 0, legs: 0, chutes: 0, coreFin: { L: 0, R: 0, M: 0 } }));
   let mx = 0, total = 0;
   const stacks = [], stackAt = {};
   for (let c = 0; c < cfg.COLS; c++) {
-    let r = cfg.ROWS - 1;
+    let r = grid.length - 1;
     while (r >= 0) {
       const ok = rr => rr >= 0 && grid[rr][c] === 'booster' && !RL.isLooseBooster(grid, rr, c);
       if (ok(r)) { const r1 = r; while (ok(r)) r--; stacks.push({ c, r0: r + 1, r1, seg: r1 - r, fins: [], stage: SR.of(r1) }); }
@@ -22,7 +22,8 @@ RL.analyze = function (grid) {
   cells.forEach(q => {
     if (q.ctx.loose) return;            // くっついていない ブースターは ロケットに ふくめない
     n[q.k]++; q.stage = SR.of(q.r);
-    const fuel = RL.ENGINES[q.k] ? P.FUEL_ENGINE : q.k === 'tank' ? P.FUEL_TANK : q.k === 'booster' ? P.BOOST_FUEL : 0, w = P.MASS[q.k] + fuel;
+    const attM = (q.ctx.att || []).reduce((z, x) => z + (P.MASS[x] || 0), 0);   // v0.12 つけたものの おもさ
+    const fuel = RL.ENGINES[q.k] ? P.FUEL_ENGINE : q.k === 'tank' ? P.FUEL_TANK : q.k === 'booster' ? P.BOOST_FUEL : 0, w = P.MASS[q.k] + attM + fuel;
     mx += w * (q.c - (cfg.COLS - 1) / 2); total += w;
     if (q.k === 'booster') { const s = stacks[stackAt[q.r + ',' + q.c]]; q.stackId = s.id; q.stack = s; return; }
     if (q.k === 'fin') {
@@ -30,15 +31,16 @@ RL.analyze = function (grid) {
       if (si !== undefined) { const s = stacks[si]; s.fins.push(q.ctx.side); s.dry += P.MASS.fin; q.stackId = s.id; q.stack = s; return; }
       const f = stages[q.stage].coreFin; if (q.ctx.side === 'left') f.L++; else if (q.ctx.side === 'right') f.R++; else f.M++;
     }
-    const S = stages[q.stage]; S.dry += P.MASS[q.k]; S.fuel += fuel;
+    const S = stages[q.stage]; S.dry += P.MASS[q.k] + attM; S.fuel += fuel;
     if (q.k === 'engine') S.eng++; if (q.k === 'vengine') S.veng++;
-    if (q.k === 'leg') { if (q.ctx.side === 'left') S.legL++; else S.legR++; }   // v0.11 着陸脚（その段に つく。空気の じゃまは なし）
+    // v0.12 つけたもの：脚（左右1組）・パラシュート は その段に のこる
+    (q.ctx.att || []).forEach(x => { n[x]++; if (x === 'leg') S.legs++; if (x === 'chute') S.chutes++; });
   });
   // 段ごとの 空気のじゃま（のこっている段の 胴体の列の数と 先っぽ）
   const drag = stages.map((_, s) => {
     const cols = new Set(), noseCols = new Set();
     for (let c = 0; c < cfg.COLS; c++) {
-      let top = null; for (let r = 0; r < cfg.ROWS; r++) if (RL.BODY[grid[r][c]] && SR.of(r) >= s) { top = top || grid[r][c]; cols.add(c); }
+      let top = null; for (let r = 0; r < grid.length; r++) if (RL.BODY[grid[r][c]] && SR.of(r) >= s) { top = top || grid[r][c]; cols.add(c); }
       if (top === 'nose') noseCols.add(c);
     }
     return { cols: cols.size, noseCover: cols.size ? noseCols.size / cols.size : 0 };

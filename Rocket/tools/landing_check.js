@@ -6,14 +6,22 @@
 // 使い方: node tools/landing_check.js        1つだけ くわしく: ONE=1 W=125 node tools/landing_check.js
 const { RL, toGrid } = require('./lib2d.js');
 const T = n => Array(n).fill('tank'), B = n => Array(n).fill('booster');
-const LD = RL.CFG.ORBIT.LAND, SL = RL.CFG.ORBIT.SLOW, P = RL.CFG.PHYS;
+const LD = RL.CFG.ORBIT.LAND.moon, SL = RL.CFG.ORBIT.SLOW, P = RL.CFG.PHYS;
+// v0.12：着陸脚は エンジンに つける（'vengine+leg'）。ROWS=14 で うちゅうモードの 大きさ
+if (process.env.ROWS) RL.CFG.ROWS = +process.env.ROWS;
+if (process.env.VK) RL.CFG.ORBIT.VAC_VBURN_K = +process.env.VK;
 const cfgs = {
-  '2段 B5 E3T｜V2T+N 脚（見本）': [['fin'], [...B(5), 'leg'], ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], [...B(5), 'leg'], ['fin']],
+  '2段 B5 E3T｜V2T+N 脚（見本）': [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine+leg', ...T(2), 'nose'], B(5), ['fin']],
   '2段 B5 E3T｜V2T+N':      [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], B(5), ['fin']],
-  '2段 B4 E3T｜V2T+N 脚':   [['fin'], [...B(4), 'fin', 'leg'], ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], [...B(4), 'fin', 'leg'], ['fin']],
-  '2段 B4 E2T｜V3T+N 脚':   [['fin'], [...B(4), 'leg'], ['engine', ...T(2), 'ring', 'vengine', ...T(3), 'nose'], [...B(4), 'leg'], ['fin']],
+  '2段 B4 E2T｜V3T+N 脚':   [['fin'], B(4), ['engine', ...T(2), 'ring', 'vengine+leg', ...T(3), 'nose'], B(4), ['fin']],
   '2段 B5 E3T｜V3T+N（v0.10の見本）': [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine', ...T(3), 'nose'], B(5), ['fin']],
   '2段 E3T｜V2T+N（ブースターなし）': [[], ['fin'], ['engine', ...T(3), 'ring', 'vengine', ...T(2), 'nose'], ['fin'], []],
+  ...(RL.CFG.ROWS >= 14 ? {
+    '14行 見本 B6 E4T｜V脚3T+まど🪂+N': [['fin'], B(6), ['engine', ...T(4), 'ring', 'vengine+leg', ...T(3), 'win+chute', 'nose'], B(6), ['fin']],
+    '14行 2段 B8 E5T｜V4T+N 脚': [['fin'], B(8), ['engine', ...T(5), 'ring', 'vengine+leg', ...T(4), 'nose'], B(8), ['fin']],
+    '14行 3段 B6 E4T｜V2T｜V2T+N 脚': [['fin'], B(6), ['engine', ...T(4), 'ring', 'vengine', ...T(2), 'ring', 'vengine+leg', ...T(2), 'nose'], B(6), ['fin']],
+    '14行 2段 B6 E4T｜V3T+N 脚': [['fin'], B(6), ['engine', ...T(4), 'ring', 'vengine+leg', ...T(3), 'nose'], B(6), ['fin']],
+  } : {})
 };
 // のこりの Δv（いまの 段から 上。くうきの外）
 function dvLeft(s) { let dv = 0; const S = s.stages; for (let i = S.length - 1; i >= s.si; i--) {
@@ -57,7 +65,7 @@ if (require.main === module && !process.env.ONE) {
       const { s, info } = pilot(cfgs[k], w, false), d = s.done || {};
       return `w${w}:${d.type || '?'}${d.hard ? '(あぶない)' : ''}${d.type === 'landed' || d.type === 'hit' ? ` ↓${(d.vDown || 0).toFixed(1)}` : ''} 月でΔv${info.dvMoon != null ? Math.round(info.dvMoon) : '-'}→${Math.round(dvLeft(s))}`;
     });
-    console.log(k.padEnd(26), `脚${top.legL + top.legR}`, row.join('   '));
+    console.log(k.padEnd(26), `脚${top.legs}`, row.join('   '));
   }
 }
 if (require.main === module && process.env.ONE) { const k = Object.keys(cfgs)[+process.env.ONE - 1]; const r = pilot(cfgs[k], +process.env.W, true); console.log(r.why || r.s.done); }

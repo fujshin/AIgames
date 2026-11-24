@@ -10,6 +10,8 @@
 //           「うしろへ」で ほぼ とまったら、真上に むけて 浮く（ホバー）。エンジンを とめると おちる
 //           着陸脚（leg）が のこっていると ゆるされる 速さが LEG_K 倍
 //           snapshot()／restore()：ここからやり直し
+//  - v0.12：地球にも 着陸（いちど エンジンを とめた あとは くうきの中でも 向きを えらべる）。地面に たいする 速さで はんてい
+//           パラシュート（deployChute）。空中から 始める（opt.start）。スローモーションの 作り直し（slowWarp）
 RL.Orbit = (function () {
   const SP = RL.Space, D2R = Math.PI / 180;
   const sum = (arr, f) => arr.reduce((z, x) => z + f(x), 0);
@@ -37,11 +39,21 @@ RL.Orbit = (function () {
       maxAlt: 0, maxV: 0, done: null, cls: null, coastT: 0, stableT: 0, inSpace: false,
       thrust: 0, mass: 0, weight: 0, pitch: 90, point: Math.PI / 2, rho: 1, vpow: P.VAIR, burnC: false, boost: false,
       profile: opt.profile || 'side', dir: 'auto', stages: S, stacks: st, a,
-      dvUsed: 0, throttle: 1, near: false, hover: false, legsOut: false, fuelBase: 0
+      dvUsed: 0, throttle: 1, near: false, hover: false, legsOut: false, fuelBase: 0,
+      chute: null, chuteOpen: 0, encLock: false, kAir: 0
     };
     sim.vx = -earth.rot * sim.y; sim.vy = earth.rot * sim.x;    // 地面と いっしょに まわっている
     ignite(0, 0);
     { const f = fins(); sim.dev = devTarget(f); sim.devDir = Math.sign(f.L - f.R) || 1; }
+    // v0.12：空中から 始める（ミッション用）。{ h, vDown, vSide, fuel }：さいごの 段だけ、燃料は 割合
+    if (opt.start) {
+      const o = opt.start, r0 = earth.R + o.h, ux = Math.cos(site), uy = Math.sin(site);
+      sim.si = last; S.forEach((x, i) => { if (i < last) { x.sepT = 0; x.fuel = 0; } }); st.forEach(x => { x.sepT = 0; x.withStage = true; x.fuel = 0; });
+      S[last].fuel *= o.fuel == null ? 1 : o.fuel; S[last].ignT = 0;
+      const vt = earth.rot * r0 + (o.vSide || 0), vr = -(o.vDown || 0);
+      Object.assign(sim, { x: r0 * ux, y: r0 * uy, vx: vr * ux - vt * uy, vy: vr * uy + vt * ux, landed: false, lifted: true, engineOn: false, dir: 'pro', maxAlt: o.h, inSpace: o.h > earth.atmo });
+      sim.dev = 0; sim.point = Math.PI / 2; sim.pitch = 90;
+    }
     const hasProp = S.some(s => s.eng + s.veng > 0) || st.length;
     if (!hasProp) sim.done = { type: 'noEngine' };
     const mass = () => Math.max(0.1, sum(S.slice(sim.si), x => x.dry + x.fuel) + sum(st.filter(attached), x => x.dry + x.fuel));
@@ -52,13 +64,18 @@ RL.Orbit = (function () {
     const canBurnCore = () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0 && sim.t >= c.ignT; };
     const boosting = () => st.some(s => s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0);
     const inAirNow = () => !!sim.body.atmo && Math.hypot(sim.x, sim.y) - sim.body.R < sim.body.atmo;
-    const LD = O.LAND;
-    // v0.11：着陸脚（いまも のこっている 段の 脚）
-    const legs = () => { const l = { L: 0, R: 0 }; S.slice(sim.si).forEach(x => { l.L += x.legL || 0; l.R += x.legR || 0; }); l.n = l.L + l.R; return l; };
-    sim.legs = legs;
+    const LDof = b => O.LAND[b.id] || O.LAND.moon;   // v0.12：天体ごとの 着陸の きまり
+    // 着陸脚（いまも のこっている 段の 脚。1こ ＝ 左右1組）・パラシュートの 数
+    const legs = () => { const n = sum(S.slice(sim.si), x => x.legs || 0); return { n, L: n, R: n }; };
+    const chutes = () => sum(S.slice(sim.si), x => x.chutes || 0);
+    sim.legs = legs; sim.chutes = chutes;
+    // 地面（まわっている）に たいする 上むき・よこの 速さ
+    const relVel = () => { const b = sim.body, r = Math.hypot(sim.x, sim.y), ux = sim.x / r, uy = sim.y / r;
+      return { r, ux, uy, vr: sim.vx * ux + sim.vy * uy, vt: sim.vx * -uy + sim.vy * ux - b.rot * r }; };
+    sim.relVel = relVel;
     // v0.11：いまの 段の 液体エンジンの 全力（しぼる 前）
     const coreFull = rho => { const c = S[sim.si], vpow = P.VAIR + (1 - P.VAIR) * (1 - rho); return c.eng * P.THRUST + c.veng * P.VTHRUST * vpow; };
-    sim.fuelBase = coreFuel();   // v0.11.1：燃料メーターの 100%（切りはなしの たびに その ときの のこりを 100% に）
+    sim.fuelBase = coreFuel() || 1;   // v0.11.1：燃料メーターの 100%（切りはなしの たびに その ときの のこりを 100% に）
     sim.isPowered = () => (sim.engineOn && canBurnCore()) || boosting() || (S[sim.si].ignT > sim.t);
     // ---- ピッチ（地平線からの角度）を自動で きめる ----
     function guidance(h, r, vr, vt, aT, g) {
@@ -76,7 +93,9 @@ RL.Orbit = (function () {
     // v0.10：「前へ／うしろへ」の ときの おす向き（地平線からの 角度。いまの 天体から 見た 速さの 向き）
     function aimAngle() {
       const r = Math.hypot(sim.x, sim.y), ux = sim.x / r, uy = sim.y / r, ex = -uy, ey = ux;
-      const k = sim.dir === 'retro' ? -1 : 1, vx = sim.vx * k, vy = sim.vy * k;
+      // くうきの中は まわる 空気（地面）に たいする 速さ、そとは 天体に たいする 速さ（v0.12）
+      const b = sim.body, inA = b.atmo && r - b.R < b.atmo, wx = sim.vx + (inA ? b.rot * sim.y : 0), wy = sim.vy - (inA ? b.rot * sim.x : 0);
+      const k = sim.dir === 'retro' ? -1 : 1, vx = wx * k, vy = wy * k;
       if (Math.hypot(vx, vy) < 1e-6) return sim.point;
       return Math.atan2(vx * ux + vy * uy, vx * ex + vy * ey);
     }
@@ -110,21 +129,49 @@ RL.Orbit = (function () {
       sim.burnC = burnC; sim.boost = boost;
       return thrustC + thrustB;
     }
+    const CH = O.CHUTE;
+    // ---- v0.12 パラシュートを ひらく：'noChute' / 'noAir' / 'torn' / 'opening' ----
+    function deployChute() {
+      if (sim.chute === 'opening' || sim.chute === 'open') return sim.chute;
+      if (!chutes()) return 'noChute';
+      if (sim.chute === 'torn') return 'torn';
+      const b = sim.body, r = Math.hypot(sim.x, sim.y);
+      if (!b.atmo || r - b.R >= b.atmo) { emit('chute-noair'); return 'noAir'; }
+      const wv = Math.hypot(sim.vx + b.rot * sim.y, sim.vy - b.rot * sim.x);
+      if (wv > CH.V_TEAR) { sim.chute = 'torn'; emit('chute-torn', { v: wv }); return 'torn'; }
+      sim.chute = 'opening'; sim.chuteOpen = 0; sim.el = null; emit('chute-deploy'); return 'opening';
+    }
+    // ---- v0.12 いま エンジンを とめたら 何秒で 地面か・その ときの 下むきの 速さ（ひらいている パラシュートは ひらききった として） ----
+    function fallInfo() {
+      const b = sim.body, rv = relVel(), g = b.mu / (rv.r * rv.r); let h = rv.r - b.R, v = -rv.vr, t = 0;
+      if (!b.atmo) {
+        if (rv.vt * rv.vt / rv.r > g * 0.98 && rv.vr >= -0.5) return null;   // よこに はやく まわれる なら つかない
+        const vd = Math.sqrt(Math.max(0, v * v + 2 * g * Math.max(0, h))); return { t: (vd - v) / g, vDown: vd, vSide: Math.abs(rv.vt) };
+      }
+      const on = sim.chute === 'opening' || sim.chute === 'open', k = (sim.kAir0 || 0) + (on ? sim.kAirC || 0 : 0);
+      for (let i = 0; i < 4000 && h > 0; i++) {
+        const dt = Math.max(0.02, Math.min(0.5, h / Math.max(1, Math.abs(v)) / 20)), rho = Math.max(0, 1 - h / b.atmo);
+        v += (g - k * rho * v * Math.abs(v)) * dt; h -= v * dt; t += dt;
+      }
+      return h > 0 ? null : { t, vDown: Math.max(0, v), vSide: Math.abs(rv.vt) };
+    }
     // ---- 1きざみ（数値積分） ----
     function numStep(dt) {
       const b = sim.body, r = Math.hypot(sim.x, sim.y), ux = sim.x / r, uy = sim.y / r, ex = -uy, ey = ux;   // 上・横（反時計まわり＝東）
       const h = r - b.R, rho = rhoAt(h); sim.rho = rho;
       const g = b.mu / (r * r);
       const vr = sim.vx * ux + sim.vy * uy, vt = sim.vx * ex + sim.vy * ey;
-      // v0.11：月の 地面ちかく。全力は 月の重力の TWR 倍まで。うしろへ ＆ ほぼ とまった ＝ ホバー（真上に 浮く）
-      const m0 = mass(), near = !!LD && b !== earth && !b.atmo && h < LD.NEAR && sim.lifted;
+      // v0.11：地面ちかく。全力は 重力の TWR 倍まで。うしろへ ＆ ほぼ とまった ＝ ホバー（真上に 浮く）
+      //  v0.12：地球でも（いちど エンジンを とめて 向きを えらべる ように なってから）。よこの 速さは 地面に たいして
+      const LD = LDof(b), m0 = mass(), near = sim.near && sim.lifted && (b !== earth || sim.dir !== 'auto');
+      const vtg = vt - b.rot * r;
       let thr = 1, aimL = null; sim.hover = false;
       if (near) {
         const full = coreFull(rho);
         if (full > 0) {
           thr = Math.min(1, LD.TWR * m0 * g / full);
-          if (sim.dir === 'retro' && Math.hypot(vr, vt) < LD.V_HOVER) {
-            const ar = g - LD.HOVER_GAIN * vr, at = -LD.HOVER_GAIN * vt;
+          if (sim.dir === 'retro' && Math.hypot(vr, vtg) < LD.V_HOVER) {
+            const ar = g - LD.HOVER_GAIN * vr, at = -LD.HOVER_GAIN * vtg;
             thr = Math.min(thr, Math.hypot(Math.max(0, ar), at) * m0 / full); aimL = Math.atan2(Math.max(0, ar), at); sim.hover = true;
           }
         }
@@ -143,15 +190,24 @@ RL.Orbit = (function () {
       const f = fins();
       if (sim.lifted) sim.dev = Math.min(1.2, sim.dev + devTarget(f) * P.TILT_GROW * rho * dt);
       // v0.10：向きを えらんで いるときは（くうきの外だけ）、すすむ向き／その反対へ まっすぐ おす
-      const manual = sim.dir !== 'auto' && !rho && sim.lifted;
-      const pt = aimL != null && sim.engineOn ? aimL : manual ? aimAngle() : sim.pitch * D2R - sim.dev * sim.devDir; sim.point = pt;
+      const manual = sim.dir !== 'auto' && sim.lifted;   // v0.12：くうきの中でも（いちど とめた あと）
+      // v0.12：パラシュートで ぶらさがって いる（エンジン なし）ときは 真上を むく
+      const hang = (sim.chute === 'opening' || sim.chute === 'open') && !(sim.engineOn && sim.isPowered());
+      const pt = hang ? Math.PI / 2 : aimL != null && sim.engineOn ? aimL : manual ? aimAngle() : sim.pitch * D2R - sim.dev * sim.devDir; sim.point = pt;
       if (manual) sim.pitch = Math.max(-90, Math.min(90, pt / D2R));   // 自動に もどったときに とばないように
       const tx = Math.cos(pt) * ex + Math.sin(pt) * ux, ty = Math.cos(pt) * ey + Math.sin(pt) * uy;
       sim.tdx = tx; sim.tdy = ty;   // おす向き（スローモーションの判定に つかう）
       // 空気のじゃま（地面といっしょに まわる 空気に対して）
       const ax0 = -b.rot * sim.y, ay0 = b.rot * sim.x, wx = sim.vx - ax0, wy = sim.vy - ay0, wv = Math.hypot(wx, wy);
       const dg = a.drag[sim.si];
-      const cd = (P.DRAG * Math.max(1, dg.cols) * (1 - (1 - P.NOSE_DRAG) * dg.noseCover) + P.DRAG * P.BOOST_DRAG * st.filter(attached).length) * rho;
+      // v0.12 パラシュート：ふくらむ（OPEN_T 秒）。ひらいた ぶんだけ 空気の じゃまが ふえる
+      if (sim.chute === 'opening') { sim.chuteOpen = Math.min(1, sim.chuteOpen + dt / CH.OPEN_T); if (sim.chuteOpen >= 1) { sim.chute = 'open'; emit('chute-open'); } }
+      const nCh = (sim.chute === 'opening' || sim.chute === 'open') ? chutes() : 0;
+      if ((sim.chute === 'opening' || sim.chute === 'open') && !nCh) { sim.chute = null; sim.chuteOpen = 0; }   // パラシュートの 段を すてた
+      const cd0 = P.DRAG * Math.max(1, dg.cols) * (1 - (1 - P.NOSE_DRAG) * dg.noseCover) + P.DRAG * P.BOOST_DRAG * st.filter(attached).length;
+      const cdC = CH.CD * nCh * sim.chuteOpen;
+      sim.kAir0 = cd0 / Math.max(0.1, mass()); sim.kAirC = CH.CD * chutes() / Math.max(0.1, mass());   // 落ちる 時間の 見つもり用
+      const cd = (cd0 + cdC) * rho;
       let accx = T * tx / m - g * ux - cd * wv * wx / m, accy = T * ty / m - g * uy - cd * wv * wy / m;
       sim.thrust = T; sim.mass = m; sim.weight = m * g;
       if (m0 > m && T > 0) sim.dvUsed += T / m * dt;
@@ -212,19 +268,21 @@ RL.Orbit = (function () {
     }
     // v0.11：月の 地面に ふれた。速さで 着陸／衝突 を きめる
     function landJudge() {
-      const r = Math.hypot(sim.x, sim.y), ux = sim.x / r, uy = sim.y / r, ex = -uy, ey = ux;
-      const vDown = Math.max(0, -(sim.vx * ux + sim.vy * uy)), vSide = Math.abs(sim.vx * ex + sim.vy * ey);
+      const LD = LDof(sim.body), rv = relVel(), vDown = Math.max(0, -rv.vr), vSide = Math.abs(rv.vt);
       const l = legs(), k = l.n ? LD.LEG_K : 1, tilt = Math.abs(Math.atan2(Math.sin(sim.point - Math.PI / 2), Math.cos(sim.point - Math.PI / 2))) / D2R;
       const okV = vDown <= LD.V_DOWN * k && vSide <= LD.V_SIDE * k, hardV = vDown <= LD.V_DOWN * k * LD.HARD_K && vSide <= LD.V_SIDE * k * LD.HARD_K;
       const tiltOk = tilt <= (l.L && l.R ? LD.TILT_MAX_LEG : LD.TILT_MAX);
       return { vDown, vSide, tilt, legs: l.n, k, type: okV || hardV ? 'landed' : 'hit', hard: !okV || !tiltOk, soft: okV && vDown <= LD.SOFT && l.n > 0 };
     }
-    function touchMoon() {
-      const j = landJudge(), r = Math.hypot(sim.x, sim.y), ang = Math.atan2(sim.y, sim.x);
-      sim.x = sim.body.R * sim.x / r; sim.y = sim.body.R * sim.y / r;
+    // v0.12：地面に ふれた（月・地球）。地球は MIN_ALT より たかく とんだ あとだけ 着陸に なる
+    function touchGround() {
+      const b = sim.body, j = landJudge(), r = Math.hypot(sim.x, sim.y), ang = Math.atan2(sim.y, sim.x);
+      if (b === earth && (j.type !== 'landed' || sim.maxAlt < LDof(b).MIN_ALT)) j.type = 'ground';
+      sim.x = b.R * sim.x / r; sim.y = b.R * sim.y / r;
       sim.burnC = false; sim.boost = false; sim.thrust = 0;
-      if (j.type === 'landed') { sim.vx = 0; sim.vy = 0; sim.engineOn = false; sim.onMoon = { ang }; }
-      finish(Object.assign({ speed: Math.hypot(j.vDown, j.vSide), range: 0, ang }, j));
+      const chute = sim.chute === 'open' || sim.chute === 'opening';
+      if (j.type === 'landed') { sim.vx = -b.rot * sim.y; sim.vy = b.rot * sim.x; sim.engineOn = false; sim.onMoon = b === earth ? null : { ang }; }
+      finish(Object.assign({ speed: Math.hypot(j.vDown, j.vSide), range: b === earth ? downrange() : 0, ang, chute }, j));
     }
     function finish(d) {
       if (sim.done) return;
@@ -267,9 +325,14 @@ RL.Orbit = (function () {
         const r2 = Math.hypot(sim.x, sim.y), h2 = r2 - sim.body.R, sp = Math.hypot(sim.vx, sim.vy);
         if (sim.body === earth) sim.maxAlt = Math.max(sim.maxAlt, h2);
         sim.maxV = Math.max(sim.maxV, sp);
-        if (sim.lifted && h2 <= 1e-6) { if (sim.body === earth) finish({ type: 'ground', speed: sp, range: downrange() }); else touchMoon(); break; }
-        // v0.11：月の 地面ちかくに 入った／出た
-        const nearNow = !!LD && sim.body !== earth && h2 < LD.NEAR;
+        if (sim.lifted && h2 <= 1e-6) { touchGround(); break; }
+        // v0.11：地面ちかくに 入った／出た（v0.12：地球は たかく とんで おりて くる とき）
+        const LD = LDof(sim.body), vr2 = (sim.vx * sim.x + sim.vy * sim.y) / r2;
+        //  地球は「このまま だと 地面に つく」（近地点が くうきの 中）ときだけ。まわって いる ときは ちがう
+        const fallE = () => { const e2 = SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t); return e2.e < 1 && e2.rp < sim.body.R + sim.body.atmo * 0.5; };
+        const nearNow = sim.body !== earth ? h2 < LD.NEAR * (sim.near ? 1.15 : 1)
+          : sim.near ? h2 < LD.NEAR * 1.15 && fallE()
+          : h2 < LD.NEAR && sim.maxAlt > LD.MIN_ALT && vr2 < 0 && (sim.dir !== 'auto' || !sim.isPowered()) && fallE();
         if (nearNow !== sim.near) { sim.near = nearNow; emit(nearNow ? 'near' : 'far'); if (nearNow && !sim.legsOut && legs().n) { sim.legsOut = true; emit('legs'); } }
         if (!sim.inSpace && sim.body.atmo && h2 > sim.body.atmo) { sim.inSpace = true; emit('space'); }
         checkSOI();
@@ -308,6 +371,33 @@ RL.Orbit = (function () {
       const a0 = SP.toElements(sim.x, sim.y, sim.vx, sim.vy, mu, sim.t), a1 = SP.toElements(sim.x, sim.y, sim.vx + tx * L, sim.vy + ty * L, mu, sim.t);
       return clsOf(a0) !== clsOf(a1);
     }
+    // ---- v0.12 スローモーション：つぎの できごとまで あと 何の 速さが 要るか（いまの おす向きに 0〜LOOK）----
+    //  できごと ＝ 軌道の 種類が かわる、月と であう 予測に なる／ならなく なる
+    function eventKey(L) {
+      const b = sim.body, vx = sim.vx + (sim.tdx || 0) * L, vy = sim.vy + (sim.tdy || 0) * L;
+      const el = SP.toElements(sim.x, sim.y, vx, vy, b.mu, sim.t); let k = clsOf(el);
+      if (b === earth && (el.e >= 1 || el.ra > moon.orbitR * 0.5) && RL.Predict) k += RL.Predict.trace({ x: sim.x, y: sim.y, vx, vy }, b, sim.t, 80, 300).end.type === 'enc' ? '+enc' : '';
+      return k;
+    }
+    function nextEventDv() {
+      const SL = O.SLOW, k0 = eventKey(0), grid = [1, 3, 6, 12, 24, 48, 96, SL.LOOK];
+      if (/\+enc/.test(k0)) return { dv: 0, enc: true };
+      let lo = 0, hi = null;
+      for (const L of grid) { if (eventKey(L) !== k0) { hi = L; break; } lo = L; }
+      if (hi === null) return { dv: Infinity };
+      for (let i = 0; i < 6; i++) { const md = (lo + hi) / 2; if (eventKey(md) !== k0) hi = md; else lo = md; }
+      return { dv: hi };
+    }
+    function slowWarp() {
+      const SL = O.SLOW, acc = sim.thrust / Math.max(0.1, sim.mass);
+      if (!SL || acc <= 0) return 1;
+      const wMin = Math.min(1, SL.DV_MIN / acc);
+      if (sim.encLock) return wMin;                         // 月と であう 予測：とめるまで ゆっくり
+      const ev = nextEventDv();
+      if (ev.enc) { sim.encLock = true; return wMin; }
+      const base = Math.min(1, SL.DV / acc), evW = ev.dv / (acc * SL.AHEAD_SEC);
+      return Math.max(wMin, Math.min(base, evW));
+    }
     function elements() { return sim.el || (sim.lifted ? SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t) : null); }
     // 早送りの おすすめ倍率
     //  - くうきの中で 燃えている間・発射台の上は 実時間
@@ -320,17 +410,14 @@ RL.Orbit = (function () {
       const r = Math.hypot(sim.x, sim.y), v = Math.max(1, Math.hypot(sim.vx, sim.vy)), h = r - sim.body.R;
       if (sim.landed) return 1;
       if (sim.near) {
-        const vd = Math.max(0, -(sim.vx * sim.x + sim.vy * sim.y) / r), g = sim.body.mu / (r * r);
-        const tg = vd > 0.01 || g > 0 ? (-vd + Math.sqrt(vd * vd + 2 * g * Math.max(0, h))) / g : Infinity;   // 落ちるだけ なら 何秒で 地面か
+        const LD = LDof(sim.body), fi = fallInfo(), tg = fi ? fi.t : 60;   // 落ちるだけ なら 何秒で 地面か（くうき・パラシュートも）
         return Math.max(LD.WARP_MIN, Math.min(sim.isPowered() ? 1 : LD.WARP_MAX, tg / LD.SLOW_SEC));
       }
       if (sim.isPowered()) {
         if (!sim.lifted || (sim.body.atmo && h < sim.body.atmo)) return 1;
-        const acc = sim.thrust / Math.max(0.1, sim.mass), SL = O.SLOW;
-        if (!SL || acc <= 0) return 1;
-        if (sim.moonNear && SL.DV_MOON) return Math.max(SL.MIN_MOON || 0.004, Math.min(1, SL.DV_MOON / acc));
-        return Math.max(SL.MIN, Math.min(1, (critical() ? SL.DV_NEAR : SL.DV) / acc));
+        return slowWarp();
       }
+      sim.encLock = false;
       if (sim.body.atmo && h < sim.body.atmo) return Math.max(1, Math.min(8, h / 60));
       let wmax = r / v / (sim.body.parent ? 6 : 1.6);
       // 月に ちかづいたら ゆっくりに（であいを 見のがさない・見せる）
@@ -339,16 +426,18 @@ RL.Orbit = (function () {
       return Math.max(1, Math.min(O.WARP_MAX, wmax));
     }
     return Object.assign(sim, {
-      advance, elements, autoWarp, downrange, events: ev, alt, coreFuel, critical, aimAngle, landJudge,
+      advance, elements, autoWarp, downrange, events: ev, alt, coreFuel, critical, aimAngle, landJudge, deployChute, fallInfo, nextEventDv,
       setEngine(on) {
         if (sim.engineOn === on) return; sim.engineOn = on; sim.el = null;
         // v0.10：うちゅうで いちど とめたら、つぎからは「前へ」（自動の 打ち上げは おしまい）
-        if (!on && sim.dir === 'auto' && sim.lifted && !inAirNow()) sim.dir = 'pro';
+        //  v0.12：くうきの中で とめても 同じ（そのあと くうきの中でも 向きを えらべる）
+        if (!on && sim.dir === 'auto' && sim.lifted) sim.dir = 'pro';
+        if (!on) sim.encLock = false;
         emit(on ? 'engine-on' : 'engine-off');
       },
       // v0.10：向きを えらぶ（くうきの外だけ）。'pro' ⇄ 'retro'
-      setDir(d) { if (!sim.lifted || inAirNow() || !['pro', 'retro'].includes(d) || sim.dir === d) return false; sim.dir = d; sim.el = null; emit('dir', { dir: d }); return true; },
-      canDir: () => sim.lifted && !sim.done && !inAirNow(),
+      setDir(d) { if (!sim.canDir() || !['pro', 'retro'].includes(d) || sim.dir === d) return false; sim.dir = d; sim.el = null; emit('dir', { dir: d }); return true; },
+      canDir: () => sim.lifted && !sim.done && (sim.dir !== 'auto' || !inAirNow()),
       // v0.11：ここからやり直し。うごく 値を ぜんぶ コピー／もどす
       snapshot() {
         const o = {};

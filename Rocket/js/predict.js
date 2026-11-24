@@ -32,7 +32,7 @@ RL.Predict = (function () {
 
   // 1つの重力圏の中を たどる
   //  返す: { pts:[[x,y]], el, end:{ type:'hit'|'exit'|'enc'|'loop', t, st } }
-  function trace(st, body, t0, N) {
+  function trace(st, body, t0, N, MS) {
     N = N || 240;
     const el = SP.toElements(st.x, st.y, st.vx, st.vy, body.mu, t0), soi = body.soi;
     const child = (body.children || [])[0];
@@ -59,7 +59,7 @@ RL.Predict = (function () {
     // 月（子の天体）との であい：月の重力圏に入る 最初の時刻（時間で こまかく しらべる）
     let tEnc = Infinity;
     if (child && el.rp < child.orbitR + child.soi && (el.e >= 1 || el.ra > child.orbitR - child.soi)) {
-      const tA = t0, tB = Math.min(tEnd0, tHit), M = 900, inSoi = t => { const s = at(t), c = SP.bodyState(child, t); return Math.hypot(s.x - c.x, s.y - c.y) < child.soi; };
+      const tA = t0, tB = Math.min(tEnd0, tHit), M = MS || 900, inSoi = t => { const s = at(t), c = SP.bodyState(child, t); return Math.hypot(s.x - c.x, s.y - c.y) < child.soi; };
       let prevT = tA;
       for (let i = 1; i <= M; i++) { const t = tA + (tB - tA) * i / M;
         if (inSoi(t)) { let lo = prevT, hi = t; for (let k = 0; k < 40; k++) { const md = (lo + hi) / 2; if (inSoi(md)) hi = md; else lo = md; } tEnc = hi; break; }
@@ -116,18 +116,13 @@ RL.Predict = (function () {
     }
     return false;
   }
-  // v0.11：いま エンジンを とめたら、月の 地面に つく ときの 下むき・よこの 速さ（つかない なら null）
+  // v0.11：いま エンジンを とめたら、地面に つく ときの 下むき・よこの 速さ（つかない なら null）
+  //  v0.12：地球でも（くうき・パラシュートを ふくめる。physics2d の fallInfo）
   function touchdown(sim) {
-    const M = sim.bodies.moon; if (!sim.lifted || sim.body !== M) return null;
-    const r = Math.hypot(sim.x, sim.y), ux = sim.x / r, uy = sim.y / r, vr = sim.vx * ux + sim.vy * uy, vt = sim.vx * -uy + sim.vy * ux;
-    const g = M.mu / (r * r), h = r - M.R;
-    if (h < M.R * 0.2) {   // 地面ちかく：重力は 一定と みなす（速くて かんたん）
-      const vd = Math.sqrt(Math.max(0, vr * vr + 2 * g * h));
-      // よこに はやく まわれる（月を まわる 速さ）なら 地面に つかない
-      if (vt * vt / r > g * 0.98 && vr >= -0.5) return null;
-      return { vDown: vd, vSide: Math.abs(vt), t: (vr + vd) / g };
-    }
-    const tr = trace(sim, M, sim.t, 120);
+    const b = sim.body; if (!sim.lifted) return null;
+    const r = Math.hypot(sim.x, sim.y), h = r - b.R;
+    if (b.atmo || h < b.R * 0.2) return sim.fallInfo();
+    const tr = trace(sim, b, sim.t, 120);
     if (tr.end.type !== 'hit') return null;
     const e = tr.end.st, rr = Math.hypot(e.x, e.y), eu = [e.x / rr, e.y / rr];
     return { vDown: Math.max(0, -(e.vx * eu[0] + e.vy * eu[1])), vSide: Math.abs(e.vx * -eu[1] + e.vy * eu[0]), t: tr.end.t - sim.t };

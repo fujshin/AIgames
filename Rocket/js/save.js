@@ -17,7 +17,9 @@ RL.MEDALS = [
   { key: 'escape',    icon: '🌠' },   // ちきゅうから だっしゅつ
   { key: 'fleet',     icon: '🌐' },   // 衛星を SAVE.FLEET こ
   { key: 'moonLand',  icon: '\u{1F9D1}\u200D\u{1F680}' },   // v0.11 月に 着陸
-  { key: 'softLeg',   icon: '\u{1F9B5}' }    // v0.11 着陸脚で ふんわり（下むき SOFT 以下）
+  { key: 'softLeg',   icon: '\u{1F9B5}' },   // v0.11 着陸脚で ふんわり（下むき SOFT 以下）
+  { key: 'earthLand', icon: '\u{1F3E0}' },   // v0.12 地球に 着陸（エンジン）
+  { key: 'chuteLand', icon: '\u{1FA82}' }    // v0.12 パラシュートで 着陸
 ];
 RL.Save = (function () {
   const C = RL.CFG.SAVE;

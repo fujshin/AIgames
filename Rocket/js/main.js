@@ -4,7 +4,7 @@
   const $ = id => document.getElementById(id), A = RL.Audio, B = RL.Builder, SV = RL.Save, SC = RL.CFG.SAVE;
   const NAMES = ['じめん', 'くも', 'ひこうき', 'うちゅう', 'じんこうえいせい', 'つき', 'すいせい', 'どせい'];
   $('launch').innerHTML = RL.ICON.rocket; $('clear').innerHTML = RL.ICON.trash; $('home').innerHTML = RL.ICON.home;
-  $('mute').innerHTML = RL.ICON.soundOn; $('again').innerHTML = RL.ICON.again; $('resRew').innerHTML = RL.ICON.rewind; $('tutEar').innerHTML = RL.ICON.ear;
+  $('mute').innerHTML = RL.ICON.soundOn; $('again').innerHTML = RL.ICON.again; $('resRew').innerHTML = RL.ICON.rewind; $('scrUp').innerHTML = RL.ICON.up; $('scrDown').innerHTML = RL.ICON.down; $('btnChute').innerHTML = RL.ICON.chute; $('tutEar').innerHTML = RL.ICON.ear;
   $('btnTut').innerHTML = RL.ICON.learn; $('btnFree').innerHTML = RL.ICON.play; $('titleRocket').innerHTML = RL.ICON.rocket;
   $('btnOrbit').innerHTML = RL.ICON.orbit; $('btnMap').innerHTML = RL.ICON.map; $('btnDone').innerHTML = RL.ICON.flag;
   $('cfYes').innerHTML = RL.ICON.ok; $('cfNo').innerHTML = RL.ICON.ng; $('pkClose').innerHTML = RL.ICON.ng; $('mdClose').innerHTML = RL.ICON.ng;
@@ -15,7 +15,8 @@
   function setProfile(p) { profile = PROF.includes(p) ? p : 'side'; $('prof').innerHTML = PROF_ICON[profile]; }
   setProfile('side');
   $('prof').addEventListener('click', () => { setProfile(PROF[(PROF.indexOf(profile) + 1) % 3]); SV.update(p => { p.profile = profile; }); A.tone(660, 0.08); A.say(PROF_SAY[profile] + ' とぶよ。'); });
-  function setMode(m) { mode = m; document.body.classList.toggle('orbitMode', m === 'orbit'); }
+  // v0.12：モードごとに 行数と 組み立てを きりかえる（たかさ 9行＝p.grid／うちゅう 14行＝p.gridOrbit）
+  function setMode(m) { mode = m; document.body.classList.toggle('orbitMode', m === 'orbit'); loadModeGrid(); }
   // ---- 確認ダイアログ（絵 ＋ ⭕／❌）。文字は 使わない ----
   let cfYes = null;
   function confirmBox(iconHTML, say, yes, danger) {
@@ -32,11 +33,21 @@
   const clone = g => g.map(r => r.slice());
   const medalCount = p => (p ? Object.keys(p.medals).length : 0);
   // いまの こどもの きろくを 画面に もどす
+  const rowsOf = m => (m === 'orbit' ? RL.CFG.ROWS_ORBIT : RL.CFG.ROWS_FREE);
+  const gridKey = () => (mode === 'orbit' ? 'gridOrbit' : 'grid');
+  const validGrid = (g, n) => Array.isArray(g) && g.length === n && g.every(r => Array.isArray(r) && r.length === RL.CFG.COLS);
+  function loadModeGrid() {
+    const n = rowsOf(mode), p = SV.cur, blank = () => Array.from({ length: n }, () => Array(RL.CFG.COLS).fill(null));
+    let g = null;
+    if (p && validGrid(p[gridKey()], n)) g = clone(p[gridKey()]);
+    else if (p && mode === 'orbit' && validGrid(p.grid, RL.CFG.ROWS_FREE)) g = [...blank().slice(0, n - RL.CFG.ROWS_FREE), ...clone(p.grid)];   // 9行の 組み立てを 下に つめて つかう
+    g = g ? RL.migrateLegs(g) : blank();   // 前の セーブの「胴体の よこの 脚」は エンジンへ
+    B.setRows(n, g);
+  }
   function applyProfile() {
     const p = SV.cur; if (!p) return;
     B.state.best = p.best || 0; B.state.last = p.last == null ? null : p.last; B.ladder();
-    const ok = Array.isArray(p.grid) && p.grid.length === RL.CFG.ROWS && p.grid.every(r => Array.isArray(r) && r.length === RL.CFG.COLS);
-    B.setGrid(ok ? clone(p.grid) : emptyGrid());
+    loadModeGrid();
     setProfile(p.profile || 'side');
     renderWho();
   }
@@ -207,7 +218,13 @@
         say += ' えいせいは、これからも ずっと まわりつづけるよ。';
         info.push(`<span>▼${pe}</span>`, `<span class="h">▲${ap}</span>`); break; }
       case 'escape': icon = '🚀'; stars = 5; say = 'ちきゅうの じゅうりょくから だっしゅつ したよ！'; medals.push('escape'); info.push(`<span>🚀${Math.round(d.maxV)}</span>`); break;
-      case 'landed': {   // v0.11 月着陸
+      case 'landed': if (d.body === 'earth') {   // v0.12 地球に 着陸
+        icon = d.chute ? '\u{1FA82}' : '\u{1F3E0}'; stars = d.hard ? 4 : 5;
+        say = d.chute ? 'パラシュートで ちきゅうに ちゃくりく！ ふんわり おりられたね！' : 'ちきゅうに ちゃくりく！ エンジンで ゆっくり おりられたね！';
+        if (d.hard) say = 'ちきゅうに ちゃくりく！ ちょっと あぶなかったけど、やったね！';
+        medals.push(d.chute ? 'chuteLand' : 'earthLand'); if (d.soft) medals.push('softLeg');
+        info.push(`<span>\u2B07${(d.vDown || 0).toFixed(1)}</span>`, `<span class="h">\u{1F3E0}\u27A1${Math.round(d.range || 0)}</span>`); break;
+      } else {   // v0.11 月着陸
         icon = '\u{1F9D1}\u200D\u{1F680}'; stars = d.hard ? 4 : 5;
         say = d.hard ? 'つきに ちゃくりく！ ちょっと あぶなかったけど、やったね！' : 'つきに ちゃくりく！ やったね！ うちゅうひこうしが つきに たったよ！';
         medals.push('moonLand'); if (d.soft) { medals.push('softLeg'); say += ' あしで ふんわり おりられたね。'; }
@@ -255,7 +272,7 @@
     RL.emit('result', s);
   }
   // 組み立てを しまう（れんしゅう中は しまわない）
-  RL.on('change', d => { if (RL.Tutorial.active || !SV.cur) return; SV.update(p => { p.grid = clone(d.grid); }); });
+  RL.on('change', d => { if (RL.Tutorial.active || !SV.cur) return; const k = gridKey(); SV.update(p => { p[k] = clone(d.grid); }); });
   function closeResult() { $('result').style.display = 'none'; }
   RL.closeResult = closeResult;
   let tutRun = false;
@@ -285,10 +302,10 @@
   let vt = 0; $('ver').addEventListener('click', () => {
     if (++vt < 3) return; vt = 0;
     const R = RL.CFG.ROWS, g = Array.from({ length: R }, () => Array(RL.CFG.COLS).fill(null)), b = R - 1;
-    // v0.11：月に 着陸 できる 見本（2段＋ブースター5＋着陸脚。tools/landing_check.js で 確かめた）
-    ['engine', 'tank', 'tank', 'tank', 'ring', 'vengine', 'tank', 'tank', 'nose'].forEach((k, i) => g[b - i][2] = k);
-    for (let r = b; r >= b - 4; r--) { g[r][1] = 'booster'; g[r][3] = 'booster'; } g[b][0] = 'fin'; g[b][4] = 'fin';
-    g[b - 5][1] = 'leg'; g[b - 5][3] = 'leg';
+    // v0.12：月に 着陸 できる 見本（2段＋ブースター＋着陸脚。tools/landing_check.js で 確かめた）。うちゅうモード（14行）は 大きく、まどと パラシュートつき
+    const big = R >= 14, core = big ? ['engine', 'tank', 'tank', 'tank', 'tank', 'ring', 'vengine+leg', 'tank', 'tank', 'tank', 'win+chute', 'nose'] : ['engine', 'tank', 'tank', 'tank', 'ring', 'vengine+leg', 'tank', 'tank', 'nose'];
+    core.forEach((k, i) => g[b - i][2] = k);
+    for (let r = b; r >= b - (big ? 5 : 4); r--) { g[r][1] = 'booster'; g[r][3] = 'booster'; } g[b][0] = 'fin'; g[b][4] = 'fin';
     B.setGrid(g); RL.emit('change', { action: 'sample', grid: g });
   });
   B.init();

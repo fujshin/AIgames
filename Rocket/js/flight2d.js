@@ -11,6 +11,7 @@
 //  - v0.10：向きボタン（前へ／うしろへ＝ブレーキ）。くうきの外で つかえる。月で うしろへ ふかすと 月を まわれる
 //  - v0.11：月着陸（月の ちかくの画面・着陸メーター・着陸脚・ホバー）と ⏪ ここからやり直し
 //  - v0.11.1：月の ちかくの画面で ロケットの 下はしを 地面に あわせる。⏪ は 着陸の とちゅうでは「まにあう」ときだけ おぼえる。燃料メーターは 段ごとに 100%
+//  - v0.12：地球にも 着陸（地面ちかくでは 地面に ロケットの 下はしを あわせる）、🪂 パラシュート、14行の ロケット、スローモーションは physics2d へ
 RL.Flight2D = (function () {
   const $ = id => document.getElementById(id), SP = RL.Space, TAU = Math.PI * 2;
   const STAGE_NAME = ['だいいち', 'だいに', 'だいさん', 'だいよん', 'だいご'], IGN_NAME = ['', 'にだんめ', 'さんだんめ', 'よんだんめ', 'ごだんめ'];
@@ -202,7 +203,7 @@ RL.Flight2D = (function () {
   // ---- v0.11 着陸メーター（燃料メーターの となり）：いま エンジンを とめたら 地面に つく 速さ（▶）と、いまの 下むきの 速さ（白い 線）
   //   みどり＝着陸できる／きいろ＝あぶない／赤＝ぶつかる。着陸脚が あると みどりが ひろい
   function drawLandMeter(g, H, sim, u) {
-    const LD = RL.CFG.ORBIT.LAND, l = sim.legs(), ok = LD.V_DOWN * (l.n ? LD.LEG_K : 1), hard = ok * LD.HARD_K, MAX = hard * 2;
+    const LD = RL.CFG.ORBIT.LAND[sim.body.id] || RL.CFG.ORBIT.LAND.moon, l = sim.legs(), ok = LD.V_DOWN * (l.n ? LD.LEG_K : 1), hard = ok * LD.HARD_K, MAX = hard * 2;
     const gx = 54 * u, gw = 26 * u, gh = 130 * u, gy = H * 0.42, Yv = v => gy + gh * Math.min(1, Math.max(0, v) / MAX);   // 上が 0（おそい）
     g.save();
     [[0, ok, '#3bd65a'], [ok, hard, '#ffd54a'], [hard, MAX, '#ff4d4d']].forEach(([a, b, c]) => { g.fillStyle = c; g.fillRect(gx, Yv(a), gw, Yv(b) - Yv(a)); });
@@ -255,11 +256,11 @@ RL.Flight2D = (function () {
     const W = innerWidth, H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
     const u = Math.max(0.5, Math.min(1, Math.min(W, H * 0.75) / 700));
     $('count').style.fontSize = (130 * u) + 'px';
-    const sim = RL.Orbit.create(a, { profile }), O = RL.CFG.ORBIT, E = sim.bodies.earth, LD = O.LAND;
+    const sim = RL.Orbit.create(a, { profile }), O = RL.CFG.ORBIT, E = sim.bodies.earth, LDb = () => O.LAND[sim.body.id] || O.LAND.moon;
     // v0.9 ワールド：この 飛行が はじまった ときの ワールドの 時計と、まえに のこした もの
     const pf = RL.Save && RL.Save.cur, WD = pf ? { W0: pf.world.clock, items: pf.world.objs.map(o => ({ o, pts: o.kind === 'sat' ? RL.World.orbitPts(o) : null })) } : null;
     sim.worldStart = WD ? WD.W0 : 0;
-    const cs = Math.min(36, W / 12, H / 20), rocket = RL.Flight.buildRocket(a, cs), RW = RL.CFG.COLS * cs;
+    const cs = Math.min(36, W / 12, H / (RL.CFG.ROWS + 11)), rocket = RL.Flight.buildRocket(a, cs), RW = RL.CFG.COLS * cs;
     rocket.style.display = 'block';
     let lowest = 0; a.cells.forEach(q => { if (!q.ctx.loose) lowest = Math.max(lowest, q.r + 1); });
     const px = H / 180, L = 150, Yh = hh => px * L * Math.log(1 + Math.max(0, hh) / L);
@@ -282,12 +283,23 @@ RL.Flight2D = (function () {
     const canSave = () => {
       if (!sim.near) return true;
       const r = Math.hypot(sim.x, sim.y), h = r - sim.body.R, g2 = sim.body.mu / (r * r), vd = Math.max(0, -(sim.vx * sim.x + sim.vy * sim.y) / r);
-      return sim.liquidLeft() && h > 60 && vd * vd / (2 * (LD.TWR - 1) * g2) < h * 0.6;
+      return (sim.liquidLeft() || (sim.chutes() && !sim.chute)) && h > 60 && vd * vd / (2 * (LDb().TWR - 1) * g2) < h * 0.6;
     };
     const saveCp = tag => { if (!sim.lifted || sim.done || !canSave()) return; lastCp = { snap: sim.snapshot(), trailLen: trail.length, tag }; };
     Z.log = 0; Z.pins.clear();
     // ボタン（v0.8.3：🏁 は visibility で 出し入れ ＝ ほかの ボタンが うごかない）
-    const bEng = $('btnEng'), bMap = $('btnMap'), bDone = $('btnDone'), zctl = $('zctl'), bDir = $('btnDir'), bRew = $('btnRew');
+    const bEng = $('btnEng'), bMap = $('btnMap'), bDone = $('btnDone'), zctl = $('zctl'), bDir = $('btnDir'), bRew = $('btnRew'), bChute = $('btnChute');
+    // ---- v0.12 🪂 パラシュート：ある ときだけ 出る（出ていない 間も 場所は とっておく） ----
+    const chuteUI = () => { const has = sim.chutes() > 0 && sim.lifted && !ended; bChute.style.visibility = has ? 'visible' : 'hidden';
+      bChute.classList.toggle('used', sim.chute === 'opening' || sim.chute === 'open'); bChute.classList.toggle('torn', sim.chute === 'torn'); };
+    bChute.onclick = () => {
+      if (bChute.style.visibility === 'hidden' || sim.done) return;
+      const r = sim.deployChute();
+      if (r === 'torn' && sim.chute === 'torn' && !bChute._said) { bChute._said = true; }
+      if (r === 'opening' || r === 'open') return;
+      if (r === 'torn') A.tone(150, 0.15, 'square', 0.08);
+    };
+    bChute.style.visibility = 'hidden'; bChute._said = false;
     let engShown = null;
     const engUI = () => { const ok = sim.liquidLeft() && !sim.done; bEng.classList.toggle('off', !ok); if (engShown !== sim.engineOn) { engShown = sim.engineOn; bEng.innerHTML = sim.engineOn ? RL.ICON.engStop : RL.ICON.engGo; } bEng.classList.toggle('on', sim.engineOn); };
     bEng.onclick = () => { RL._engClick = (RL._engClick || 0) + 1; if (!sim.lifted || !sim.liquidLeft() || sim.done) { A.tone(150, 0.15, 'square', 0.08); return; }
@@ -307,6 +319,7 @@ RL.Flight2D = (function () {
       sim.stacks.forEach(st => { if (st.sepT === null) delete sepReal[st.id]; else if (!st.withStage && !sepReal[st.id]) sepReal[st.id] = now - 10000; });
       rocket.querySelectorAll('.p').forEach(b => { b.style.transform = ''; b.style.opacity = ''; });
       rocket.classList.toggle('legsOut', !!sim.legsOut); rocket.classList.remove('landedOk');
+      rocket.classList.toggle('chuteOut', !!sim.chute); hideRocket = false;
     }
     rewCb = () => {
       if (!lastCp || ended) return;
@@ -331,7 +344,7 @@ RL.Flight2D = (function () {
     }
     function pipOff() { wrap.style.transform = ''; wrap.style.clipPath = ''; bPip.style.display = 'none'; }
     bPip.onclick = () => { view = 'near'; A.tone(660, 0.06); };
-    const cleanup = () => { pipOff(); cancelAnimationFrame(raf); abortCb = null; rewCb = null; bDir.style.visibility = 'hidden'; bRew.style.visibility = 'hidden';
+    const cleanup = () => { pipOff(); cancelAnimationFrame(raf); abortCb = null; rewCb = null; bDir.style.visibility = 'hidden'; bRew.style.visibility = 'hidden'; bChute.style.visibility = 'hidden';
       lastRun = { cp: lastCp, trail: trail.slice(), rewinds }; Z.on = false; zctl.style.display = 'none'; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
     abortCb = () => { if (ended) return; ended = 'abort'; cleanup(); A.stop(); A.tone(300, 0.15, 'square', 0.1); onAbort && onAbort(sim); };
     if (!resume) {
@@ -359,7 +372,15 @@ RL.Flight2D = (function () {
         if (e.type === 'dir') { A.tone(e.dir === 'retro' ? 440 : 660, 0.1, 'triangle'); A.say(e.dir === 'retro' ? 'うしろむき。ブレーキ！' : 'まえむき。かそく！'); }
         // v0.11 月着陸
         if (e.type === 'near') { saveCp('near'); view = 'auto';
-          if (!saidNear) { saidNear = true; A.say('じめんが ちかいよ！ うしろむきで エンジン。ゆっくり おりよう。', null, { interrupt: true }); } }
+          if (!saidNear) { saidNear = true;
+            const ch = sim.chutes() && !sim.chute && sim.body === E;
+            A.say(ch ? 'じめんが ちかいよ！ パラシュートを ひらこう。 エンジンで おりても いいよ。' : 'じめんが ちかいよ！ うしろむきで エンジン。ゆっくり おりよう。', null, { interrupt: true });
+            if (ch) { bChute.classList.add('hint'); setTimeout(() => bChute.classList.remove('hint'), 4000); } } }
+        // v0.12 パラシュート
+        if (e.type === 'chute-deploy') { rocket.classList.add('chuteOut'); A.tone(500, 0.1, 'triangle'); setTimeout(() => A.tone(380, 0.25, 'sine', 0.15), 100); A.say('パラシュート、ひらけ！', null, { interrupt: true }); }
+        if (e.type === 'chute-open') { [523, 784].forEach((f, k) => setTimeout(() => A.tone(f, 0.15, 'triangle'), k * 90)); A.say('ひらいた！ ふんわり おりていくよ。', null, { interrupt: false }); }
+        if (e.type === 'chute-torn') { tornAt = performance.now(); rocket.classList.add('chuteOut'); A.tone(160, 0.35, 'sawtooth', 0.15); A.say('はやすぎて、パラシュートが やぶれちゃった！ もっと ゆっくりに なってから ひらこう。', null, { interrupt: true }); }
+        if (e.type === 'chute-noair') { A.tone(150, 0.15, 'square', 0.08); A.say(sim.body === E ? 'ここは くうきが ないから、パラシュートは ひらかないよ。 てんせんの したまで まってね。' : 'つきには くうきが ないから、パラシュートは ひらかないよ。 エンジンで おりよう。', null, { interrupt: true }); }
         if (e.type === 'legs') { rocket.classList.add('legsOut'); [330, 440].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'square', 0.08), i * 120)); }
         if (e.type === 'stage-sep') { fuelFlash = 1; }
         if (e.type === 'class' && e.cls === 'moonOrbit' && e.old !== 'moonOrbit') { [659, 880, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
@@ -374,8 +395,9 @@ RL.Flight2D = (function () {
         }
       });
     }
-    function nearView(h, rangeD) {
-      const cam = Math.max(0, Yh(h) - room), gy = ground + cam;
+    // v0.12：anchor＝地面ちかく（着陸）。ロケットを ANCH_Y に おき、のこっている 部分の 下はしから 高さぶん 下に 地面
+    function nearView(h, rangeD, anchor) {
+      const gy = anchor ? ANCH_Y + bottomOff() + Yh(h) : ground + Math.max(0, Yh(h) - room), cam = gy - ground;
       g.fillStyle = RL.Flight.skyAt(h); g.fillRect(0, 0, W, H);
       const sa = Math.min(1, Math.max(0, (h - 150) / 200));
       if (sa > 0) { g.fillStyle = `rgba(255,255,255,${sa})`; stars.forEach(st => { g.beginPath(); g.arc(st.x, (st.y + cam * 0.3) % H, st.r, 0, 7); g.fill(); }); }
@@ -387,12 +409,13 @@ RL.Flight2D = (function () {
       if (ay > -10 && ay < H + 10) { g.strokeStyle = 'rgba(160,220,255,.8)'; g.lineWidth = 4; g.setLineDash([16, 12]); g.beginPath(); g.moveTo(0, ay); g.lineTo(W, ay); g.stroke(); g.setLineDash([]); }
       if (gy < H + 50) { g.fillStyle = '#3c8f3c'; g.fillRect(0, gy, W, H);
         const padX = W / 2 - RW / 2 - 20 + rangeD * px * 1.4; g.fillStyle = '#ffcc00'; g.fillRect(padX, gy - 10, RW + 40, 10); }
+      if (anchor) { boomY = gy; return { ty: ANCH_Y }; }
       return { ry: startY - Math.min(Yh(h), room) };
     }
     // ---- v0.11 月の ちかくの画面：くろい 空・灰色の 地面・クレーター・とおくに 地球 ----
     //  v0.11.1：ロケットの まんなかを MOON_Y に おき、のこっている 部分の 下はしから 高さぶん 下に 地面（高さ 0 で ぴったり つく）
     const craters = Array.from({ length: 12 }, (_, i) => ({ x: Math.random() * 1.6, y: 0.15 + Math.random() * 0.7, r: 8 + Math.random() * 26 }));
-    const MOON_Y = H * 0.42;
+    const MOON_Y = H * 0.45, ANCH_Y = MOON_Y;
     const bottomOff = () => box ? (box.r1 - box.cy) * cs : RL.CFG.ROWS * cs / 2;
     function moonView(h, rangeD) {
       const gy = MOON_Y + bottomOff() + Yh(h);
@@ -410,7 +433,26 @@ RL.Flight2D = (function () {
       boomY = gy;
       return { ty: MOON_Y };
     }
-    const cam = RL.Flight.rocketCam(cs); let box = null, fuelFlash = 0, hideRocket = false;
+    const cam = RL.Flight.rocketCam(cs); let box = null, fuelFlash = 0, hideRocket = false, tornAt = 0;
+    // ---- v0.12 パラシュートの 絵（のこっている ロケットの 上） ----
+    function drawChute() {
+      if (!box || hideRocket) return;
+      const [tx, ty] = cam.toScreen(box.cx * cs, box.r0 * cs), k = sim.chute === 'open' ? 1 : sim.chute === 'opening' ? sim.chuteOpen : 0;
+      if (k > 0) {
+        const R = cs * (0.9 + 1.4 * k), cy = ty - cs * (1.2 + 2.2 * k), sw = Math.sin(performance.now() / 500) * 3;
+        g.save(); g.strokeStyle = '#2b3245'; g.lineWidth = 1.5;
+        [-1, -0.45, 0.45, 1].forEach(f => { g.beginPath(); g.moveTo(tx, ty); g.lineTo(tx + f * R + sw, cy); g.stroke(); });
+        g.fillStyle = '#ff7a1a'; g.beginPath(); g.moveTo(tx - R + sw, cy); g.quadraticCurveTo(tx + sw, cy - R * 1.25, tx + R + sw, cy); g.closePath(); g.fill();
+        g.fillStyle = '#fff'; g.beginPath(); g.moveTo(tx - R * 0.35 + sw, cy); g.quadraticCurveTo(tx + sw, cy - R * 1.2, tx + R * 0.35 + sw, cy); g.closePath(); g.fill();
+        g.strokeStyle = '#2b3245'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(tx - R + sw, cy); g.quadraticCurveTo(tx + sw, cy - R * 1.25, tx + R + sw, cy); g.stroke();
+        g.restore();
+      } else if (tornAt && performance.now() - tornAt < 1500) {   // やぶれた きれはし
+        const q = (performance.now() - tornAt) / 1500;
+        g.save(); g.globalAlpha = 1 - q; g.fillStyle = '#ff7a1a';
+        [[-1, 0.3], [0.6, 0.5], [-0.2, 0.9], [1.1, 0.2]].forEach(([a, b2]) => { g.save(); g.translate(tx + a * cs * (1 + q * 2), ty - cs * (1 + b2) + q * q * 80); g.rotate(q * 6 * a); g.fillRect(-8, -5, 16, 10); g.restore(); });
+        g.restore();
+      }
+    }
     function rocketDOM(ry, burnAny, dtR, pip, ty) {
       const tilt = -(Math.PI / 2 - (sim.visPt != null ? sim.visPt : sim.point));   // 東（地図で 左）へ かたむく（v0.10：見た目の 向き）
       const shake = burnAny ? 1.5 : 0;
@@ -481,13 +523,13 @@ RL.Flight2D = (function () {
       $('count').textContent = el < pre ? String(3 - Math.floor(el / 700)) : '';
       if (el > pre && !sim.done) {
         const target = sim.autoWarp();
-        warp = target > warp ? Math.min(target, warp * 1.06 + 0.05) : target;
+        // 上げるのは ゆっくり（v0.12：燃やしている 間は もっと ゆっくり ＝ 急に 速く ならない）
+        warp = target > warp ? Math.min(target, sim.isPowered() ? warp * 1.02 + 0.003 : warp * 1.06 + 0.05) : target;
         // v0.10：月と であう 予測に かわる すぐ手前は とても ゆっくり（とめる タイミングが 2秒くらい ある）
-        sim.moonNear = sim.isPowered() && sim.inSpace && sim.body === E && RL.Predict.moonNear(sim, O.SLOW.LOOK_MOON);
         if (warp < 0.9 && !saidSlow) { saidSlow = true; [700, 520].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'sine', 0.1), i * 120)); }   // はじめて 🐢 に なった
         sim.advance(dtR * warp);
       }
-      events(); engUI(); dirUI();
+      events(); engUI(); dirUI(); chuteUI();
       bRew.style.visibility = lastCp && sim.lifted && !ended ? 'visible' : 'hidden';
       // v0.10：見た目の 向きは 1秒に 4ラジアンまで（くるっと まわる）
       if (sim.visPt == null || !sim.lifted || sim.done) sim.visPt = sim.point;
@@ -500,8 +542,9 @@ RL.Flight2D = (function () {
           A.say(el.rp > sim.body.R ? 'いまだ！ うしろむきに して、エンジン！' : 'このままだと つきに ぶつかるよ！ うしろむきに して、エンジン！', null, { interrupt: true }); }
       }
       // v0.11：月の 地面ちかくの おしえ（はやすぎる／ういてる）
-      if (sim.near && !sim.done && sim.body.id === 'moon') {
-        const rr = Math.hypot(sim.x, sim.y), hh = rr - sim.body.R, gg = sim.body.mu / (rr * rr), vd = Math.max(0, -(sim.vx * sim.x + sim.vy * sim.y) / rr);
+      //  v0.12：地球でも。パラシュートが ひらいて いる ときは いわない
+      if (sim.near && !sim.done && !(sim.chute === 'open' || sim.chute === 'opening')) {
+        const LD = LDb(), rr = Math.hypot(sim.x, sim.y), hh = rr - sim.body.R, gg = sim.body.mu / (rr * rr), vd = Math.max(0, -(sim.vx * sim.x + sim.vy * sim.y) / rr);
         if (!sim.isPowered() && sim.liquidLeft() && vd * vd / (2 * (LD.TWR - 1) * gg) > hh * 0.8 && ts - warnAt > 4000) {
           const td = RL.Predict.touchdown(sim), ok = LD.V_DOWN * (sim.legs().n ? LD.LEG_K : 1);
           if (!td || td.vDown > ok) { warnAt = ts; A.say(sim.dir === 'retro' ? 'はやすぎる！ エンジン！' : 'はやすぎる！ うしろむきで エンジン！', null, { interrupt: true });
@@ -541,10 +584,12 @@ RL.Flight2D = (function () {
         pipOff();
         rocket.style.display = hideRocket ? 'none' : 'block';   // v0.11.1：月で ぶつかったら ロケットは けして 💥 だけ
         const ph = Math.atan2(sim.y, sim.x) - (O.SITE + E.rot * sim.t), rangeD = Math.atan2(Math.sin(ph), Math.cos(ph)) * E.R;
-        const onMoonNear = sim.body !== E && (sim.near || (sim.done && sim.done.type === 'landed'));
+        const onLand = sim.near || (sim.done && ['landed', 'hit', 'ground'].includes(sim.done.type) && boomY != null) || (sim.done && sim.done.type === 'landed');
         boomY = null;
-        const { ry, ty } = onMoonNear ? moonView(Math.max(0, h), Math.atan2(sim.y, sim.x) * sim.body.R) : nearView(sim.body === E ? h : 9999, rangeD);
+        const { ry, ty } = onLand && sim.body !== E ? moonView(Math.max(0, h), Math.atan2(sim.y, sim.x) * sim.body.R)
+          : nearView(sim.body === E ? Math.max(0, h) : 9999, rangeD, onLand && sim.body === E);
         rocketDOM(ry, sim.burnC || sim.boost, dtR, false, ty);
+        drawChute();
         // 小さな地図（予測の線が 地球を ひとまわり するのが 見える）
         const sz = Math.min(W, H) * 0.34, VV = { r: Math.max(E.R * 1.3, V.ra), cx: V.cx, cy: V.cy, u: u * 0.6, stars: [] };
         drawMap(g, VV, sim, pr, trail, { x0: 12, y0: 86, w: sz, h: sz }, true, WD);
@@ -553,7 +598,7 @@ RL.Flight2D = (function () {
       drawSpeed(g, W, H, sim, u);
       if (a.fuel > 0) { drawFuel(g, H, sim, u);
         if (fuelFlash > 0) { g.fillStyle = `rgba(255,255,255,${fuelFlash * 0.7})`; g.fillRect(14 * u, H * 0.42, 30 * u, 130 * u); fuelFlash = Math.max(0, fuelFlash - dtR * 1.5); } }   // v0.11.1：満タンに もどる ぴかっ
-      if (sim.near && sim.body !== E && !(sim.done && sim.done.type === 'landed')) drawLandMeter(g, H, sim, u);
+      if (sim.near && !sim.done) drawLandMeter(g, H, sim, u);
       if (sepFlash > 0) { g.fillStyle = `rgba(255,255,255,${sepFlash / 60})`; g.fillRect(0, 0, W, H); sepFlash--; }
       // おわり
       if (sim.done && !ended) {

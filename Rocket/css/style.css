@@ -167,3 +167,25 @@ body.tutorial #btnRew{display:none}
 #flyRocket.legsOut .legf{display:none}
 #flyRocket.legsOut .legd{display:inline}
 @media (max-width:420px){#btnRew{width:54px;height:54px;left:80px}}
+/* ===== v0.12 ===== */
+/* 組み立て画面の スクロール（うちゅうモード 14行・見えるのは 9行） */
+#gridView{overflow-y:auto;overflow-x:visible;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#gridView::-webkit-scrollbar{display:none}
+#scrollBtns{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;gap:12px}
+#scrollBtns button{width:40px;height:56px;border-radius:14px;border:2px solid #fff;background:rgba(40,60,130,.85);cursor:pointer;display:flex;align-items:center;justify-content:center}
+#scrollBtns svg{width:70%;height:70%}
+#ladder.overview{display:flex;align-items:center;justify-content:center;background:#0b1640;border:2px solid rgba(255,255,255,.25)}
+.ovBox{position:relative;background:rgba(255,255,255,.06);cursor:pointer}
+.ovCell{position:absolute;outline:1px solid rgba(0,0,0,.25)}
+.ovFrame{position:absolute;left:-3px;right:-3px;border:3px solid #ffd54a;border-radius:4px;pointer-events:none;transition:top .1s}
+/* つける部品：パレットの しるし、さいごの 段 以外は うすく */
+.pal.att{background:#1e4a3a}
+.pal.att.sel{background:#2a6a52}
+.cell.attLoose .legd,.cell.attLoose .legf,.cell.attLoose .chutePack{opacity:.35}
+#flyRocket .chutePack{display:inline}
+#flyRocket.chuteOut .chutePack{display:none}
+/* パラシュートの ボタン */
+#btnChute.used{opacity:.35}
+#btnChute.torn{background:rgba(120,40,40,.85)}
+#btnChute.hint{animation:pulse .5s infinite alternate}
+@media (max-width:420px){#palette{flex-wrap:wrap}.pal{flex:0 0 calc(20% - 5px)}#scrollBtns button{width:34px;height:48px}}
