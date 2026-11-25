@@ -231,6 +231,9 @@ body.mission #misBadge{display:block}
 #btnOrbit.locked svg{opacity:.45;filter:grayscale(.6)}
 /* v0.14.6 ミッションの 絵 */
 .misImg{display:block;pointer-events:none}
+/* v0.16 もえない エンジン（同じ 段で 下に 部品が ある） */
+.cell.buried svg{opacity:.45;filter:grayscale(.7)}
+.cell.buried::after{content:'\1F4A4';position:absolute;right:2px;top:0;font-size:min(22px,45%);pointer-events:none}
 .misCard{width:96px;height:112px}
 .misCard .ic .misImg{width:76px;height:76px}
 #misBadge .misImg{display:inline-block;width:30px;height:30px;vertical-align:middle}

@@ -24,10 +24,10 @@ RL.Flight = (function () {
         d.dataset.side = s.c < (RL.CFG.COLS - 1) / 2 ? -1 : 1;
         d.style.transformOrigin = `${(s.c - q.c + 0.5) * cs}px ${((s.r0 + s.r1 + 1) / 2 - q.r) * cs}px`;
       }
-      const isEng = RL.ENGINES[q.k], isB = q.k === 'booster' && !q.ctx.down;
+      const isEng = RL.ENGINES[q.k] && !q.buried, isB = q.k === 'booster' && !q.ctx.down;   // v0.16：埋もれた エンジンは ほのおなし
       if (isEng || isB) {
         const f = document.createElement('div'); f.className = 'flame'; f.innerHTML = q.k === 'vengine' ? RL.VFLAME : RL.FLAME;
-        f.dataset.kind = isB ? 'b' : q.k === 'vengine' ? 'v' : 'e'; f.dataset.stage = q.stage; if (isB) f.dataset.stackFlame = q.stackId;
+        f.dataset.kind = isB ? 'b' : q.k === 'vengine' ? 'v' : 'e'; f.dataset.stage = q.stage; if (isB || q.pod) f.dataset.stackFlame = q.stackId;   // v0.16 よこの 段の エンジンも その 段と いっしょ
         const fw = q.k === 'vengine' ? 0.95 : 0.76;
         Object.assign(f.style, { left: q.c * cs + cs * (1 - fw) / 2 + 'px', top: (q.r + 1) * cs - 4 + 'px', width: cs * fw + 'px', height: cs * 1.1 + 'px' });
         f.dataset.l = q.c * cs + cs * (1 - fw) / 2; f.dataset.w = cs * fw; f.dataset.h = cs * 1.1;

@@ -19,6 +19,25 @@ RL.analyze = function (grid) {
     }
   }
   stacks.forEach((s, i) => { s.id = s.c + ':' + s.r0; s.dry = s.seg * P.MASS.booster; s.fuel = s.seg * P.BOOST_FUEL; for (let r = s.r0; r <= s.r1; r++) stackAt[r + ',' + s.c] = i; });
+  // v0.16 よこの 段（液体の よこならび。うちゅうモードの 18行だけ）：まど の ない 列で、下が エンジン・リングを ふくまない 胴体の かたまり
+  //   まんなかの 列（まど の ある 列）の となり か、よこの 段の となり。1段目と いっしょに もえて、燃料が なくなったら その 列だけ はずれる
+  if (grid.length >= cfg.ROWS_ORBIT && cfg.PHYS.PODS !== false) {
+    const base = (r, c) => RL.base(grid[r][c]), body = (r, c) => c >= 0 && c < cfg.COLS && r >= 0 && r < grid.length && RL.BODY[grid[r][c]];
+    let center = -1; for (let c = 0; c < cfg.COLS; c++) for (let r = 0; r < grid.length; r++) if (base(r, c) === 'win') center = center < 0 ? c : center;
+    if (center < 0) { let bc = 0; for (let c = 0; c < cfg.COLS; c++) { const k = grid.reduce((z, row) => z + (RL.BODY[row[c]] ? 1 : 0), 0); if (k > bc || (k === bc && c === 2)) { bc = k; center = c; } } }
+    const runs = [], pods = [];
+    for (let c = 0; c < cfg.COLS; c++) { if (c === center) continue; let r = grid.length - 1;
+      while (r >= 0) { if (body(r, c)) { const r1 = r; while (body(r, c)) r--; runs.push({ c, r0: r + 1, r1 }); } else r--; } }
+    const okRun = q => RL.ENGINES[grid[q.r1][q.c]] && !Array.from({ length: q.r1 - q.r0 + 1 }, (_, i) => base(q.r0 + i, q.c)).includes('ring');
+    const touch = (q, c) => { for (let r = q.r0; r <= q.r1; r++) if (c === center ? body(r, c) : pods.some(p => p.c === c && r >= p.r0 && r <= p.r1)) return true; return false; };
+    let grew = true;
+    while (grew) { grew = false; runs.forEach(q => { if (q.pod || !okRun(q)) return; if (touch(q, q.c - 1) || touch(q, q.c + 1)) { q.pod = true; pods.push(q); grew = true; } }); }
+    pods.forEach(q => { const i = stacks.length; stacks.push({ c: q.c, r0: q.r0, r1: q.r1, seg: q.r1 - q.r0 + 1, fins: [], stage: SR.of(q.r1), pod: true, id: 'p' + q.c + ':' + q.r0, dry: 0, fuel: 0, eng: 0, veng: 0 });
+      for (let r = q.r0; r <= q.r1; r++) stackAt[r + ',' + q.c] = i; });
+  }
+  const podOf = q => { const i = stackAt[q.r + ',' + q.c]; return i !== undefined && stacks[i].pod ? stacks[i] : null; };
+  // v0.16：同じ 段の 中で すぐ 下に 胴体の 部品が ある エンジンは もえない（おもりだけ）
+  const buried = q => RL.CFG.PHYS.BURIED_ENGINE !== 'on' && RL.ENGINES[q.k] && q.r + 1 < grid.length && RL.BODY[grid[q.r + 1][q.c]] && SR.of(q.r + 1) === SR.of(q.r);
   cells.forEach(q => {
     if (q.ctx.loose) return;            // くっついていない ブースターは ロケットに ふくめない
     n[q.k]++; q.stage = SR.of(q.r);
@@ -26,13 +45,17 @@ RL.analyze = function (grid) {
     const fuel = RL.ENGINES[q.k] ? P.FUEL_ENGINE : q.k === 'tank' ? P.FUEL_TANK : q.k === 'booster' ? P.BOOST_FUEL : 0, w = P.MASS[q.k] + attM + fuel;
     mx += w * (q.c - (cfg.COLS - 1) / 2); total += w;
     if (q.k === 'booster') { const s = stacks[stackAt[q.r + ',' + q.c]]; q.stackId = s.id; q.stack = s; return; }
+    const pd = podOf(q);
+    if (pd) { q.stackId = pd.id; q.stack = pd; q.pod = true; pd.dry += P.MASS[q.k] + attM; pd.fuel += fuel;   // v0.16 よこの 段
+      if (q.r === pd.r1) { if (q.k === 'engine') pd.eng++; else pd.veng++; } else if (RL.ENGINES[q.k]) q.buried = true; return; }
     if (q.k === 'fin') {
       const si = q.ctx.attC == null ? undefined : stackAt[q.r + ',' + q.ctx.attC];
       if (si !== undefined) { const s = stacks[si]; s.fins.push(q.ctx.side); s.dry += P.MASS.fin; q.stackId = s.id; q.stack = s; return; }
       const f = stages[q.stage].coreFin; if (q.ctx.side === 'left') f.L++; else if (q.ctx.side === 'right') f.R++; else f.M++;
     }
     const S = stages[q.stage]; S.dry += P.MASS[q.k] + attM; S.fuel += fuel;
-    if (q.k === 'engine') S.eng++; if (q.k === 'vengine') S.veng++;
+    if (buried(q)) q.buried = true;
+    else { if (q.k === 'engine') S.eng++; if (q.k === 'vengine') S.veng++; }
     // v0.12 つけたもの：脚（左右1組）・パラシュート は その段に のこる
     (q.ctx.att || []).forEach(x => { n[x]++; if (x === 'leg') S.legs++; if (x === 'chute') S.chutes++; });
   });
@@ -40,7 +63,7 @@ RL.analyze = function (grid) {
   const drag = stages.map((_, s) => {
     const cols = new Set(), noseCols = new Set();
     for (let c = 0; c < cfg.COLS; c++) {
-      let top = null; for (let r = 0; r < grid.length; r++) if (RL.BODY[grid[r][c]] && SR.of(r) >= s) { top = top || grid[r][c]; cols.add(c); }
+      let top = null; for (let r = 0; r < grid.length; r++) if (RL.BODY[grid[r][c]] && SR.of(r) >= s && !(stackAt[r + ',' + c] !== undefined && stacks[stackAt[r + ',' + c]].pod)) { top = top || grid[r][c]; cols.add(c); }
       if (top === 'nose') noseCols.add(c);
     }
     return { cols: cols.size, noseCover: cols.size ? noseCols.size / cols.size : 0 };

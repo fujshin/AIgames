@@ -18,16 +18,27 @@ RL.Missions = (function () {
     // v0.14.1：よこ なら ちきゅうを まわれる、まっすぐ だと おちてくる（tools/mission_check.js）
     FIRST: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine', 'tank', 'win', 'nose'], ['fin'], []],
     // v0.14.1：ねんりょうが たりない（タンクを 1つ のせると まわれる）
-    SHORT: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine'], ['fin'], []]
+    SHORT: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine'], ['fin'], []],
+      // v0.16 4-7：まんなか だけでは つきの たかさに とどかない（よこに エンジン＋タンク2 を ならべると とどく。tools/mission_check.js）
+    // v0.17 5章：月着陸の 1段（宇宙用＋脚）、地上から 月に おりる 見本（landing_check の 見本）
+    LANDER: [[], [], ['vengine+leg', ...T(3), 'win', 'nose'], [], []],
+    MOONSHIP: [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine+leg', ...T(2), 'win', 'nose'], B(5), ['fin']],
+    POD0: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine', 'tank', 'win+chute', 'nose'], ['fin'], []]
   };
-  const ORB = ['low', 'high'];
-  const E = s => s.bodies.earth;
-  const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; };
+  const ORB = ['low', 'high'];  const E = s => s.bodies.earth, TAU = Math.PI * 2;
+const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; };
   const ap = s => { const el = s.elements(); return el ? (el.e < 1 ? el.ra - s.body.R : 1e9) : -1e9; };
   const off = s => !s.isPowered();
   const vr = s => (s.vx * s.x + s.vy * s.y) / Math.hypot(s.x, s.y);
   const onEarth = d => d.body === 'earth';
-  const ROWS = () => RL.CFG.ROWS_ORBIT;
+  const ROWS = () => RL.CFG.ROWS_ORBIT;  // v0.15：4章の 下しらべ（予測は おもい ので 6こまに 1回）
+  const LEAD = 0.06;   // ふかす しるしの すこし 手前で とめる（ふかす 間に すすむ ぶん）
+  const encNow = (s, c) => { c.encK = (c.encK || 0) + 1; if (c.encK % 6) return !!c.encLast; const e = M.encInfo(s); c.encLast = e.enc && !e.hit; if (c.encLast) c.enc = true; return c.encLast; };
+  const hitNow = s => M.encInfo(s).hit;
+  // v0.17：いまから エンジンで とまれる ぎりぎりの すこし 手前（月の 地面ちかく）
+  const brakeNow = s => { if (!s.near || s.surface) return false; const v = Math.max(0, -s.relVel().vr), a = Math.max(0.1, s.brakeAcc()); return v > 1 && v * v / (2 * a) > s.alt() * 0.85; };
+  // v0.16：よこの 段の 数（seg＝たての ながさ 以上）
+  const podCount = (g, seg) => { try { return RL.analyze(g).stacks.filter(x => x.pod && x.seg >= seg).length; } catch (e) { return 0; } };
   const sats = () => (RL.World && RL.Save && RL.Save.cur ? RL.World.counts(RL.Save.cur).sats : 0);
 
   const LIST = [
@@ -155,7 +166,8 @@ RL.Missions = (function () {
       say: ['ちきゅうを まわっている ところから、かえろう。', 'うしろむき に して エンジンを つけると、▼ が さがるよ。 ▼ が くうきに はいったら、エンジンを とめて まとう。', 'さいごは パラシュート！'],
       goal: { done: d => d.type === 'landed' && onEarth(d) }, star3: d => (d.maxG || 99) <= 20,
       hints: [{ t: () => true, say: 'むきの ボタンで うしろむき に しよう。', hl: 'btnDir' },
-              { t: (s, c) => c.dirs.has('retro'), say: 'エンジンを つけよう。', hl: 'btnEng' },                { t: (s, c) => (c.ui.btnEng || 0) >= 1 && pe(s) < (s.isPowered() ? 200 : 300), pause: s => (s.isPowered() ? 'btnEng' : null), say: 'ストップ！ ▼ が くうきに はいった！ エンジンは とめて おこう。', hl: 'btnEng' },
+              { t: (s, c) => c.dirs.has('retro'), say: 'エンジンを つけよう。', hl: 'btnEng' },
+                { t: (s, c) => (c.ui.btnEng || 0) >= 1 && pe(s) < (s.isPowered() ? 200 : 300), pause: s => (s.isPowered() ? 'btnEng' : null), say: 'ストップ！ ▼ が くうきに はいった！ エンジンは とめて おこう。', hl: 'btnEng' },
                 { t: s => s.near, pause: 'speech', say: 'くうきに はいったよ！ ひだりに メーターが でたね。 しろい さんかくが みどりの ところに くれば、ふんわり おりられるよ。 いまは あか。 くうきで ゆっくりに なるのを まとう。' },
                 { t: s => s.alt() < 300 && s.chutes() && !s.chute && Math.hypot(s.vx + E(s).rot * s.y, s.vy - E(s).rot * s.x) < 76, pause: 'btnChute', say: 'ゆっくりに なった！ いまだ、パラシュート！', hl: 'btnChute' }],
         help: 'うしろむき で すこし ふかして、▼ を くうきの なかに いれよう。' },
@@ -173,7 +185,8 @@ RL.Missions = (function () {
         { at: 'result', fail: (d, s) => d.type === 'ground' && !s.legs().n, hl: 'again',
           say: ['どーん！ エンジンで ゆっくりに なったけど、あしが ないと、それでも はやすぎて こわれちゃうんだ。', 'ロケットに あしを つけてみよう。 みどりの ボタンで もどってね。'] },
         { at: 'build', block: true, hl: 'pal:leg', cells: 'engine', say: ['あしを えらんで、ひかっている エンジンを タップ してね。 あしは エンジンに つける ぶひん だよ。'] },
-        { at: 'build', when: x => x.grid.some(r => r.some(k => RL.has(k, 'leg'))), hl: 'launch', say: ['あしが ついた！ はっしゃ ボタンで、さっきと おなじ ところから はじめるよ。'] },        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['あしの ついた ロケットで もういちど。 うしろむき に しよう。'] },
+        { at: 'build', when: x => x.grid.some(r => r.some(k => RL.has(k, 'leg'))), hl: 'launch', say: ['あしが ついた！ はっしゃ ボタンで、さっきと おなじ ところから はじめるよ。'] },
+                { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['あしの ついた ロケットで もういちど。 うしろむき に しよう。'] },
         { at: 'fly', when: s => s.near, pause: 'speech',
           say: ['メーターが でた！ みて、あしが あると、みどりの ところが ひろく なったね。', 'あしは じめんの ちかくで ひらいて、ふんわり うけとめて くれるよ。 すこし はやくても だいじょうぶ。'] },
         { at: 'fly', when: s => s.alt() < 520, hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'), say: ['いまだ！ ほのおの ボタンで ブレーキ！ さっきと おなじ ように つけた まま だよ。'] }
@@ -183,14 +196,149 @@ RL.Missions = (function () {
       say: ['エンジンを とめている ときは、はさみの ボタンで いらない だんを すてられるよ。 2かい おしてね。', 'うしろむき で ふかして ▼ を くうきに いれたら、したの だんを すてよう。', 'くうきに はいる まえに すてられたら ほしみっつ。'],
       goal: { done: (d, s, c) => d.type === 'landed' && onEarth(d) && d.chute && c.manualSep >= 1 }, star3: (d, s, c) => c.sepAlt > 300,
       hints: [{ t: () => true, say: 'むきの ボタンで うしろむき に しよう。', hl: 'btnDir' },
-              { t: (s, c) => c.dirs.has('retro'), say: 'エンジンを つけよう。', hl: 'btnEng' },                { t: (s, c) => (c.ui.btnEng || 0) >= 1 && pe(s) < (s.isPowered() ? 200 : 300), pause: s => (s.isPowered() ? 'btnEng' : null), say: 'ストップ！ ▼ が くうきに はいった！ エンジンは とめて おこう。', hl: 'btnEng' },
-                { t: (s, c) => off(s) && pe(s) < 250 && (s.canSep() || c.manualSep >= 1), say: 'はさみを 2かい おして、したの だんを すてよう！', hl: 'btnSep' },                { t: (s, c) => c.manualSep >= 1, pause: 'speech', say: 'したの だんを すてたね！ まど だけ だと、はやすぎて じめんに ぶつかっちゃう。 くうきで ゆっくりに なったら、パラシュートを ひらこう。' },
+              { t: (s, c) => c.dirs.has('retro'), say: 'エンジンを つけよう。', hl: 'btnEng' },
+                { t: (s, c) => (c.ui.btnEng || 0) >= 1 && pe(s) < (s.isPowered() ? 200 : 300), pause: s => (s.isPowered() ? 'btnEng' : null), say: 'ストップ！ ▼ が くうきに はいった！ エンジンは とめて おこう。', hl: 'btnEng' },
+                { t: (s, c) => off(s) && pe(s) < 250 && (s.canSep() || c.manualSep >= 1), say: 'はさみを 2かい おして、したの だんを すてよう！', hl: 'btnSep' },
+                { t: (s, c) => c.manualSep >= 1, pause: 'speech', say: 'したの だんを すてたね！ まど だけ だと、はやすぎて じめんに ぶつかっちゃう。 くうきで ゆっくりに なったら、パラシュートを ひらこう。' },
                 { t: s => s.near, pause: 'speech', say: 'くうきに はいったよ！ ひだりに メーターが でたね。 しろい さんかくが みどりの ところに くれば、ふんわり おりられるよ。 いまは あか。 くうきで ゆっくりに なるのを まとう。' },
-                { t: s => s.alt() < 300 && s.chutes() && !s.chute && Math.hypot(s.vx + E(s).rot * s.y, s.vy - E(s).rot * s.x) < 76, pause: 'btnChute', say: 'ゆっくりに なった！ いまだ、パラシュート！', hl: 'btnChute' }],
-      help: 'エンジンを とめてから、はさみを 2かい つづけて おしてね。' }
+                { t: s => s.alt() < 300 && s.chutes() && !s.chute && Math.hypot(s.vx + E(s).rot * s.y, s.vy - E(s).rot * s.x) < 76, pause: 'btnChute', say: 'ゆっくりに なった！ いまだ、パラシュート！', hl: 'btnChute' }],      help: 'エンジンを とめてから、はさみを 2かい つづけて おしてね。' },
+    // ===== 4章 つきへ（v0.15）=====
+    //  ひくい 軌道（または 月へ むかう とちゅう）から はじめる。地図で みる（map）。だいじな ところで とめて まつ（pause）
+    //  4-1 月の 高さまで（🌓）／4-2 ふかす ところ・であい（うすい月）／4-3 じゅうりょくけん（点線の まる）／4-4 月に とどけ（💥）／4-5 月を まわる（▼で うしろへ）／4-6 ぜんぶ じぶんで
+    { id: '4-1', ch: 4, quiet: true, map: true, icon: ['\u{1F313}', '\u{1F525}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 450 } }, dvRate: 25,
+      goal: { tick: s => s.cls === 'toMoon' && off(s) },
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['こんどは つきへ いこう！ ちずの まんなかが ちきゅう、とおくに いるのが つき だよ。', 'まずは、つきの たかさまで とどく せんを つくろう。'] },
+        { at: 'fly', hl: 'btnEng', pause: 'btnEng', say: ['すすむ むきに ふかすと、はんたいがわが どんどん たかく なるよ。 ほのおの ボタンを おして、つけた ままに してね。'] },
+        { at: 'fly', when: s => s.isPowered() && ap(s) > 20000, say: ['せんが のびて いくよ。 つきの たかさまで、もう すこし！'] },
+        { at: 'fly', when: s => s.cls === 'toMoon', hl: 'btnEng', pause: s => (s.isPowered() ? 'btnEng' : null), say: ['ストップ！ せんの はしが、つきの たかさまで とどいた！ ほのおの ボタンで とめよう。'] }
+      ], help: 'せんの はしが つきの まるい みちに とどいたら とめよう。' },
+    { id: '4-2', ch: 4, quiet: true, map: true, mark: true, icon: ['\u{1F3AF}', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 450, burnIn: 120 } }, dvRate: 25,
+      goal: { tick: (s, c) => c.enc && off(s) },
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['つきは うごいているから、いつ ふかしても あえる わけじゃ ないんだ。', 'ちずの ひかっている ほのおの しるしが、ふかす ところ。 ロケットが しるしに つくまで まとう。'] },
+        { at: 'fly', when: s => { const b = M.burnAng(s); return !!b && b.dt * Math.sqrt(E(s).mu / Math.pow(b.r, 3)) < LEAD; }, hl: 'btnEng', pause: 'btnEng',
+          say: ['しるしに ついた！ いったん ストップ。 ほのおの ボタンで ふかそう。 つけた まま だよ。'] },
+        { at: 'fly', when: (s, c) => s.isPowered() && encNow(s, c), hl: 'btnEng', pause: 'btnEng',
+          say: ['ストップ！ うすい つきが でたよ。 つきと であえる せんに なった！', 'ほのおの ボタンで とめよう。'] }
+      ], help: 'ひかっている しるしで ふかして、うすい つきが でたら とめよう。' },
+    { id: '4-3', ch: 4, quiet: true, map: true, icon: ['\u2B55', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.3 } },
+      goal: { tick: (s, c) => c.inMoon && s.body === E(s) },
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['いま、つきへ むかって とんでいる ところ。 うすい つきの まわりの てんせんの まるを みてね。', 'あの まるの なかは、つきに ひっぱられる ところ。 じゅうりょくけん って いうんだ。'] },
+        { at: 'fly', when: s => s.body === s.bodies.moon, pause: 'speech',
+          say: ['まるの なかに はいった！ ここからは つきに ひっぱられて、せんが まがるよ。', 'この せんは、つきの よこを とおりぬける せん。 みていてね。'] },
+        { at: 'fly', when: (s, c) => c.inMoon && s.body === E(s), pause: 'speech', say: ['まるの そとに でた！ つきの よこを とおりぬけたね。'] }
+      ] },
+    { id: '4-4', ch: 4, quiet: true, map: true, noSlow: true, icon: ['\u{1F4A5}', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.3 } }, dvRate: 3,
+      goal: { done: d => d.body === 'moon' && ['hit', 'landed', 'crash'].includes(d.type) },
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['こんどは つきに とどけよう！ いまの せんは、つきの よこを とおりすぎちゃう。', 'すこし とんで、とちゅうで せんを なおすよ。'] },
+        { at: 'fly', when: s => s.t > 700, hl: 'btnEng', pause: 'btnEng',
+          say: ['ここで ストップ。 すすむ むきに すこし ふかすと、せんが つきに ちかづくよ。', 'ほのおの ボタンを おして、せんを みていてね。'] },
+        { at: 'fly', when: s => s.isPowered() && hitNow(s), hl: 'btnEng', pause: 'btnEng',
+          say: ['ストップ！ どーんの しるしが でた。 つきに とどく せんだ！ ほのおの ボタンで とめよう。'] },
+        { at: 'fly', when: s => s.body === s.bodies.moon, say: ['つきの じゅうりょくけんに はいった。 つきが ちかづいて くるよ！'] }
+      ], help: 'まえむきに すこし ふかすと、つきに ちかづくよ。' },
+    { id: '4-5', ch: 4, quiet: true, map: true, icon: ['\u{1F504}', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.21 } }, dvRate: 6,
+      goal: { tick: s => s.body === s.bodies.moon && s.cls === 'moonOrbit' && off(s) },
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['こんどは つきを ぐるぐる まわろう。', 'いまの せんは、つきの すぐ よこを とおって、とおりすぎて しまう。 つきに いちばん ちかい ところで ブレーキを かけるよ。'] },
+        { at: 'fly', when: s => s.body === s.bodies.moon, hl: 'btnDir', pause: 'btnDir',
+          say: ['じゅうりょくけんに はいった！ いまの うちに、むきの ボタンで うしろむき に しよう。'] },
+        { at: 'fly', when: s => s.body === s.bodies.moon && vr(s) >= 0, hl: 'btnEng', pause: 'btnEng',
+          say: ['いまだ！ つきに いちばん ちかい ところ。 ほのおの ボタンで ブレーキ！ つけた まま だよ。'] },
+        { at: 'fly', when: s => s.body === s.bodies.moon && s.cls === 'moonOrbit', hl: 'btnEng', pause: s => (s.isPowered() ? 'btnEng' : null),
+          say: ['ストップ！ せんが つきを ぐるっと かこんだ！ ほのおの ボタンで とめよう。'] }
+      ], help: 'つきに いちばん ちかい ところで、うしろむきに ふかそう。' },
+    { id: '4-6', ch: 4, map: false, mark: true, icon: ['\u{1F6E0}\uFE0F', '\u{1F319}'], preset: 'ORBIT', allow: null, hl: 'launch',
+      say: ['さいごは、じぶんで つくった ロケットで、つきを まわろう！', 'ちきゅうを まわったら、ひかる しるしで ふかして、つきの ちかくで ブレーキ だよ。'],
+      goal: { tick: s => s.body === s.bodies.moon && s.cls === 'moonOrbit' && off(s) },
+      //  とぶ ときの あんないは 4-2・4-5 と おなじ（とめて まつ）
+      hints: [{ t: s => ORB.includes(s.cls) && off(s) && !!M.burnAng(s), say: 'ちきゅうを まわれた！ ちずの ひかる しるしまで まとう。', hl: 'btnMap' },
+              { t: s => { const b = M.burnAng(s); return off(s) && !!b && b.dt * Math.sqrt(E(s).mu / Math.pow(b.r, 3)) < LEAD; }, pause: 'btnEng', hl: 'btnEng', say: 'しるしに ついた！ ほのおの ボタンで ふかそう。' },
+              { t: (s, c) => s.isPowered() && encNow(s, c), pause: 'btnEng', hl: 'btnEng', say: 'うすい つきが でた！ とめよう。' },
+              { t: s => s.body === s.bodies.moon, pause: 'btnDir', hl: 'btnDir', say: 'じゅうりょくけんに はいった！ うしろむき に しよう。' },
+              { t: s => s.body === s.bodies.moon && vr(s) >= 0, pause: 'btnEng', hl: 'btnEng', say: 'いまだ！ ブレーキ！ つけた まま だよ。' },
+              { t: s => s.body === s.bodies.moon && s.cls === 'moonOrbit', pause: s => (s.isPowered() ? 'btnEng' : null), hl: 'btnEng', say: 'つきを かこんだ！ とめよう。' }],
+      help: 'まず ちきゅうを まわって、しるしで ふかそう。 つきに ちかづいたら うしろむき で ブレーキ。' },
+    // v0.16 よこに ならべよう：まんなか だけで つきの たかさを めざす → ねんりょうが たりない → よこに エンジン＋タンクを ならべる（よこの だん）→ からに なったら はずれて とどく
+    { id: '4-7', ch: 4, quiet: true, map: false, icon: ['\u{1F680}', '\u2194\uFE0F'], rocket: 'POD0', allow: ['engine', 'tank'], profile: 'side', need: 'side',
+      goal: { tick: (s, c) => s.cls === 'toMoon' && off(s) && c.podSep >= 1 }, star3: s => s.fuelRatio() >= 0.1,
+      steps: [
+        { at: 'build', hl: 'launch', say: ['この ロケットで、つきの たかさまで とどく せんを つくろう。 はっしゃ！'] },
+        { at: 'fly', when: s => ORB.includes(s.cls) && s.isPowered(), hl: 'btnEng', pause: 'btnEng', say: ['みどりの せんに なった！ ほのおの ボタンで いったん とめよう。'] },
+        { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnEng', pause: 'btnEng', say: ['こんどは つきの たかさまで ふかそう。 ほのおの ボタンを おして、つけた まま だよ。'] },
+        { at: 'fly', when: (s, c) => (c.ui.btnEng || 0) >= 2 && !s.liquidLeft() && s.cls !== 'toMoon', pause: 'speech', end: 'nofuel',
+          say: ['あっ、ねんりょうが なくなっちゃった。 つきの たかさまで とどかないね。'] },
+        { at: 'result', fail: d => d.type === 'nofuel', hl: 'again',
+          say: ['タンクを うえに つむと おもすぎる。 そんな ときは、よこに ならべよう！', 'みどりの ボタンで もどってね。'] },
+        { at: 'build', block: true, hl: 'pal:engine', cells: 'pod', say: ['エンジンを、まんなかの ロケットの よこに おこう。 ひかっている ところ、りょうがわ だよ。'] },
+        { at: 'build', block: true, when: x => podCount(x.grid, 1) >= 2, hl: 'pal:tank', cells: 'pod', say: ['よこの エンジンの うえに、タンクを ふたつずつ のせよう。 りょうがわ だよ。'] },
+        { at: 'build', when: x => podCount(x.grid, 3) >= 2, hl: 'launch', say: ['よこに ならんだ！ よこの だんは、からっぽに なったら はずれるよ。 はっしゃ！'] },
+        { at: 'fly', when: (s, c) => c.podSep >= 1, pause: 'speech', say: ['よこの だんが からっぽに なって、はずれたよ！ かるく なって、まんなかの ロケットが もっと とおくへ いけるんだ。'] },
+        { at: 'fly', when: s => ORB.includes(s.cls) && s.isPowered(), hl: 'btnEng', pause: 'btnEng', say: ['みどりの せんだ！ いったん とめよう。'] },
+        { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnEng', pause: 'btnEng', say: ['つきの たかさまで ふかそう！ つけた まま だよ。'] },
+        { at: 'fly', when: s => s.cls === 'toMoon', hl: 'btnEng', pause: s => (s.isPowered() ? 'btnEng' : null), say: ['とどいた！ ほのおの ボタンで とめよう。'] }
+      ], help: 'まんなかの ロケットの よこに、エンジンと タンクを ならべよう。' },
+    // ===== 5章 つきに おりる（v0.17）=====
+    //  月の まわり（または 月の 上）から はじめる。月の 地面ちかくは メーター（みどり＝ふんわり）。うしろむきの エンジンを つけた ままなら ゆっくり おりる（LAND.moon.HOVER_VD）
+    //  ブレーキの タイミングは とめて まつ（brakeNow：いまから エンジンで とまれる ぎりぎりの すこし 手前）
+    //  5-1 ▼を さげる／5-2 メーターと ブレーキ／5-3 🚩 と 🏁／5-4 よこの はやさを けす／5-5 ぜんぶ じぶんで
+    { id: '5-1', ch: 5, quiet: true, map: true, icon: ['\u{1F319}', '\u25BC'], rocket: 'LANDER', start: { moon: { pe: 2500, ap: 2700 } }, dvRate: 4,
+      goal: { tick: s => off(s) && s.body === s.bodies.moon && pe(s) <= 150 && pe(s) > -s.body.R * 0.5 },
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['つきを まわっているよ。 こんどは つきに おりる じゅんびを しよう。', 'ちきゅうと おなじ。 うしろむき に ふかすと、はんたいがわの ▼ が さがって、つきに ちかづくよ。'] },
+        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['むきの ボタンで、うしろむき に しよう。'] },
+        { at: 'fly', hl: 'btnEng', pause: 'btnEng', say: ['ほのおの ボタンで ふかそう。 ▼ の かずを みててね。 つけた まま だよ。'] },
+        { at: 'fly', when: s => s.isPowered() && pe(s) <= 150, hl: 'btnEng', pause: 'btnEng', say: ['ストップ！ ▼ が つきの すぐ ちかくまで さがった。 ほのおの ボタンで とめよう。'] }
+      ], help: 'うしろむき で ふかして、▼ が 150 より ちいさく なったら とめよう。' },
+    { id: '5-2', ch: 5, quiet: true, icon: ['\u{1F7E2}', '\u{1F525}'], rocket: 'LANDER', start: { moon: { h: 1500, vDown: 12 } },
+      goal: { tick: s => s.surface },
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['いま、つきの うえから おちていく ところ。 つきには くうきが ないから、パラシュートは つかえないよ。', 'エンジンで ブレーキを かけて おりよう。'] },
+        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['まず、むきの ボタンで うしろむき に しよう。'] },
+        { at: 'fly', when: s => s.near, pause: 'speech',
+          say: ['ひだりの メーターを みてね。 ちきゅうと おなじ、しろい さんかくが みどりの ところで つけば ふんわり。', 'いまは あか。 このままだと どーん、だね。 でも まだ ブレーキは はやいよ。 ぎりぎりまで まとう。'] },
+        { at: 'fly', when: s => brakeNow(s), hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'),
+          say: ['いまだ！ ほのおの ボタンで ブレーキ！ つけた まま だよ。 さんかくが みどりに うごくのを みてね。'] },
+        { at: 'fly', when: s => s.hover, say: ['みどりに なった！ そのまま ゆっくり おりていくよ。'] }
+      ], help: 'うしろむき に して、「いまだ」で エンジンを つけた まま に しよう。' },
+    { id: '5-3', ch: 5, quiet: true, icon: ['\u{1F6A9}', '\u{1F3C1}'], rocket: 'LANDER', start: { moon: { h: 400, vDown: 4 } },
+      goal: { done: (d, s) => d.type === 'landed' && d.body === 'moon' && s.flagPlanted }, star3: d => !!d.soft,
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['つきに おりて、はたを たてよう！'] },
+        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['うしろむき に しよう。'] },
+        { at: 'fly', when: s => brakeNow(s), hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'), say: ['いまだ！ ブレーキ！ つけた まま だよ。'] },
+        { at: 'fly', when: s => s.surface, hl: 'btnFlag', pause: 'btnFlag', say: ['ちゃくりく！ あたらしい ボタンが でたよ。 はたの ボタンで、つきに はたを たてよう！'] },
+        { at: 'fly', when: s => s.surface && s.flagPlanted, hl: 'btnDone', pause: 'btnDone', say: ['はたが たった！ たてた はたは、ワールドの つきに ずっと のこるよ。', 'ゴールの はたで おわろう。'] }
+      ], help: 'おりたら、はたの ボタン、ゴールの はた の じゅんばんで おそう。' },
+    { id: '5-4', ch: 5, quiet: true, map: true, icon: ['\u27A1\uFE0F', '\u2B07\uFE0F'], rocket: 'LANDER', start: { moon: { pe: 2200, ap: 2400 } }, dvRate: 12,
+      goal: { tick: s => s.surface }, star3: s => s.surfJ && s.surfJ.vDown <= RL.CFG.ORBIT.LAND.moon.SOFT * 2,
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['つきを まわっている ところから おりよう。', 'まわっている ときは、よこに すごく はやく うごいているんだ。 そのまま おりると、よこに すべって ころんじゃう。'] },
+        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['うしろむき に して、よこの はやさを けそう。 むきの ボタン！'] },
+        { at: 'fly', hl: 'btnEng', pause: 'btnEng', say: ['ほのおの ボタン！ つけた まま だよ。 したの スピードメーターが へっていくよ。'] },
+        { at: 'fly', when: s => s.isPowered() && Math.abs(s.relVel().vt) < 2, hl: 'btnEng', pause: 'btnEng',
+          say: ['ストップ！ よこの はやさが ほとんど なくなった。 ほのおの ボタンで とめよう。 こんどは まっすぐ したに おちていくよ。'] },
+        { at: 'fly', when: s => s.near, pause: 'speech', say: ['メーターが でた。 さっきと おなじ。 ぎりぎりまで まって ブレーキ だよ。'] },
+        { at: 'fly', when: s => brakeNow(s), hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'), say: ['いまだ！ ブレーキ！ つけた まま だよ。'] }
+      ], help: 'よこの はやさを けしてから、おちる とちゅうで ブレーキ。' },
+    { id: '5-5', ch: 5, mark: true, icon: ['\u{1F6E0}\uFE0F', '\u{1F9D1}\u200D\u{1F680}'], preset: 'MOONSHIP', allow: null, hl: 'launch',
+      say: ['さいごは、じぶんの ロケットで ちきゅうから つきに おりよう！', 'つきを まわったら、うしろむき で よこの はやさを けして、ブレーキで ふんわり。'],
+      goal: { tick: s => s.surface, done: d => d.type === 'landed' && d.body === 'moon' }, star3: (d, s) => !!(s.surfJ ? s.surfJ.soft : d && d.soft),
+      hints: [{ t: s => ORB.includes(s.cls) && off(s) && !!M.burnAng(s), say: 'ちきゅうを まわれた！ ちずの ひかる しるしまで まとう。', hl: 'btnMap' },
+              { t: s => { const b = M.burnAng(s); return off(s) && !!b && b.dt * Math.sqrt(E(s).mu / Math.pow(b.r, 3)) < LEAD; }, pause: 'btnEng', hl: 'btnEng', say: 'しるしに ついた！ ほのおの ボタンで ふかそう。' },
+              { t: (s, c) => s.isPowered() && encNow(s, c), pause: 'btnEng', hl: 'btnEng', say: 'うすい つきが でた！ とめよう。' },
+              { t: s => s.body === s.bodies.moon, pause: 'btnDir', hl: 'btnDir', say: 'じゅうりょくけんに はいった！ うしろむき に しよう。' },
+              { t: s => s.body === s.bodies.moon && vr(s) >= 0, pause: 'btnEng', hl: 'btnEng', say: 'いまだ！ ブレーキ！ つけた まま だよ。' },
+              { t: s => s.body === s.bodies.moon && s.cls === 'moonOrbit', pause: 'speech', say: 'つきを まわる せんに なった。 このまま つけて、よこの はやさを けすよ。' },
+              { t: s => s.body === s.bodies.moon && s.isPowered() && Math.abs(s.relVel().vt) < 2, pause: 'btnEng', hl: 'btnEng', say: 'よこの はやさが なくなった！ とめよう。' },
+              { t: s => s.near && off(s) && brakeNow(s), pause: 'btnEng', hl: 'btnEng', say: 'いまだ！ さいごの ブレーキ！ つけた まま だよ。' }],
+      help: 'しるしで ふかす → うすい つき → うしろむき で ブレーキ → よこの はやさを けす → さいごの ブレーキ。' }
   ];
   const CHAPTERS = [
-    { ch: 1, icon: '\u{1F680}', medal: 'mis1' }, { ch: 2, icon: '\u{1F6F0}\uFE0F', medal: 'mis2' }, { ch: 3, icon: '\u{1FA82}', medal: 'mis3' }
+    { ch: 1, icon: '\u{1F680}', medal: 'mis1' }, { ch: 2, icon: '\u{1F6F0}\uFE0F', medal: 'mis2' }, { ch: 3, icon: '\u{1FA82}', medal: 'mis3' }, { ch: 4, icon: '\u{1F319}', medal: 'mis4' }, { ch: 5, icon: '\u{1F9D1}\u200D\u{1F680}', medal: 'mis5' }
   ];
   const byId = id => LIST.find(m => m.id === id);
   const toGrid = cols => { const R = RL.CFG.ROWS_ORBIT, C = RL.CFG.COLS, g = Array.from({ length: R }, () => Array(C).fill(null)); (cols || []).forEach((s, c) => s.slice(0, R).forEach((k, i) => { g[R - 1 - i][c] = k; })); return g; };
@@ -224,6 +372,7 @@ RL.Missions = (function () {
   function hlCells(st) {
     if (!st || !st.cells || !RL.Builder) return;
     const g = RL.Builder.grid; let top = g.length; g.forEach((r, i) => { if (r[2] && i < top) top = i; });
+    if (st.cells === 'pod') { const w = []; [1, 3].forEach(cc => { for (let i = g.length - 1; i >= 0; i--) if (!g[i][cc]) { w.push([i, cc]); break; } }); if (w.length) RL.Builder.highlightCell(w); return; }   // v0.16
     if (st.cells === 'engine') { const w = []; g.forEach((r, i) => r.forEach((k, j) => { if (RL.ENGINES[k]) w.push([i, j]); })); if (w.length) RL.Builder.highlightCell(w); return; }   // v0.14.6
     if (st.cells === 'win') { const w = []; g.forEach((r, i) => r.forEach((k, j) => { if (RL.base(k) === 'win') w.push([i, j]); })); if (w.length) RL.Builder.highlightCell(w); return; }
     if (top > 0) RL.Builder.highlightCell([top - 1, 2]);
@@ -251,7 +400,7 @@ RL.Missions = (function () {
     if (need && profile !== need) return { need };
     c.prof = profile; c.profs.add(profile);
     c.topRow = 99; grid.forEach((row, r) => { if (row.some(Boolean)) c.topRow = Math.min(c.topRow, r); });
-    c.ui = {}; c.aborts = 0; c.dirs = new Set(['pro']); c.cleared = null; c.manualSep = 0; c.sepAlt = 0; c.mapT0 = 0; c.cutFuel = 0; c.siLaunch = c.si;
+    c.ui = {}; c.podSep = 0; c.enc = false; c.encLast = false; c.inMoon = false; c.aborts = 0; c.dirs = new Set(['pro']); c.cleared = null; c.manualSep = 0; c.sepAlt = 0; c.mapT0 = 0; c.cutFuel = 0; c.siLaunch = c.si;
     return true;
   };
   M.buildInfo = (grid, profile) => ({ grid, profile, tanks: countTanks(grid) });
@@ -259,14 +408,17 @@ RL.Missions = (function () {
   M.event = (e, s) => {
     const c = M.ctx; if (!c) return;
     if (e.type === 'dir') c.dirs.add(e.dir);
+    if (e.type === 'booster-sep' && e.pod) c.podSep = (c.podSep || 0) + 1;   // v0.16
     if (e.type === 'stage-sep' && e.manual) { c.manualSep++; if (!c.sepAlt) c.sepAlt = Math.hypot(s.x, s.y) - s.body.R; }
   };
   // 毎こま：あんない と、とちゅうで クリア（tick）。もどり値：あんない の ならび、クリアは { clear: true }
   M.tick = s => {
     const m = M.active, c = M.ctx; if (!m || !c || s.done) return [];
+    if (s.body === s.bodies.moon) c.inMoon = true;
     if (!c.cutFuel && ORB.includes(s.cls) && !s.isPowered() && (c.ui.btnEng || 0) >= 1) c.cutFuel = s.fuelRatio();
     const out = M.pollAll('fly', s);
-    if (!c.cleared && m.goal.tick && m.goal.tick(s, c)) { c.cleared = { s3: !!(m.star3 && m.star3(s, c)) }; out.push({ clear: true }); }
+    const held = out.some(h => h.pause && (typeof h.pause !== 'function' || h.pause(s)));   // v0.15：とめて 話す あんないの こまでは クリアに しない（声が かさならない）
+    if (!held && !c.cleared && m.goal.tick && m.goal.tick(s, c)) { c.cleared = { s3: !!(m.star3 && m.star3(s, c)) }; out.push({ clear: true }); }
     return out;
   };
   // しっぱいの あと：その 飛行の はじめの あんないに もどす
@@ -280,9 +432,27 @@ RL.Missions = (function () {
     const ok2 = m.rewOk || !(s.rewinds > 0);
     if (!clear) c.fails++;
     return { clear, stars: clear ? stars(m, ok2, s3) : 0 };
+  };  M.countTanks = countTanks;
+  // ---- v0.15 4章：月へ ----
+  //  ふかす ところ（ちきゅうを まわる 軌道の 上の 角度）：ここで まえに ふかすと、月の 高さに つく ときに 月が そこに いる
+  M.burnAng = s => {
+    if (!s || s.body !== E(s) || !s.lifted) return null;
+    const el = s.elements(); if (!el || el.e >= 0.3) return null;
+    const Mo = s.bodies.moon, mu = E(s).mu, r = Math.hypot(s.x, s.y), D = Mo.orbitR;
+    const th = Math.PI * Math.sqrt(Math.pow((r + D) / 2, 3) / mu), n = Math.sqrt(mu / (r * r * r)) * el.s, a0 = Math.atan2(s.y, s.x);
+    let tb = 0, phi = 0;
+    for (let i = 0; i < 8; i++) { phi = Mo.ph0 + Mo.w * (s.t + tb + th) - Math.PI; const d = ((phi - a0) * el.s % TAU + TAU) % TAU; tb = d / Math.abs(n); }
+    return { ang: phi, dt: tb, r };
   };
-  M.countTanks = countTanks;
-  // ひらいているか（ひとつ まえの ミッションが ⭐1 いじょう）
+  //  地図の しるし（ここで ふかす）：ちきゅうの まわりで、エンジンが とまっている ときだけ
+  M.mark = s => { const m = M.active; if (!m || !m.mark || s.isPowered() || !ORB.includes(s.cls)) return null;
+    const b = M.burnAng(s); return b ? { x: Math.cos(b.ang) * b.r, y: Math.sin(b.ang) * b.r, dt: b.dt } : null; };
+  //  月との であい（予測）：{ enc, close（月の 地面からの いちばん ちかい 高さ）, hit }
+  M.encInfo = s => {
+    const pr = RL.Predict.fromSim(s); if (!pr || !pr.enc) return { enc: false };
+    const R = s.bodies.moon.R; return { enc: true, hit: !!pr.enc.hitPt, close: pr.enc.peAlt };
+  };
+// ひらいているか（ひとつ まえの ミッションが ⭐1 いじょう）
   M.unlocked = (rec, id) => { const i = LIST.findIndex(m => m.id === id); return i <= 0 || (rec[LIST[i - 1].id] || 0) >= 1; };
   M.chapterDone = (rec, ch) => LIST.filter(m => m.ch === ch).every(m => (rec[m.id] || 0) >= 1);
   return M;

@@ -22,8 +22,9 @@ RL.MEDALS = [
   { key: 'chuteLand', icon: '\u{1FA82}' },   // v0.12 パラシュートで 着陸
   { key: 'moonRock',  icon: '\u{1FAA8}' },   // v0.13 月から かえってきた（つきの いし）
   { key: 'mis1',      icon: '\u{1F530}' },   // v0.14 ミッション 1章（うちゅうモードの きほん）
-  { key: 'mis2',      icon: '\u{1F4AB}' },   // v0.14 ミッション 2章（ちきゅうを まわる）
-  { key: 'mis3',      icon: '\u{1F3C5}' }    // v0.14 ミッション 3章（ちきゅうに かえる）
+  { key: 'mis2',      icon: '\u{1F4AB}' },   // v0.14 ミッション 2章（ちきゅうを まわる）  { key: 'mis3',      icon: '\u{1F3C5}' },   // v0.14 ミッション 3章（ちきゅうに かえる）
+  { key: 'mis4',      icon: '\u{1F396}\uFE0F' },   // v0.15 ミッション 4章（つきへ）
+  { key: 'mis5',      icon: '\u{1F947}' }   // v0.17 ミッション 5章（つきに おりる）
 ];
 RL.Save = (function () {
   const C = RL.CFG.SAVE;

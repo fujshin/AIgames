@@ -56,9 +56,23 @@ RL.Orbit = (function () {
       const o = opt.start, keep = Math.max(1, Math.min(last + 1, o.stages || 1)), s0 = last - keep + 1;
       sim.si = s0; S.forEach((x, i) => { if (i < s0) { x.sepT = 0; x.fuel = 0; } else x.fuel *= o.fuel == null ? 1 : o.fuel; }); st.forEach(x => { x.sepT = 0; x.withStage = true; x.fuel = 0; });
       S[s0].ignT = 0;
-      if (o.orbit) {
-        const rp = earth.R + o.orbit.pe, ra = earth.R + o.orbit.ap, sma = (rp + ra) / 2, r0 = o.orbit.at === 'ap' ? ra : rp, v = Math.sqrt(earth.mu * (2 / r0 - 1 / sma));
-        const ux = Math.cos(site), uy = Math.sin(site);
+        if (o.moon) {   // v0.17 5章：月の まわりから。{ pe, ap }＝月を まわる 軌道（▼の ところ）、{ h, vDown, vSide }＝月の 上から おちる
+          const mo = o.moon, ang = mo.ang != null ? mo.ang : Math.PI / 2;
+          let r0, vr = 0, vt;
+          if (mo.pe != null) { const rp = moon.R + mo.pe, ra = moon.R + mo.ap, sma = (rp + ra) / 2; r0 = rp; vt = Math.sqrt(moon.mu * (2 / rp - 1 / sma)); }
+          else { r0 = moon.R + mo.h; vr = -(mo.vDown || 0); vt = mo.vSide || 0; }
+          const ux = Math.cos(ang), uy = Math.sin(ang);
+          Object.assign(sim, { body: moon, x: r0 * ux, y: r0 * uy, vx: vr * ux - vt * uy, vy: vr * uy + vt * ux, landed: false, lifted: true, engineOn: false, dir: 'pro', maxAlt: 1000, inSpace: true });
+        } else if (o.orbit) {        // v0.15：ap: 'moon' ＝ 月の 高さまで。ang ＝ はじめの 位置（rad）。lead（rad）＝ 月へ むかう とちゅう：
+        //   月の 高さに つく ときに 月が ちょうど そこに いる 位置から はじめる（lead だけ ずらすと 月の 前／うしろを とおる）
+        //   burnIn（秒）＝ ひくい 軌道で、この 時間 あとに「ここで ふかす」ところに つく 位置から はじめる（4-1・4-2）
+        const D = moon.orbitR, apH = o.orbit.ap === 'moon' ? D - earth.R : o.orbit.ap;
+        const rp = earth.R + o.orbit.pe, ra = earth.R + apH, sma = (rp + ra) / 2, r0 = o.orbit.at === 'ap' ? ra : rp, v = Math.sqrt(earth.mu * (2 / r0 - 1 / sma));
+        let ang = o.orbit.ang != null ? o.orbit.ang : site;
+        if (o.orbit.lead != null) ang = moon.ph0 + moon.w * Math.PI * Math.sqrt(sma * sma * sma / earth.mu) - Math.PI + o.orbit.lead;
+        if (o.orbit.burnIn != null) { const th = Math.PI * Math.sqrt(Math.pow((rp + D) / 2, 3) / earth.mu), n = Math.sqrt(earth.mu / (rp * rp * rp));
+          ang = moon.ph0 + moon.w * (o.orbit.burnIn + th) - Math.PI - n * o.orbit.burnIn; }
+        const ux = Math.cos(ang), uy = Math.sin(ang);
         Object.assign(sim, { x: r0 * ux, y: r0 * uy, vx: -v * uy, vy: v * ux, landed: false, lifted: true, engineOn: false, dir: 'pro', maxAlt: r0 - earth.R, inSpace: true });
       } else {
         const r0 = earth.R + o.h, ux = Math.cos(site), uy = Math.sin(site);
@@ -73,9 +87,10 @@ RL.Orbit = (function () {
     const alt = () => Math.hypot(sim.x, sim.y) - sim.body.R;
     const rhoAt = h => sim.body.atmo ? Math.max(0, 1 - h / sim.body.atmo) : 0;
     const coreFuel = () => sum(S.slice(sim.si), y => y.fuel);
-    const liquidLeft = () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0; };
-    const canBurnCore = () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0 && sim.t >= c.ignT; };
-    const boosting = () => st.some(s => s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0);
+      const podLive = s => s.pod && s.sepT === null && s.stage >= sim.si && s.fuel > 0 && s.eng + s.veng > 0;   // v0.16 よこの 段
+      const liquidLeft = () => { const c = S[sim.si]; return (c.fuel > 0 && c.eng + c.veng > 0) || st.some(podLive); };
+      const canBurnCore = () => { const c = S[sim.si]; return (c.fuel > 0 && c.eng + c.veng > 0 && sim.t >= c.ignT) || st.some(s => podLive(s) && s.ignT !== null && sim.t >= s.ignT); };
+      const boosting = () => st.some(s => !s.pod && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0);
     const inAirNow = () => !!sim.body.atmo && Math.hypot(sim.x, sim.y) - sim.body.R < sim.body.atmo;
     const LDof = b => O.LAND[b.id] || O.LAND.moon;   // v0.12：天体ごとの 着陸の きまり
     // 着陸脚（いまも のこっている 段の 脚。1こ ＝ 左右1組）・パラシュートの 数
@@ -87,7 +102,8 @@ RL.Orbit = (function () {
       return { r, ux, uy, vr: sim.vx * ux + sim.vy * uy, vt: sim.vx * -uy + sim.vy * ux - b.rot * r }; };
     sim.relVel = relVel;
     // v0.11：いまの 段の 液体エンジンの 全力（しぼる 前）
-    const coreFull = rho => { const c = S[sim.si], vpow = P.VAIR + (1 - P.VAIR) * (1 - rho); return c.eng * P.THRUST + c.veng * P.VTHRUST * vpow; };
+      const coreFull = rho => { const c = S[sim.si], vpow = P.VAIR + (1 - P.VAIR) * (1 - rho), on = c.fuel > 0 ? 1 : 0;
+        return (c.eng * P.THRUST + c.veng * P.VTHRUST * vpow) * on + st.filter(podLive).reduce((z, s) => z + s.eng * P.THRUST + s.veng * P.VTHRUST * vpow, 0); };
     sim.fuelBase = coreFuel() || 1;   // v0.11.1：燃料メーターの 100%（切りはなしの たびに その ときの のこりを 100% に）
     sim.isPowered = () => (sim.engineOn && canBurnCore()) || boosting() || (S[sim.si].ignT > sim.t);
     // ---- ピッチ（地平線からの角度）を自動で きめる ----
@@ -121,17 +137,25 @@ RL.Orbit = (function () {
       const burnC = sim.engineOn && on && cur.fuel > 0 && cur.eng + cur.veng > 0;
       if (burnC) {
         thrustC = (cur.eng * P.THRUST + cur.veng * P.VTHRUST * vpow) * thr;
-        cur.fuel = Math.max(0, cur.fuel - (cur.eng * P.BURN + cur.veng * P.VBURN * (rho > 0 ? 1 : (O.VAC_VBURN_K || 1))) * thr * dt);   // v0.11：宇宙用エンジンは くうきの外で 燃費が よい（うちゅうモードだけ）
+          let use = (cur.eng * P.BURN + cur.veng * P.VBURN * (rho > 0 ? 1 : (O.VAC_VBURN_K || 1))) * thr * dt;   // v0.11：宇宙用エンジンは くうきの外で 燃費が よい（うちゅうモードだけ）
+          // v0.16 クロスフィード（設定で）：よこの 段が のこって いる 間は、まんなかの エンジンも よこの 段の 燃料を つかう
+          if (O.CROSSFEED) st.filter(s => s.pod && s.sepT === null && s.stage === sim.si && s.fuel > 0).sort((p, q) => p.fuel - q.fuel).forEach(s => { const k = Math.min(use, s.fuel); s.fuel -= k; use -= k; });
+          cur.fuel = Math.max(0, cur.fuel - use);
       }
-      let thrustB = 0, boost = false;
-      st.forEach(s => {
-        if (s.sepT !== null || s.ignT === null || sim.t < s.ignT) return;
-        if (s.fuel > 0) { s.fuel = Math.max(0, s.fuel - P.BOOST_BURN * Math.pow(s.seg, P.BOOST_SEG_POW || 0) * dt); thrustB += TbOf(s.seg); boost = true; }
+        let thrustB = 0, boost = false, podOn = false;
+        st.forEach(s => {
+          if (s.sepT !== null || s.ignT === null || sim.t < s.ignT) return;
+          if (s.pod) {   // v0.16 よこの 段：エンジンを とめれば とまる。燃料が なくなったら その 列だけ はずれる
+            if (s.fuel > 0 && sim.engineOn && s.eng + s.veng > 0) { thrustC += (s.eng * P.THRUST + s.veng * P.VTHRUST * vpow) * thr;
+              s.fuel = Math.max(0, s.fuel - (s.eng * P.BURN + s.veng * P.VBURN * (rho > 0 ? 1 : (O.VAC_VBURN_K || 1))) * thr * dt); podOn = true; }
+            if (s.fuel <= 1e-9 || (s.eng + s.veng === 0 && !(O.CROSSFEED && s.fuel > 0))) { s.sepT = sim.t; emit('booster-sep', { id: s.id, pod: true }); }
+            return; }
+          if (s.fuel > 0) { s.fuel = Math.max(0, s.fuel - P.BOOST_BURN * Math.pow(s.seg, P.BOOST_SEG_POW || 0) * dt); thrustB += TbOf(s.seg); boost = true; }
         if (s.fuel <= 0) { s.sepT = sim.t; emit('booster-sep', { id: s.id }); }
       });
       // 段の切りはなし：いまの段で 燃えるものが なくなったら（エンジンを止めただけでは 切りはなさない）
-      if (sim.si < last && on && !(cur.fuel > 0 && cur.eng + cur.veng > 0) && !st.some(s => s.stage === sim.si && s.sepT === null && s.fuel > 0)) doSep(rho, false);
-      sim.burnC = burnC; sim.boost = boost;
+        if (sim.si < last && on && !(cur.fuel > 0 && cur.eng + cur.veng > 0) && !st.some(s => s.stage === sim.si && s.sepT === null && s.fuel > 0 && (!s.pod || s.eng + s.veng > 0))) doSep(rho, false);
+        sim.burnC = burnC || podOn; sim.boost = boost;
       return thrustC + thrustB;
     }
     // 段を 切りはなす（自動・v0.13 ✂️ 手で）。manual：燃料が のこっていても。月面なら その段は 月に のこる
@@ -190,7 +214,8 @@ RL.Orbit = (function () {
         if (full > 0) {
           thr = Math.min(1, LD.TWR * m0 * g / full);
           // v0.14.6：HOVER_VD＞0（地球）は「ういて とまる」でなく「その 速さで ゆっくり おりる」。脚が あれば その まま 着陸できる
-          const vdT = LD.HOVER_VD || 0;
+          // v0.17：HOVER_K（月）＝たかい ところでは はやく（高さ×HOVER_K、HOVER_MAX まで）、地面の ちかくで HOVER_VD まで ゆっくり（重力の むだを へらす）
+          const vdT = LD.HOVER_K ? Math.max(LD.HOVER_VD, Math.min(LD.HOVER_MAX || 30, (r - b.R) * LD.HOVER_K)) : (LD.HOVER_VD || 0);
           if (sim.dir === 'retro' && (vdT > 0 ? -vr < vdT + LD.V_HOVER && Math.abs(vtg) < LD.V_HOVER : Math.hypot(vr, vtg) < LD.V_HOVER)) {
             const ar = g - LD.HOVER_GAIN * (vr + vdT), at = -LD.HOVER_GAIN * vtg;
             thr = Math.min(thr, Math.hypot(Math.max(0, ar), at) * m0 / full); aimL = Math.atan2(Math.max(0, ar), at); sim.hover = true;
@@ -447,7 +472,12 @@ RL.Orbit = (function () {
       return Math.max(wMin, Math.min(base, evW));
     }
     // のこりの Δv（くうきの外。ツール・表示用）
-    function dvRest() { let dv = 0; for (let i = last; i >= sim.si; i--) { const x = S[i]; if (!(x.eng + x.veng) || x.fuel <= 0) continue;
+      function dvRest() { let dv = 0;
+        // v0.16 よこの 段：さきに もえる（見つもり）
+        const pl = st.filter(podLive), above0 = sum(S.slice(sim.si), y => y.dry + y.fuel) + sum(st.filter(attached), y => y.dry + y.fuel);
+        if (pl.length) { const Tp = sum(pl, s => s.eng * P.THRUST + s.veng * P.VTHRUST), md = sum(pl, s => s.eng * P.BURN + s.veng * P.VBURN * (O.VAC_VBURN_K || 1)), f = sum(pl, s => s.fuel);
+          dv += Tp / md * Math.log(above0 / (above0 - f)); }
+        for (let i = last; i >= sim.si; i--) { const x = S[i]; if (!(x.eng + x.veng) || x.fuel <= 0) continue;
       const ve = (x.eng * P.THRUST + x.veng * P.VTHRUST) / (x.eng * P.BURN + x.veng * P.VBURN * (O.VAC_VBURN_K || 1)), above = S.slice(i + 1).reduce((z, y) => z + y.dry + y.fuel, 0);
       dv += ve * Math.log((above + x.dry + x.fuel) / (above + x.dry)); } return dv; }
     function elements() { return sim.el || (sim.lifted ? SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t) : null); }
@@ -470,9 +500,16 @@ RL.Orbit = (function () {
           if (!sim.chuteW) sim.chuteW = Math.max(1, Math.min(LD.WARP_MAX, alt() / Math.max(1, -relVel().vr) / (CH.SEC || 3)));
           return sim.chuteW; }
         // v0.14.7：地球で エンジンで ゆっくり おりる（HOVER_VD）ときも さくっと
-        if (sim.hover && LD.HOVER_VD && sim.isPowered()) { if (!sim.hoverW) sim.hoverW = Math.max(1, Math.min(LD.WARP_MAX, (alt() / LD.HOVER_VD) / (LD.HOVER_SEC || 4))); return sim.hoverW; }
+        if (sim.hover && LD.HOVER_VD && sim.isPowered()) { if (!sim.hoverW) { const h = alt(), h0 = LD.HOVER_K ? LD.HOVER_VD / LD.HOVER_K : h;   // v0.17：HOVER_K の とき 地面までの 時間 ＝ log の ぶん ＋ さいごの ぶん
+              const tg = LD.HOVER_K && h > h0 ? Math.log(h / h0) / LD.HOVER_K + h0 / LD.HOVER_VD : h / LD.HOVER_VD;
+              sim.hoverW = Math.max(1, Math.min(LD.WARP_MAX, tg / (LD.HOVER_SEC || 4))); } return sim.hoverW; }
+        // v0.15 noSlow（4-4 月に ぶつかる）も 同じ
         // v0.14.7：地球で おちている（エンジン なし）ときは 高さ ÷ 下むきの 速さ（くうきで よこに すべる 間も はやく）
+        if (sim.noSlow && !sim.isPowered()) { if (!sim.noSlowW) sim.noSlowW = Math.max(1, Math.min(LD.WARP_MAX, tg / 4)); return sim.noSlowW; }
         if (sim.body === earth && !sim.isPowered()) return Math.max(1, Math.min(LD.WARP_MAX, alt() / Math.max(1, -relVel().vr) / LD.SLOW_SEC));
+        // v0.17：うしろむきで ブレーキ中、まにあう（とまる きょりが 高さの 7わり より みじかい）なら BRAKE_WARP まで はやく
+        if (sim.isPowered() && LD.BRAKE_WARP && sim.dir === 'retro') { const v = Math.max(0, -relVel().vr), a = sim.brakeAcc ? sim.brakeAcc() : 0;
+          if (a > 0.1 && v * v / (2 * a) < alt() * 0.7) return LD.BRAKE_WARP; }
         return Math.max(LD.WARP_MIN, Math.min(sim.isPowered() ? 1 : LD.WARP_MAX, tg / LD.SLOW_SEC));
       }
       if (sim.isPowered()) {
@@ -481,7 +518,7 @@ RL.Orbit = (function () {
       }
       sim.encLock = false;
       if (sim.body.atmo && h < sim.body.atmo) return Math.max(1, Math.min(8, h / 60));
-      let wmax = r / v / (sim.body.parent ? 6 : 1.6);
+      let wmax = r / v / (sim.body.parent ? (O.MOON_WARP_K || 6) : 1.6);   // v0.15 MOON_WARP_K：月の 重力圏の 中の 早送り（小さい ほど はやい）
       // 月に ちかづいたら ゆっくりに（であいを 見のがさない・見せる）
       sim.body.children.forEach(c => { const cs = SP.bodyState(c, sim.t), d = Math.hypot(sim.x - cs.x, sim.y - cs.y) - c.soi, rv = Math.max(1, Math.hypot(sim.vx - cs.vx, sim.vy - cs.vy));
         if (d > 0) wmax = Math.min(wmax, Math.max(20, d / rv / 1.2)); });

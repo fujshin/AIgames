@@ -2,7 +2,7 @@
 //  v0.12：つける部品（脚→エンジン、パラシュート→まど）。うちゅうモードは 縦14行で、見えるのは 9行（▲▼・指で 上下に うごかす）
 RL.Builder = (function () {
   const $ = id => document.getElementById(id);
-  let grid, sel = 'engine', allowed = null, gridLocked = false, hlCells = [], cs0 = 30;
+  let saidBuried = false, grid, sel = 'engine', allowed = null, gridLocked = false, hlCells = [], cs0 = 30;
   const S = { best: 0, last: null };
   const empty = () => Array.from({ length: RL.CFG.ROWS }, () => Array(RL.CFG.COLS).fill(null));
   const VIS = () => Math.min(RL.CFG.ROWS, RL.CFG.VIS_ROWS || 9);
@@ -28,6 +28,7 @@ RL.Builder = (function () {
     $('gridView').style.height = VIS() * cs + 'px'; $('gridView').style.width = C * cs + 'px';
     $('scrollBtns').style.display = scrolls() ? 'flex' : 'none';
     const map = {}; RL.layout(grid).forEach(q => map[q.r + ',' + q.c] = q);
+    const bur = {}; try { RL.analyze(grid).cells.forEach(q => { if (q.buried) bur[q.r + ',' + q.c] = 1; }); } catch (e) {}   // v0.16：もえない エンジン
     const SR = RL.stageRows(grid);
     for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
       const d = document.createElement('div'); d.className = 'cell'; d.style.width = d.style.height = cs + 'px';
@@ -36,6 +37,7 @@ RL.Builder = (function () {
       if (hlCells.some(h => h[0] === r && h[1] === c)) d.classList.add('hl');
       const q = map[r + ',' + c]; if (q) { d.innerHTML = RL.drawPart(q.k, q.ctx);
         if (q.ctx.loose) d.classList.add('loose');
+        if (bur[r + ',' + c]) d.classList.add('buried');
         // v0.12：つけたものは さいごの 段に ついて いないと やくに たたない（切りはなしで すてられる）ので うすく
         if (q.ctx.att && q.ctx.att.length && SR.of(r) !== SR.n - 1) d.classList.add('attLoose'); }
       d.addEventListener('click', () => tap(r, c)); g.appendChild(d);
@@ -85,6 +87,8 @@ RL.Builder = (function () {
     }
     render(); RL.emit('change', { action, grid });
     if (placedRow !== null) showRow(placedRow);
+    // v0.16：エンジンの うえに エンジン（同じ 段）は もえない。はじめて の とき 声で
+    if (placedRow !== null && !saidBuried && !(RL.Tutorial && RL.Tutorial.active) && document.querySelector('.cell.buried')) { saidBuried = true; RL.Audio.say('エンジンの うえに エンジンを のせても、もえないよ。 リングで だんを わけよう。'); }
   }
   // ---- v0.12 上下に うごかす ----
   const gv = () => $('gridView');

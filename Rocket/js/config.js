@@ -1,7 +1,7 @@
 // 全体設定。数値の調整はここだけで行う
 window.RL = window.RL || {};
 RL.CFG = {
-  COLS: 5, ROWS: 9, VERSION: 'v0.14.7',
+  COLS: 5, ROWS: 9, VERSION: 'v0.17.0',
   ROWS_FREE: 9, ROWS_ORBIT: 18, VIS_ROWS: 9,   // v0.12：うちゅうモードは 縦14行（見えるのは 9行。上下に うごかす）。ROWS は いまの モードの 行数
   PHYS: {
     G: 10,
@@ -18,7 +18,9 @@ RL.CFG = {
     BOOST_THRUST: 110, BOOST_FUEL: 0.7, BOOST_BURN: 0.45, BOOST_DRAG: 0.15,
     BOOST_SEG_POW: 0.5, // 長いブースターほど 力が強く、長く もえる（√長さ 倍）
     IGN_DELAY: 0.3,   // 切りはなしから つぎの段が 点火するまで（秒）
-    TIME_STRETCH: 1.3, DT: 0.02, MAX_T: 120
+      BURIED_ENGINE: 'off',  // v0.16：'off'＝同じ 段の 中で すぐ 下に 胴体の 部品が ある エンジンは もえない（おもり）。'on'＝まえの きまり
+      PODS: true,           // v0.16：よこの 段（液体の よこならび。うちゅうモードだけ）
+      TIME_STRETCH: 1.3, DT: 0.02, MAX_T: 120
   },
   PLAY: { MAX_SEC: 30, COAST_SEC: 4, FF_MIN: 3 },   // 燃えている間は実時間。燃料が なくなったら 早送り
   VOICE_RATE: 1.2,
@@ -52,6 +54,8 @@ RL.CFG = {
     SLOW: { DV: 60, AHEAD_SEC: 3, LOOK: 200, DV_MIN: 1.5, LOOK_MOON: 10 },
     ORBIT_DONE: 1.2,   // 燃料が もう ないとき：安定した軌道を この周回ぶん まわったら おしまい
     IDLE_TURNS: 12,    // v0.8.3：燃料が のこっていても、エンジンを つかわずに この周回ぶん まわったら おしまい（ずっと おわらない のを ふせぐ）
+    CROSSFEED: false,  // v0.16：よこの 段の 燃料を まんなかの エンジンも つかう。しらべたら Δv が へった ので いまは つかわない
+    MOON_WARP_K: 2.5,  // v0.15：月の 重力圏の 中の 早送り（月の 高さ÷速さ を この 数で わる。まえは 6）
     MOON_WAIT: 4,      // v0.8.3：燃料が もう ないとき、月まで とどく軌道は 月と であうのを この周回ぶん まつ
     // v0.11 月着陸：下むき V_DOWN・よこ V_SIDE 以下で 着陸（HARD_K 倍までは「あぶなかった」）。着陸脚で LEG_K 倍
     //   NEAR：月の 地面ちかく（エンジンを 月の重力の TWR 倍まで しぼる・ちかくの画面・着陸メーター）
@@ -59,7 +63,7 @@ RL.CFG = {
     //   v0.12：天体ごと（moon／earth）。地球は 地面に たいする 速さ（地面は まわっている）。MIN_ALT より たかく とんだ あとだけ 着陸に なる
     LAND: {
       moon:  { V_DOWN: 4, V_SIDE: 3, HARD_K: 1.5, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 2000, TWR: 3,
-               V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5 },
+               V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5, HOVER_VD: 1.4, HOVER_K: 0.15, HOVER_MAX: 30, HOVER_SEC: 5, BRAKE_WARP: 3 },   // v0.17：月も うしろむきの エンジンを つけた まま なら 速さ 1.4 で ゆっくり おりる（脚なしでも 着陸できる）
       earth: { V_DOWN: 5, V_SIDE: 3, HARD_K: 1.2, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 600, TWR: 3,
                V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 4, WARP_MIN: 1, WARP_MAX: 30, SOFT: 1.5, MIN_ALT: 100, HOVER_VD: 8, HOVER_SEC: 4 }   // v0.14.7：地球は スローに しない（WARP_MIN 1）。HOVER_SEC：エンジンで ゆっくり おりる ときは 地面まで 実時間 約 HOVER_SEC 秒   // v0.14.6 HOVER_VD：うしろむきの エンジンで この 速さで おりる（脚なら 着陸、脚なしは こわれる）
     },
@@ -71,7 +75,7 @@ RL.CFG = {
     // v0.13 くうきに 入る：くうきに たいする 速さが HOT より はやい 間は 🔥 の 光（演出だけ）
     REENTRY: { HOT: 150 },
     MOON_IDLE_SEC: 60,  // v0.13：月面で なにも しないと この 秒数（実時間）で 声で さそう
-    VAC_VBURN_K: 0.7,  // v0.11：うちゅうモードだけ、宇宙用エンジンは くうきの外で 燃料の へりが この割合（燃費が よい）。月着陸に 燃料が とどくように
+    VAC_VBURN_K: 0.6,   // v0.16：0.7 → 0.6（月往還に 子どもの むだ 25% ぶんの よゆう）。  // v0.11：うちゅうモードだけ、宇宙用エンジンは くうきの外で 燃料の へりが この割合（燃費が よい）。月着陸に 燃料が とどくように
     CHECKPOINT: { STAR_PENALTY: [0, 1, 1, 2] },   // ⏪ の 回数（0,1,2,3回〜）で へらす 星
     TURN_START: 20,    // この高さから かたむけ はじめる
     PITCH_RATE: 15,    // v0.8.2：自動で かたむける速さの上限（度／秒）。切りはなしで 急に 真上へ もどらない

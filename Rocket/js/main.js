@@ -197,12 +197,13 @@
         if (ok.need) { A.say(ok.need === 'up' ? 'まずは、まっすぐ うえに うちあげて みよう。' : PROF_SAY[ok.need] + ' とぶ うちあげかたに しよう。 したの ひかっている ボタンだよ。'); MS.setHl('prof'); }
         else { A.say(ok.say.join(' ')); MS.setHl(ok.hl); } return; } }
     RL.emit('launch', s);
+    if (mode === 'orbit' && !saidBur && a.cells.some(q => q.buried)) { saidBur = true; A.say('エンジンの うえの エンジンは もえないよ。 リングで だんを わけよう。', null, { interrupt: false }); }   // v0.16
     if (mode === 'orbit') { lastA = a; lastProf = profile; RL.Flight2D.run(a, profile, sim => result2d(sim), aborted, null, MS.active && MS.active.start); return; }   // v0.14.6：とちゅうから の ミッション（3-4）は くみたての あとも とちゅうから
     RL.Flight.run(a, s, () => result(s), aborted);
   }
   // 中止：結果は出さず、組み立てたロケットのまま もどる（うちゅうモードは ワールドの 時計だけ すすむ）
   // v0.11 ⏪：結果画面から 最後に おぼえた ところへ もどって つづける（さっきの 結果で ふえた ものは もどす）
-  let lastA = null, lastProf = 'side', lastRec = null;
+  let lastA = null, lastProf = 'side', lastRec = null, saidBur = false;
   $('resRew').addEventListener('click', () => {
     const lr = RL.Flight2D.lastRun; if (!lr || !lr.cp || !lastA) return;
     if (lastRec) SV.update(p => { p.world.clock -= lastRec.clock; p.flights = Math.max(0, (p.flights || 1) - 1); if (lastRec.obj) p.world.objs.pop(); });
@@ -254,7 +255,8 @@
         if (d.vDown != null) { say += ' はやさ ' + Math.round(d.vDown) + '。' + (d.vDown < 40 ? 'もうすこし ゆっくり おりれば ちゃくりく できるよ！' : 'つきの ちかくで うしろむきに エンジンを つかうと、ゆっくり おりられるよ。'); }
         SV.addObj({ kind: 'flag', ang: Math.atan2(sim.y, sim.x), abs: W0 + sim.t }); objAdded = true; break;
       case 'heavy': icon = '🏋️'; say = 'おもくて あがらなかった！'; break;
-      case 'mission': icon = '\u{1F389}'; stars = 3; break;   // v0.14：とちゅうで ミッション クリア
+        case 'mission': icon = '\u{1F389}'; stars = 3; break;
+        case 'nofuel': icon = '\u26FD'; say = 'ねんりょうが なくなっちゃった。'; break;   // v0.16 4-7   // v0.14：とちゅうで ミッション クリア
       default: icon = '⏱️'; say = 'じかん ぎれ！';
     }
     // v0.13：月面に のこした もの（✂️ した 段＝着陸機、🚩）。月面で おわった ときの 着陸機は 上で のこしている

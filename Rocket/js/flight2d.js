@@ -106,6 +106,11 @@ RL.Flight2D = (function () {
     // 発射場
     if (E.R * sc > 25) { const ph = RL.CFG.ORBIT.SITE + E.rot * sim.t; g.font = `${small ? 12 : 18}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.fillText('🏠', X(Math.cos(ph) * E.R * 1.03), Y(Math.sin(ph) * E.R * 1.03)); }
+    // v0.15 4章：ふかす しるし（ひかる ほのお）
+    const mk = sim.body === E && RL.Missions && RL.Missions.mark(sim);
+    if (mk) { const a = Math.atan2(mk.y, mk.x) - 0.06, rr = Math.hypot(mk.x, mk.y), mx = X(Math.cos(a) * rr), my = Y(Math.sin(a) * rr), pu = 0.5 + 0.5 * Math.sin(performance.now() / 180);
+      g.save(); g.strokeStyle = `rgba(90,255,122,${0.5 + 0.5 * pu})`; g.lineWidth = small ? 2 : 4; g.beginPath(); g.arc(mx, my, (small ? 6 : 14 + 6 * pu) * (small ? 1 : V.u), 0, TAU); g.stroke();
+      if (!small) { g.font = `${22 * V.u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('\u{1F525}', mx, my - 30 * V.u); } g.restore(); }
     // とんできた あと
     if (trail.length > 1) { g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = small ? 1 : 1.5; g.beginPath();
       trail.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[1])) : g.moveTo(X(p[0]), Y(p[1]))); g.stroke(); }
@@ -263,6 +268,7 @@ RL.Flight2D = (function () {
     const pf = RL.Save && RL.Save.cur, WD = pf ? { W0: pf.world.clock, items: pf.world.objs.map(o => ({ o, pts: o.kind === 'sat' ? RL.World.orbitPts(o) : null })) } : null;
     sim.worldStart = WD ? WD.W0 : 0;
     if (RL.Missions && RL.Missions.active && RL.Missions.active.dvRate) sim.dvRate = RL.Missions.active.dvRate;   // v0.14.6
+    if (RL.Missions && RL.Missions.active && RL.Missions.active.noSlow) sim.noSlow = true;   // v0.15
     // v0.14.6 ミッションの いちじ停止：{ until: 'speech'（声が おわるまで）／ボタンの id（おすまで）, end }
     pause = null;
     const speechDone = () => { const p = pause; pause = null; if (p && p.end && !sim.done) sim.forceEnd(p.end); };
@@ -277,7 +283,8 @@ RL.Flight2D = (function () {
     const trail = []; const smoke = [];
     const sepReal = {}, stageReal = {};
     let prCache = null, prAt = 0, prKind = null, saidEnc = false;
-    let t0 = null, prev = null, warp = 1, view = 'auto', sepFlash = 0, saidSep = false, ended = null, endAt = 0, saidOrbit = false, saidSlow = false;
+    let t0 = null, prev = null, warp = 1, view = RL.Missions && RL.Missions.active && RL.Missions.active.map ? 'map' : 'auto',   // v0.15：4章は 地図から
+      sepFlash = 0, saidSep = false, ended = null, endAt = 0, saidOrbit = false, saidSlow = false;
     const pre = resume || start ? 0 : 2100;
     // v0.10／v0.11 の おしえ（いちど だけ）
     let saidPeri = true, saidNear = false, saidHover = false, warnAt = 0, boomY = null;
@@ -382,7 +389,7 @@ RL.Flight2D = (function () {
     function events() {
       sim.events.splice(0).forEach(e => {
         if (RL.Missions && RL.Missions.active) RL.Missions.event(e, sim);   // v0.14
-        if (e.type === 'booster-sep') { sepReal[e.id] = performance.now(); sepFlash = 25; A.tone(180, 0.25, 'square', 0.15); if (!saidSep) { saidSep = true; A.say('ブースター、きりはなし！', null, { interrupt: false }); } }
+        if (e.type === 'booster-sep') { sepReal[e.id] = performance.now(); sepFlash = 25; A.tone(180, 0.25, 'square', 0.15); if (e.pod) A.say('よこの だん、きりはなし！', null, { interrupt: false }); else if (!saidSep) { saidSep = true; A.say('ブースター、きりはなし！', null, { interrupt: false }); } }
         if (e.type === 'stage-sep' && e.surface) { sepFlash = 20; A.tone(220, 0.3, 'square', 0.18); A.say('きりはなし！ したの だんは つきに のこるよ。', null, { interrupt: true }); fuelFlash = 1; }
         else if (e.type === 'stage-sep') { stageReal[e.i] = performance.now(); sepFlash = 40; A.tone(220, 0.3, 'square', 0.18); setTimeout(() => A.tone(140, 0.4, 'square', 0.12), 140);
           A.say((STAGE_NAME[e.i] || '') + 'だん、きりはなし！', null, { interrupt: false });
@@ -502,7 +509,7 @@ RL.Flight2D = (function () {
       const now = performance.now();
       rocket.querySelectorAll('.flame').forEach(f => {
         let on;
-        if (f.dataset.kind === 'b') { const s = sim.stacks.find(x => x.id === f.dataset.stackFlame); on = !!s && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0; }
+        if (f.dataset.stackFlame) { const s = sim.stacks.find(x => x.id === f.dataset.stackFlame); on = !!s && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0 && (!s.pod || (sim.engineOn && sim.burnC)); }
         else on = +f.dataset.stage === sim.si && sim.burnC;
         if (!sim.lifted && sim.t < 0.01) on = false;
         f.style.display = on ? 'block' : 'none';
