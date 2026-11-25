@@ -110,7 +110,7 @@ RL.Missions = (function () {
           say: ['こんどは ▲ が とおすぎる。 ▲ を ちかく したいね。', 'ロケットが いるのは ▼ の ところ。 ▲ の ちょうど はんたいがわ だよ。',
             'ここで うしろむきに ふかすと、はんたいがわの ▲ が さがるんだ。 むきの ボタンを おして、ロケットを うしろむき に しよう。'] },
         { at: 'fly', when: (s, c) => c.dirs.has('retro'), hl: 'btnEng', pause: 'btnEng', say: ['うしろむき に なった。 エンジンを つけると ブレーキに なるよ。 はんたいがわの ▲ を みててね。 ほのおの ボタン！'] },
-        { at: 'fly', when: s => s.isPowered() && ap(s) <= 3000, hl: 'btnEng', say: ['▲ が 3000 より ちかく なった！ とめよう。'] }
+        { at: 'fly', when: s => s.isPowered() && ap(s) <= 2000, hl: 'btnEng', pause: 'btnEng', say: ['ストップ！ ▲ が ちかく なった。 ほのおの ボタンで とめよう。'] }
       ], help: 'ながく つけすぎると、ちきゅうに おちちゃうよ。' },
     { id: '2-4', ch: 2, quiet: true, icon: ['\u25BC', '\u2B55'], rocket: 'UP', start: { orbit: { pe: 500, ap: 3000 } },
       goal: { tick: (s, c) => off(s) && (c.ui.btnEng || 0) >= 2 && ap(s) - pe(s) <= 300 && pe(s) >= 300 }, star3: s => ap(s) - pe(s) <= 100,
@@ -118,9 +118,10 @@ RL.Missions = (function () {
         { at: 'fly', pause: 'speech',
           say: ['▼ は ちきゅうに いちばん ちかい ところ。 いまは たまごがた の きどう だね。', 'こんどは ▼ を もちあげて、まんまるに したい。',
             '▼ の ちょうど はんたいがわ、▲ の ところで まえに ふかすと、▼ が あがるよ。 ロケットが ▲ に つくまで まとう。'] },
-        { at: 'fly', when: s => Math.hypot(s.x, s.y) - 12000 > ap(s) - 60, hl: 'btnEng', pause: 'btnEng',
+        // v0.14.7：▲ を すぎた ところ（上むきの 速さが 0）で とめる。▲ の 手前だと 上むきの 速さが のこって まんまるに ならない
+        { at: 'fly', when: s => vr(s) <= 0 && Math.hypot(s.x, s.y) - 12000 > ap(s) - 100, hl: 'btnEng', pause: 'btnEng',
           say: ['▲ に ついた！ いったん ストップ。 ここで ふかすと、はんたいがわの ▼ が あがるよ。 ほのおの ボタンを おそう！'] },
-        { at: 'fly', when: s => s.isPowered() && ap(s) - pe(s) <= 300, hl: 'btnEng', say: ['▼ と ▲ が ちかく なった！ まんまるだ。 とめよう！'] }
+        { at: 'fly', when: s => s.isPowered() && ap(s) - pe(s) <= 80, hl: 'btnEng', pause: 'btnEng', say: ['ストップ！ ▼ と ▲ が おなじ くらいに なった。 まんまるだ！ ほのおの ボタンで とめよう！'] }
       ], help: 'はやおくりで ▲ まで まって、そこで エンジンを つけよう。' },
     { id: '2-5', ch: 2, icon: ['\u{1F6E0}\uFE0F', '\u{1F6F0}\uFE0F'], preset: null, allow: null, hl: 'launch',
       say: ['さいごは、じぶんで ロケットを つくって、ちきゅうを まわろう！', 'ゴールの はたで おわったら クリア だよ。'],
@@ -146,34 +147,35 @@ RL.Missions = (function () {
     // v0.14.6：たかい ところ（2000）から はじめて、はじめに とめて せつめい。ふだんの「じめんが ちかいよ」は ださない（quiet）
     { id: '3-2', ch: 3, quiet: true, icon: ['\u{1F4A8}', '\u{1FA82}'], rocket: 'CAP', start: { h: 2000, vDown: 0, fuel: 0 },
       say: ['いま、たかい ところから おちていく ところ だよ。 パラシュートで ちきゅうに おりよう。', 'でも、はやすぎる ときに ひらくと、やぶれちゃう。', 'てんせんの したの くうきで、ゆっくりに なるまで まって ひらこう。'],
-      goal: { done: d => d.type === 'landed' && onEarth(d) && d.chute }, star3: (d, s, c) => (c.ui.btnChute || 0) === 1,
-      hints: [{ t: s => s.alt() < 300, say: 'てんせんの したは くうき。 だんだん ゆっくりに なるよ。 メーターの さんかくを みててね。' },
-              { t: s => s.alt() < 110, say: 'いまだ！ ひらこう！', hl: 'btnChute' }],
+      goal: { done: d => d.type === 'landed' && onEarth(d) && d.chute }, star3: (d, s, c) => (c.ui.btnChute || 0) === 1,        // v0.14.7：メーターが でたら（地面ちかく）とめて せつめい。ひらく ときも とめて まつ
+        hints: [{ t: s => s.near, pause: 'speech', say: 'ストップ。 ひだりに メーターが でたよ。 いまは しろい さんかくが あかい ところ。 はやすぎて、いま ひらくと やぶれちゃう。 てんせんの したの くうきで、だんだん ゆっくりに なるよ。' },
+                { t: s => s.alt() < 110, pause: 'btnChute', say: 'いまだ！ ゆっくりに なった。 パラシュートの ボタンを おそう！', hl: 'btnChute' }],
       help: 'じめんの ちかくまで まってから おそう。' },
     { id: '3-3', ch: 3, quiet: true, icon: ['\u{1F6F0}\uFE0F', '\u{1F3E0}'], rocket: 'CAP', start: { orbit: { pe: 400, ap: 500 } },
       say: ['ちきゅうを まわっている ところから、かえろう。', 'うしろむき に して エンジンを つけると、▼ が さがるよ。 ▼ が くうきに はいったら、エンジンを とめて まとう。', 'さいごは パラシュート！'],
       goal: { done: d => d.type === 'landed' && onEarth(d) }, star3: d => (d.maxG || 99) <= 20,
       hints: [{ t: () => true, say: 'むきの ボタンで うしろむき に しよう。', hl: 'btnDir' },
-              { t: (s, c) => c.dirs.has('retro'), say: 'エンジンを つけよう。', hl: 'btnEng' },
-              { t: s => s.isPowered() && pe(s) < 200, say: '▼ が くうきに はいった！ とめよう。', hl: 'btnEng' },
-              { t: s => s.alt() < 300 && s.chutes() && !s.chute && Math.hypot(s.vx + E(s).rot * s.y, s.vy - E(s).rot * s.x) < 76, say: 'ゆっくりに なった！ パラシュート！', hl: 'btnChute' }],
-      help: 'うしろむき で すこし ふかして、▼ を くうきの なかに いれよう。' },
+              { t: (s, c) => c.dirs.has('retro'), say: 'エンジンを つけよう。', hl: 'btnEng' },                { t: (s, c) => (c.ui.btnEng || 0) >= 1 && pe(s) < (s.isPowered() ? 200 : 300), pause: s => (s.isPowered() ? 'btnEng' : null), say: 'ストップ！ ▼ が くうきに はいった！ エンジンは とめて おこう。', hl: 'btnEng' },
+                { t: s => s.near, pause: 'speech', say: 'くうきに はいったよ！ ひだりに メーターが でたね。 しろい さんかくが みどりの ところに くれば、ふんわり おりられるよ。 いまは あか。 くうきで ゆっくりに なるのを まとう。' },
+                { t: s => s.alt() < 300 && s.chutes() && !s.chute && Math.hypot(s.vx + E(s).rot * s.y, s.vy - E(s).rot * s.x) < 76, pause: 'btnChute', say: 'ゆっくりに なった！ いまだ、パラシュート！', hl: 'btnChute' }],
+        help: 'うしろむき で すこし ふかして、▼ を くうきの なかに いれよう。' },
     // v0.14.6：はじめて 着陸脚。脚なしで エンジン着陸（たいてい こわれる）→ 脚を エンジンに つけて もういちど（メーターの みどりが ひろがる）
     //   startBuild：とちゅうから はじまるが、しっぱいの あとは くみたて画面で 脚を つけられる
     { id: '3-4', ch: 3, quiet: true, icon: ['\u{1F9B5}', '\u{1F525}'], rocket: 'NOLEG', allow: ['leg'], startBuild: true, start: { h: 1500, vDown: 20, fuel: 1 },
       goal: { done: d => d.type === 'landed' && onEarth(d) && !d.chute },
       steps: [
-        { at: 'fly', pause: 'speech',
-          say: ['こんどは パラシュートが ない ロケット。 エンジンで ブレーキを かけて、ゆっくり おりよう。', 'ひだりの メーターを みてね。 みどりの ところが せまいね。 あしが ない ロケットは、すこし はやいだけで こわれちゃうんだ。'] },
+        { at: 'fly', pause: 'speech',          say: ['こんどは パラシュートが ない ロケット。 エンジンで ブレーキを かけて、ゆっくり おりよう。'] },
         { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['まず、むきの ボタンで うしろむき に しよう。'] },
+        // v0.14.7：メーターが でてから（地面ちかく）せつめい
+        { at: 'fly', when: s => s.near, pause: 'speech',
+          say: ['ストップ。 ひだりに メーターが でたよ。 しろい さんかくが みどりの ところで じめんに つけば、ぶじに おりられる。', 'みどりの ところが せまいね。 あしが ない ロケットは、すこし はやいだけで こわれちゃうんだ。'] },
         { at: 'fly', when: s => s.alt() < 520, hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'), say: ['ストップ！ いまだ、ほのおの ボタンで ブレーキ！ つけた ままに しておいてね。'] },
         { at: 'result', fail: (d, s) => d.type === 'ground' && !s.legs().n, hl: 'again',
           say: ['どーん！ エンジンで ゆっくりに なったけど、あしが ないと、それでも はやすぎて こわれちゃうんだ。', 'ロケットに あしを つけてみよう。 みどりの ボタンで もどってね。'] },
         { at: 'build', block: true, hl: 'pal:leg', cells: 'engine', say: ['あしを えらんで、ひかっている エンジンを タップ してね。 あしは エンジンに つける ぶひん だよ。'] },
-        { at: 'build', when: x => x.grid.some(r => r.some(k => RL.has(k, 'leg'))), hl: 'launch', say: ['あしが ついた！ はっしゃ ボタンで、さっきと おなじ ところから はじめるよ。'] },
-        { at: 'fly', pause: 'speech',
-          say: ['メーターを みて！ あしが あると、みどりの ところが ひろく なったね。', 'あしは じめんの ちかくで ひらいて、ふんわり うけとめて くれるよ。 すこし はやくても だいじょうぶ。'] },
-        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['うしろむき に しよう。'] },
+        { at: 'build', when: x => x.grid.some(r => r.some(k => RL.has(k, 'leg'))), hl: 'launch', say: ['あしが ついた！ はっしゃ ボタンで、さっきと おなじ ところから はじめるよ。'] },        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['あしの ついた ロケットで もういちど。 うしろむき に しよう。'] },
+        { at: 'fly', when: s => s.near, pause: 'speech',
+          say: ['メーターが でた！ みて、あしが あると、みどりの ところが ひろく なったね。', 'あしは じめんの ちかくで ひらいて、ふんわり うけとめて くれるよ。 すこし はやくても だいじょうぶ。'] },
         { at: 'fly', when: s => s.alt() < 520, hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'), say: ['いまだ！ ほのおの ボタンで ブレーキ！ さっきと おなじ ように つけた まま だよ。'] }
       ], help: 'はやく おちる まえに、すこし はやめに エンジンを つけよう。' },
     // v0.14.6：はじめに パラシュートの 話は しない。きりはなした あとに せつめい
@@ -181,11 +183,10 @@ RL.Missions = (function () {
       say: ['エンジンを とめている ときは、はさみの ボタンで いらない だんを すてられるよ。 2かい おしてね。', 'うしろむき で ふかして ▼ を くうきに いれたら、したの だんを すてよう。', 'くうきに はいる まえに すてられたら ほしみっつ。'],
       goal: { done: (d, s, c) => d.type === 'landed' && onEarth(d) && d.chute && c.manualSep >= 1 }, star3: (d, s, c) => c.sepAlt > 300,
       hints: [{ t: () => true, say: 'むきの ボタンで うしろむき に しよう。', hl: 'btnDir' },
-              { t: (s, c) => c.dirs.has('retro'), say: 'エンジンを つけよう。', hl: 'btnEng' },
-              { t: s => s.isPowered() && pe(s) < 200, say: '▼ が くうきに はいった！ とめよう。', hl: 'btnEng' },
-              { t: (s, c) => off(s) && pe(s) < 250 && (s.canSep() || c.manualSep >= 1), say: 'はさみを 2かい おして、したの だんを すてよう！', hl: 'btnSep' },
-              { t: (s, c) => c.manualSep >= 1, pause: 'speech', say: 'したの だんを すてたね！ まど だけ だと、はやすぎて じめんに ぶつかっちゃう。 くうきで ゆっくりに なったら、パラシュートを ひらこう。' },
-              { t: s => s.alt() < 300 && s.chutes() && !s.chute && Math.hypot(s.vx + E(s).rot * s.y, s.vy - E(s).rot * s.x) < 76, say: 'ゆっくりに なった！ パラシュート！', hl: 'btnChute' }],
+              { t: (s, c) => c.dirs.has('retro'), say: 'エンジンを つけよう。', hl: 'btnEng' },                { t: (s, c) => (c.ui.btnEng || 0) >= 1 && pe(s) < (s.isPowered() ? 200 : 300), pause: s => (s.isPowered() ? 'btnEng' : null), say: 'ストップ！ ▼ が くうきに はいった！ エンジンは とめて おこう。', hl: 'btnEng' },
+                { t: (s, c) => off(s) && pe(s) < 250 && (s.canSep() || c.manualSep >= 1), say: 'はさみを 2かい おして、したの だんを すてよう！', hl: 'btnSep' },                { t: (s, c) => c.manualSep >= 1, pause: 'speech', say: 'したの だんを すてたね！ まど だけ だと、はやすぎて じめんに ぶつかっちゃう。 くうきで ゆっくりに なったら、パラシュートを ひらこう。' },
+                { t: s => s.near, pause: 'speech', say: 'くうきに はいったよ！ ひだりに メーターが でたね。 しろい さんかくが みどりの ところに くれば、ふんわり おりられるよ。 いまは あか。 くうきで ゆっくりに なるのを まとう。' },
+                { t: s => s.alt() < 300 && s.chutes() && !s.chute && Math.hypot(s.vx + E(s).rot * s.y, s.vy - E(s).rot * s.x) < 76, pause: 'btnChute', say: 'ゆっくりに なった！ いまだ、パラシュート！', hl: 'btnChute' }],
       help: 'エンジンを とめてから、はさみを 2かい つづけて おしてね。' }
   ];
   const CHAPTERS = [

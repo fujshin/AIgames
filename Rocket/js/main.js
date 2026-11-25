@@ -335,7 +335,7 @@
     setMode('free'); document.body.classList.remove('tutorial'); $('title').style.display = 'none'; B.setAllowed(null); B.lockGrid(false); B.highlightCell(null); B.select('engine'); A.say('じゆうに ロケットを つくろう！');
   }
   RL.startFree = startFree;
-  function startOrbit() { startFree(); setMode('orbit'); A.say('うちゅうモード！ ちきゅうを まわる ロケットを つくろう！'); }
+  function startOrbit() { startFree(); setMode('orbit'); A.say('うちゅうモード！ つきに ちゃくりく して、ちきゅうに かえって こられるかな？'); }
   $('launch').addEventListener('click', launch);
   $('clear').addEventListener('click', () => {
     if (RL.Tutorial.active) { if (!RL.Tutorial.canClear) { A.tone(150, 0.15, 'square', 0.08); return; } B.clear(); return; }

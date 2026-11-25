@@ -20,9 +20,11 @@ RL.Audio = (function () {
   function pickVoice() { try { jaVoice = speechSynthesis.getVoices().find(v => /ja/i.test(v.lang)) || null; } catch (e) {} }
   if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
   let talkId = 0;
-  // v0.14.6：よみあげ用に なおす（▼▲ は「くろさんかく」と よまれる、「はた」は「わた」と よまれる）
-  const speak = t => String(t).replace(/▼/g, 'みどりの さんかく').replace(/▲/g, 'きいろの さんかく')
-    .replace(/ゴールの はた/g, 'ゴールの 旗').replace(/(^|[\s、。！])はたを/g, '$1旗を');
+  // v0.14.6：よみあげ用に なおす（▼▲ は「くろさんかく」と よまれる、「はた」は「わた」と よまれる）  //  v0.14.7：ことばの はじめの「は」が「わ」と よまれる（はいる → わいる）。は で はじまる ことばを 漢字に
+  const YOMI = [['はいる', '入る'], ['はいっ', '入っ'], ['はいれ', '入れ'], ['はさみ', 'ハサミ'], ['はやすぎ', '速すぎ'], ['はやく', '速く'], ['はやさ', '速さ'],
+    ['はやおくり', '早送り'], ['はんたいがわ', '反対側'], ['はっしゃ', '発射'], ['はずれ', '外れ'], ['はね', '羽'], ['はじめ', '始め'], ['はこ', '箱'], ['はたを', '旗を'], ['はたで', '旗で'], ['はた', '旗']];
+  const speak = t => { t = String(t).replace(/▼/g, 'みどりの さんかく').replace(/▲/g, 'きいろの さんかく');
+    YOMI.forEach(([a, b]) => { t = t.replace(new RegExp('(^|[\\s、。！？])' + a, 'g'), '$1' + b); }); return t; };
   function say(t, cb, opt = {}) {
     t = speak(t);
     const id = ++talkId, done = () => { if (id === talkId && cb) { const f = cb; cb = null; f(); } };

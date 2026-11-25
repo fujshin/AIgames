@@ -43,7 +43,7 @@ RL.Orbit = (function () {
       thrust: 0, mass: 0, weight: 0, pitch: 90, point: Math.PI / 2, rho: 1, vpow: P.VAIR, burnC: false, boost: false,
       profile: opt.profile || 'side', dir: 'auto', stages: S, stacks: st, a,
       dvUsed: 0, throttle: 1, near: false, hover: false, legsOut: false, fuelBase: 0,
-      chute: null, chuteOpen: 0, encLock: false, kAir: 0,
+      chute: null, chuteOpen: 0, encLock: false, kAir: 0, chuteW: 0, hoverW: 0,
       surface: false, moonLanded: false, leftStages: [], maxG: 0, surfJ: null
     };
     sim.vx = -earth.rot * sim.y; sim.vy = earth.rot * sim.x;    // 地面と いっしょに まわっている
@@ -464,7 +464,15 @@ RL.Orbit = (function () {
       if (sim.near) {
         const LD = LDof(sim.body), fi = fallInfo(), tg = fi ? fi.t : 60;   // 落ちるだけ なら 何秒で 地面か（くうき・パラシュートも）
         // v0.14.6：パラシュートで おりる ときは さくっと（スローに しない）
-        if ((sim.chute === 'open' || sim.chute === 'opening') && !sim.isPowered()) return Math.max(1, Math.min(LD.WARP_MAX, tg / (CH.SEC || 3)));
+        //  v0.14.7：ひらききった ときに 早送りを きめて、地面まで その まま（だんだん おそく ならない）
+        if (sim.chute === 'opening' && !sim.isPowered()) return 1;
+        if (sim.chute === 'open' && !sim.isPowered()) {
+          if (!sim.chuteW) sim.chuteW = Math.max(1, Math.min(LD.WARP_MAX, alt() / Math.max(1, -relVel().vr) / (CH.SEC || 3)));
+          return sim.chuteW; }
+        // v0.14.7：地球で エンジンで ゆっくり おりる（HOVER_VD）ときも さくっと
+        if (sim.hover && LD.HOVER_VD && sim.isPowered()) { if (!sim.hoverW) sim.hoverW = Math.max(1, Math.min(LD.WARP_MAX, (alt() / LD.HOVER_VD) / (LD.HOVER_SEC || 4))); return sim.hoverW; }
+        // v0.14.7：地球で おちている（エンジン なし）ときは 高さ ÷ 下むきの 速さ（くうきで よこに すべる 間も はやく）
+        if (sim.body === earth && !sim.isPowered()) return Math.max(1, Math.min(LD.WARP_MAX, alt() / Math.max(1, -relVel().vr) / LD.SLOW_SEC));
         return Math.max(LD.WARP_MIN, Math.min(sim.isPowered() ? 1 : LD.WARP_MAX, tg / LD.SLOW_SEC));
       }
       if (sim.isPowered()) {
