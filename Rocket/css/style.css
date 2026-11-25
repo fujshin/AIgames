@@ -229,3 +229,10 @@ body.mission #misBadge{display:block}
 #btnOrbit .lockMark{display:none;position:absolute;right:6px;bottom:4px;font-size:min(40px,8vw);line-height:1}
 #btnOrbit.locked .lockMark{display:block}
 #btnOrbit.locked svg{opacity:.45;filter:grayscale(.6)}
+/* v0.14.6 ミッションの 絵 */
+.misImg{display:block;pointer-events:none}
+.misCard{width:96px;height:112px}
+.misCard .ic .misImg{width:76px;height:76px}
+#misBadge .misImg{display:inline-block;width:30px;height:30px;vertical-align:middle}
+#mgIcon .misImg{width:min(260px,60vw);height:min(260px,60vw);border-radius:24px}
+@media (max-width:460px){.misCard{width:84px;height:100px}.misCard .ic .misImg{width:64px;height:64px}}

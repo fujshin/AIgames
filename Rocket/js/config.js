@@ -1,7 +1,7 @@
 // 全体設定。数値の調整はここだけで行う
 window.RL = window.RL || {};
 RL.CFG = {
-  COLS: 5, ROWS: 9, VERSION: 'v0.14.5',
+  COLS: 5, ROWS: 9, VERSION: 'v0.14.6',
   ROWS_FREE: 9, ROWS_ORBIT: 18, VIS_ROWS: 9,   // v0.12：うちゅうモードは 縦14行（見えるのは 9行。上下に うごかす）。ROWS は いまの モードの 行数
   PHYS: {
     G: 10,
@@ -61,11 +61,11 @@ RL.CFG = {
       moon:  { V_DOWN: 4, V_SIDE: 3, HARD_K: 1.5, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 2000, TWR: 3,
                V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5 },
       earth: { V_DOWN: 5, V_SIDE: 3, HARD_K: 1.2, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 600, TWR: 3,
-               V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5, MIN_ALT: 100 }
+               V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5, MIN_ALT: 100, HOVER_VD: 8 }   // v0.14.6 HOVER_VD：うしろむきの エンジンで この 速さで おりる（脚なら 着陸、脚なしは こわれる）
     },
     // v0.12 パラシュート：くうきの中で ひらく（OPEN_T 秒で ふくらむ）。くうきに たいする 速さが V_TEAR より はやいと やぶれる
     //   空気の じゃまに CD × こ数 × ひらき具合 × 空気の こさ を たす
-    CHUTE: { CD: 2.2, V_TEAR: 80, OPEN_T: 1 },
+    CHUTE: { CD: 2.2, V_TEAR: 80, OPEN_T: 1, SEC: 3 },   // v0.14.6 SEC：ひらいた あとは 地面まで 実時間 約 SEC 秒
     // v0.13 月往還：月からの 離陸（自動）。TURN_H まで まっすぐ、上むきの 速さ VR_MAX までで HOLD の 高さを たもって よこへ、近い ところが PE_MIN より 上で とめる。ACC＝加速の 上限（月の 重力の 何倍）
     MOON_UP: { TURN_H: 15, HOLD: 150, PE_MIN: 50, ACC: 5, VR_MAX: 10 },
     // v0.13 くうきに 入る：くうきに たいする 速さが HOT より はやい 間は 🔥 の 光（演出だけ）

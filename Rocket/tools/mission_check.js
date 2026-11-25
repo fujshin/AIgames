@@ -20,10 +20,8 @@ const P = {
   '3-1': (s, c, st) => chute(s, st, vr(s) < 0),
   '3-2': (s, c, st) => { if (!st.c && s.alt() < 100) { st.c = 1; press('btnChute', () => s.deployChute()); } },
   '3-3': (s, c, st) => deorbit(s, st, false), '3-5': (s, c, st) => deorbit(s, st, true),
-  '3-4': (s, c, st) => { if (!st.a) { st.a = 1; press('btnDir', () => s.setDir('retro')); }
-    const rv = s.relVel(), h = s.alt(), vd = Math.max(0, -rv.vr), aAv = s.near ? (LD.TWR - 1) * 10 : 20, td = s.fallInfo(), allow = LD.V_DOWN * (s.legs().n ? LD.LEG_K : 1) * 0.4;
-    if (s.engineOn && s.hover) press('btnEng', () => s.setEngine(false));
-    else if (!s.engineOn && s.liquidLeft() && vd * vd / (2 * aAv) > h * 0.85 - 3 && !(td && td.vDown <= allow)) press('btnEng', () => s.setEngine(true)); }
+  '3-4': (s, c, st) => { if (!st.a) { st.a = 1; press('btnDir', () => s.setDir('retro')); }   // v0.14.6：あんないで とまった ところ（高さ 520）で つけて その まま
+      if (st.a === 1 && s.alt() < 520) { st.a = 2; press('btnEng', () => s.setEngine(true)); } }
 };
 function cut(s, st) { const el = s.elements(); if (!st.cut && s.engineOn && s.lifted && el && el.e < 1 && el.rp > s.body.R + s.body.atmo + 20) { st.cut = 1; press('btnEng', () => s.setEngine(false)); } }
 function chute(s, st, ok) { if (!st.c && ok && s.alt() < 300 && s.chutes() && wind(s) < 76) { st.c = 1; press('btnChute', () => s.deployChute()); } }
@@ -34,7 +32,8 @@ function deorbit(s, st, sep) {
   chute(s, st, st.a >= 2);
 }
 const addTop = g => { g = g.map(r => r.slice()); let top = g.length; g.forEach((r, i) => { if (r[2] && i < top) top = i; }); g[top - 1][2] = 'tank'; return g; };
-const PLAN = { '2-1': [{}, { second: true }], '3-1': [{ grid: M.ROCKETS.SMALL }, { mod: g => g.map(r => r.map(k => (k === 'win' ? 'win+chute' : k))) }], '1-1': [{ prof: 'up' }, { prof: 'side' }], '1-2': [{ prof: 'side' }, { mod: addTop }], '1-4': [{ prof: 'tilt' }, { rew: true }] };
+const PLAN = { '2-1': [{}, { second: true }], '3-1': [{ grid: M.ROCKETS.SMALL }, { mod: g => g.map(r => r.map(k => (k === 'win' ? 'win+chute' : k))) }], '1-1': [{ prof: 'up' }, { prof: 'side' }], '1-2': [{ prof: 'side' }, { mod: addTop }], '1-4': [{ prof: 'tilt' }, { rew: true }],
+  '3-4': [{}, { mod: g => g.map(r => r.map(k => (k === 'engine' ? 'engine+leg' : k))) }] };   // v0.14.6：脚なし → 脚を つけて
 const extraGrid = { '2-5': M.ROCKETS.ORBIT };
 const prof0 = {};
 const info = (g, p) => M.buildInfo(g, p);
@@ -56,7 +55,7 @@ for (const m of M.LIST) {
     while (!s.done && s.t < 60000) {
       s.advance(s.isPowered() || s.alt() < 1500 || st.fine ? 0.02 : Math.max(0.02, Math.min(s.autoWarp(), 100) * 0.05));
       if (P[m.id]) P[m.id](s, c, st);
-      M.tick(s).forEach(h => { if (h.clear) s.missionEnd(); else log.push('🗣' + h.say[0].slice(0, 10) + (h.hl ? '[' + h.hl + ']' : '')); });
+      M.tick(s).forEach(h => { if (h.end && !s.done) s.forceEnd(h.end); if (h.clear) s.missionEnd(); else log.push('🗣' + h.say[0].slice(0, 10) + (h.hl ? '[' + h.hl + ']' : '')); });
       s.events.splice(0).forEach(e => M.event(e, s));
     }
     d = s.done || {};

@@ -64,6 +64,7 @@ RL.Builder = (function () {
     if (RL.ATTACH[sel] && !(allowed && !allowed.includes(sel))) { attach(r, c); return; }
     let action, placedRow = null;
     if (grid[r][c]) {
+      if (allowed && !allowed.includes(RL.base(grid[r][c]))) { buzz(); return; }   // v0.14.6：つかえない 部品は けせない（ミッション）
       for (let i = r; i > 0; i--) grid[i][c] = grid[i - 1][c];
       grid[0][c] = null; RL.Audio.tone(300, 0.1, 'square', 0.1); action = 'remove';
     } else {

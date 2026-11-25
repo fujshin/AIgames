@@ -20,7 +20,11 @@ RL.Audio = (function () {
   function pickVoice() { try { jaVoice = speechSynthesis.getVoices().find(v => /ja/i.test(v.lang)) || null; } catch (e) {} }
   if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
   let talkId = 0;
+  // v0.14.6：よみあげ用に なおす（▼▲ は「くろさんかく」と よまれる、「はた」は「わた」と よまれる）
+  const speak = t => String(t).replace(/▼/g, 'みどりの さんかく').replace(/▲/g, 'きいろの さんかく')
+    .replace(/ゴールの はた/g, 'ゴールの 旗').replace(/(^|[\s、。！])はたを/g, '$1旗を');
   function say(t, cb, opt = {}) {
+    t = speak(t);
     const id = ++talkId, done = () => { if (id === talkId && cb) { const f = cb; cb = null; f(); } };
     const est = (900 + t.length * 170) / RL.CFG.VOICE_RATE;
     if (muted || !window.speechSynthesis) { setTimeout(done, muted ? est * 0.6 : est); return; }
@@ -33,5 +37,5 @@ RL.Audio = (function () {
     } catch (e) { setTimeout(done, est); }
   }
   function stop() { talkId++; try { speechSynthesis.cancel(); } catch (e) {} }
-  return { tone, rumble, say, stop, get muted() { return muted; }, toggle() { muted = !muted; if (muted) stop(); return muted; } };
+  return { tone, rumble, say, stop, speak, get muted() { return muted; }, toggle() { muted = !muted; if (muted) stop(); return muted; } };
 })();

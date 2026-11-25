@@ -36,7 +36,7 @@ for (const k in rockets) {
     s.advance(0.02);
     const rv = s.relVel(), h = s.alt(), g = 10, vd = Math.max(0, -rv.vr), aAv = s.near ? (LD.TWR - 1) * g : 20;
     const td = s.fallInfo(), allow = LD.V_DOWN * (s.legs().n ? LD.LEG_K : 1) * 0.7;
-    if (s.engineOn && s.hover) s.setEngine(false);
+    if (s.engineOn && s.hover && !LD.HOVER_VD) s.setEngine(false);   // v0.14.6：地球は HOVER_VD で ゆっくり おりるので つけた まま
     else if (!s.engineOn && s.liquidLeft() && vd * vd / (2 * aAv) > h * 0.85 - 3 && !(td && td.vDown <= allow)) s.setEngine(true);
   }
   console.log(k.padEnd(28), res(s), ` 燃料${Math.round(s.fuelRatio() * 100)}%`, s.near ? '' : '');

@@ -197,7 +197,7 @@
         if (ok.need) { A.say(ok.need === 'up' ? 'まずは、まっすぐ うえに うちあげて みよう。' : PROF_SAY[ok.need] + ' とぶ うちあげかたに しよう。 したの ひかっている ボタンだよ。'); MS.setHl('prof'); }
         else { A.say(ok.say.join(' ')); MS.setHl(ok.hl); } return; } }
     RL.emit('launch', s);
-    if (mode === 'orbit') { lastA = a; lastProf = profile; RL.Flight2D.run(a, profile, sim => result2d(sim), aborted); return; }
+    if (mode === 'orbit') { lastA = a; lastProf = profile; RL.Flight2D.run(a, profile, sim => result2d(sim), aborted, null, MS.active && MS.active.start); return; }   // v0.14.6：とちゅうから の ミッション（3-4）は くみたての あとも とちゅうから
     RL.Flight.run(a, s, () => result(s), aborted);
   }
   // 中止：結果は出さず、組み立てたロケットのまま もどる（うちゅうモードは ワールドの 時計だけ すすむ）
@@ -233,7 +233,7 @@
         objAdded = true; SV.addObj({ kind: 'sat', body: d.body, cls: d.body === 'moon' ? 'moonOrbit' : d.cls, el: RL.World.pack(el), t: sim.t, abs: W0 + sim.t });
         say += ' えいせいは、これからも ずっと まわりつづけるよ。';
         info.push(`<span>▼${pe}</span>`, `<span class="h">▲${ap}</span>`); break; }
-      case 'escape': icon = '🚀'; stars = 5; say = 'ちきゅうの じゅうりょくから だっしゅつ したよ！'; medals.push('escape'); info.push(`<span>🚀${Math.round(d.maxV)}</span>`); break;
+      case 'escape': icon = '🚀'; stars = 5; say = 'ちきゅうの じゅうりょくから だっしゅつ したよ！'; if (!d.forced) medals.push('escape'); info.push(`<span>🚀${Math.round(d.maxV)}</span>`); break;
       case 'landed': if (d.body === 'earth' && d.returned) {   // v0.13 月から かえってきた
         icon = '\u{1FAA8}'; stars = d.hard ? 4 : 5; say = 'おかえりなさい！ つきから ちきゅうに かえってきたよ！ つきの いしを もちかえった！';
         medals.push('moonRock', 'moonLand', d.chute ? 'chuteLand' : 'earthLand');
@@ -346,7 +346,9 @@
   $('home').addEventListener('click', showTitle);
   $('mute').addEventListener('click', () => { $('mute').innerHTML = A.toggle() ? RL.ICON.soundOff : RL.ICON.soundOn; });
   $('again').addEventListener('click', () => { if (RL.Tutorial.active) return; closeResult(); A.tone(660, 0.08);
-    if (MS.active && MS.active.start) missionFly(MS.active); else if (MS.active) { MS.retryBuild && MS.retryBuild(); missionBuild(true); } });   // v0.14：とちゅうから の ミッションは すぐ もういちど
+    // v0.14.6：つぎの あんないが くみたて なら くみたて画面（3-4 で 脚を つける）、そうでなければ とちゅうから の ミッションは すぐ もういちど
+    const nx = MS.active && MS.active.steps[MS.ctx.si];
+    if (MS.active && MS.active.start && !(nx && nx.at === 'build')) missionFly(MS.active); else if (MS.active) { MS.retryBuild && MS.retryBuild(); missionBuild(true); } });   // v0.14：とちゅうから の ミッションは すぐ もういちど
   $('resMap').addEventListener('click', () => { closeResult(); A.tone(660, 0.08); openMissionMap(); });
   let nextMis = null;
   $('resNext').addEventListener('click', () => { const m = nextMis; if (!m) return; nextMis = null; A.tone(784, 0.1); startMission(m); });
@@ -360,9 +362,11 @@
   // v0.14 ミッション
   // =====================================================================
   const MS = RL.Missions;
+    // v0.14.6：ミッションの 絵（img/mis/1-1.webp など。Microsoft Copilot で 生成）。よめない ときは 絵文字
+    const misImg = m => `<img class="misImg" src="img/mis/${m.id}.webp" alt="" draggable="false" onerror="this.replaceWith(document.createTextNode('${m.icon.join('')}'))">`;
   function flash(el, ms) { if (!el) return; el.classList.add('mhint'); setTimeout(() => el.classList.remove('mhint'), ms || 4000); }
   // 飛行中の ボタンを おした 回数（ミッションの はんてい用）
-  $('fly').addEventListener('click', e => { const b = e.target.closest('button'); if (b && MS.active) MS.ui(b.id); }, true);
+  $('fly').addEventListener('click', e => { const b = e.target.closest('button'); if (b && MS.active) { MS.ui(b.id); RL.Flight2D.unpause(b.id); } }, true);
   function endMission() { if (!MS.active) return; MS.end(); document.body.classList.remove('mission'); B.lockGrid(false); B.setAllowed(null); }
   function openMissionMap() {
     const p = SV.cur; if (!p) return; const rec = p.missions || {}, box = $('misRows'); box.innerHTML = '';
@@ -374,7 +378,7 @@
         const st = rec[m.id] || 0, open = MS.unlocked(rec, m.id), b = document.createElement('button'); b.type = 'button';
         b.className = 'misCard' + (open ? '' : ' lock') + (open && !st && !nextSet ? ' next' : ''); if (open && !st) nextSet = true;
         b.setAttribute('aria-label', 'ミッション ' + m.id);
-        b.innerHTML = `<span class="ic">${open ? m.icon.join('') : '\u{1F512}'}</span><span class="st">${st ? '⭐'.repeat(st) : ''}</span>`;
+        b.innerHTML = `<span class="ic">${open ? misImg(m) : '\u{1F512}'}</span><span class="st">${st ? '⭐'.repeat(st) : ''}</span>`;
         b.addEventListener('click', () => { if (!open) { A.tone(150, 0.15, 'square', 0.08); A.say('まえの ミッションを クリア すると ひらくよ。'); return; } startMission(m); });
         row.appendChild(b);
       });
@@ -387,14 +391,14 @@
   function startMission(m) {
     $('misMap').style.display = 'none'; closeResult(); RL.Tutorial.stop();
     endMission(); startFree(); setMode('orbit');
-    const c = MS.begin(m); document.body.classList.add('mission'); $('misBadge').innerHTML = '\u{1F50A} ' + m.id + ' ' + m.icon.join('');
+    const c = MS.begin(m); document.body.classList.add('mission'); $('misBadge').innerHTML = '\u{1F50A} ' + m.id + ' ' + misImg(m);
     if (m.rocket || m.preset) B.setGrid(MS.gridOf(m));
-    if (m.lock || m.start) { B.setAllowed([]); B.lockGrid(true); } else B.setAllowed(m.allow || null);
+    if ((m.lock || m.start) && !m.startBuild) { B.setAllowed([]); B.lockGrid(true); } else B.setAllowed(m.allow || null);   // v0.14.6 startBuild：あとで くみたて できる
     if (m.profile) setProfile(m.profile);
     c.tanks0 = MS.countTanks(B.grid);
     A.stop();
     // v0.14.1：はじめに ミッションの めあて（大きな 絵）。タップで とじる
-    $('mgIcon').textContent = m.icon.join(''); $('misGoal').style.display = 'flex'; A.tone(523, 0.12); setTimeout(() => A.tone(784, 0.18), 120);
+    $('mgIcon').innerHTML = misImg(m); $('misGoal').style.display = 'flex'; A.tone(523, 0.12); setTimeout(() => A.tone(784, 0.18), 120);
     goalNext = () => { if (m.start) missionFly(m); else missionBuild(); };
     A.say('ミッション ' + m.id.replace('-', 'の ') + '。', null, { interrupt: true });
     clearTimeout(goalT); goalT = setTimeout(closeGoal, 2200);

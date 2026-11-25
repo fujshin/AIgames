@@ -189,8 +189,10 @@ RL.Orbit = (function () {
         const full = coreFull(rho);
         if (full > 0) {
           thr = Math.min(1, LD.TWR * m0 * g / full);
-          if (sim.dir === 'retro' && Math.hypot(vr, vtg) < LD.V_HOVER) {
-            const ar = g - LD.HOVER_GAIN * vr, at = -LD.HOVER_GAIN * vtg;
+          // v0.14.6：HOVER_VD＞0（地球）は「ういて とまる」でなく「その 速さで ゆっくり おりる」。脚が あれば その まま 着陸できる
+          const vdT = LD.HOVER_VD || 0;
+          if (sim.dir === 'retro' && (vdT > 0 ? -vr < vdT + LD.V_HOVER && Math.abs(vtg) < LD.V_HOVER : Math.hypot(vr, vtg) < LD.V_HOVER)) {
+            const ar = g - LD.HOVER_GAIN * (vr + vdT), at = -LD.HOVER_GAIN * vtg;
             thr = Math.min(thr, Math.hypot(Math.max(0, ar), at) * m0 / full); aimL = Math.atan2(Math.max(0, ar), at); sim.hover = true;
           }
         }
@@ -436,6 +438,7 @@ RL.Orbit = (function () {
     function slowWarp() {
       const SL = O.SLOW, acc = sim.thrust / Math.max(0.1, sim.mass);
       if (!SL || acc <= 0) return 1;
+      if (sim.dvRate) return Math.min(1, sim.dvRate / acc);   // v0.14.6：ミッションで きめた はやさ（実時間1秒に ふえる 速さ）
       const wMin = Math.min(1, SL.DV_MIN / acc);
       if (sim.encLock) return wMin;                         // 月と であう 予測：とめるまで ゆっくり
       const ev = nextEventDv();
@@ -460,6 +463,8 @@ RL.Orbit = (function () {
       if (sim.landed) return 1;
       if (sim.near) {
         const LD = LDof(sim.body), fi = fallInfo(), tg = fi ? fi.t : 60;   // 落ちるだけ なら 何秒で 地面か（くうき・パラシュートも）
+        // v0.14.6：パラシュートで おりる ときは さくっと（スローに しない）
+        if ((sim.chute === 'open' || sim.chute === 'opening') && !sim.isPowered()) return Math.max(1, Math.min(LD.WARP_MAX, tg / (CH.SEC || 3)));
         return Math.max(LD.WARP_MIN, Math.min(sim.isPowered() ? 1 : LD.WARP_MAX, tg / LD.SLOW_SEC));
       }
       if (sim.isPowered()) {
@@ -505,6 +510,10 @@ RL.Orbit = (function () {
         sim.stages = S; sim.stacks = st; ev.length = 0;
       },
       abort() { finish({ type: 'abort' }); },
+      // v0.14.6：いま エンジンで ブレーキ できる 加速（地面ちかくの しぼりも ふくむ。重力を ひいた もの）
+      brakeAcc() { const b = sim.body, r = Math.hypot(sim.x, sim.y), g = b.mu / (r * r), m = mass(), full = coreFull(rhoAt(r - b.R)) / m;
+        return (sim.near ? Math.min(full, LDof(b).TWR * g) : full) - g; },
+      forceEnd(type) { finish({ type, forced: true }); },   // v0.14.6：ミッションの あんないで おわらせる（2-1 の とびだし）
       missionEnd() { finish({ type: 'mission', el: sim.lifted ? elements() : null }); },   // v0.14：ミッションの クリア（とちゅうで おわる）
       finishNow() { if (sim.cls && ['low', 'high', 'toMoon', 'moonOrbit'].includes(sim.cls) && !sim.isPowered()) finish({ type: 'orbit', el: elements() }); },
       liquidLeft,
