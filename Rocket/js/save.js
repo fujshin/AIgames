@@ -31,7 +31,7 @@ RL.Save = (function () {
   const C = RL.CFG.SAVE;
   let mem = null, ok = true;
   const blank = () => ({ cur: -1, slots: Array(C.SLOTS).fill(null) });
-  const newProfile = avatar => ({ avatar, medals: {}, best: 0, last: null, grid: null, profile: 'side', world: { clock: 0, objs: [] }, flights: 0, created: Date.now(), misV18: 1 });
+  const newProfile = avatar => ({ avatar, medals: {}, best: 0, last: null, grid: null, profile: 'side', world: { clock: 0, objs: [] }, flights: 0, created: Date.now(), misV18: 1, misV181: 1 });
   function load() {
     let s = null;
     try { s = localStorage.getItem(C.KEY); } catch (e) { ok = false; }           // ブラウザが しまわせて くれない
@@ -42,7 +42,11 @@ RL.Save = (function () {
       // v0.18：4章の ならびを かえた（よこに ならべよう 4-7 → 4-2、4-2〜4-6 → 4-3〜4-7）。まえの ⭐ を あたらしい 番号へ
       if (p.missions && !p.misV18) { const m = p.missions, MAP = { '4-2': '4-3', '4-3': '4-4', '4-4': '4-5', '4-5': '4-6', '4-6': '4-7', '4-7': '4-2' }, n = {};
         Object.keys(m).forEach(k => { n[MAP[k] || k] = m[k]; }); p.missions = n; }
-      p.misV18 = 1; });
+      p.misV18 = 1;
+      // v0.18.1：5章を 5こ → 4こ（5-2〜5-5 → 5-1〜5-4。まえの 5-1 は 5-3 に まとめた ので けす）
+      if (p.missions && !p.misV181) { const m = p.missions, MAP = { '5-2': '5-1', '5-3': '5-2', '5-4': '5-3', '5-5': '5-4' }, n = {};
+        Object.keys(m).forEach(k => { if (k === '5-1') return; n[MAP[k] || k] = m[k]; }); p.missions = n; }
+      p.misV181 = 1; });
     if (!mem.slots[mem.cur]) mem.cur = mem.slots.findIndex(Boolean);
     return mem;
   }

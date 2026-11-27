@@ -23,7 +23,7 @@ const P = {
   '3-2': (s, c, st) => { if (!st.c && s.alt() < 100) { st.c = 1; press('btnChute', () => s.deployChute()); } },
   '3-3': (s, c, st) => deorbit(s, st, false), '3-5': (s, c, st) => deorbit(s, st, true),
   // v0.15 4章：あんないで とまったら その ボタンを おす（下の AUTO）。4-6 は ぜんぶ 自動
-  '4-7': (s, c, st) => cut(s, st), '4-2': () => {}, '5-5': (s, c, st) => cut(s, st),   // 打ち上げて まわるまで（そのあとは あんないの ボタンを おす）
+  '4-7': (s, c, st) => cut(s, st), '4-2': () => {}, '5-4': (s, c, st) => cut(s, st),   // 打ち上げて まわるまで（そのあとは あんないの ボタンを おす）
   '3-4': (s, c, st) => { if (!st.a) { st.a = 1; press('btnDir', () => s.setDir('retro')); }   // v0.14.6：あんないで とまった ところ（高さ 520）で つけて その まま
       if (st.a === 1 && s.alt() < 520) { st.a = 2; press('btnEng', () => s.setEngine(true)); } }
 };
