@@ -28,6 +28,13 @@ RL.analyze = function (grid) {
     const runs = [], pods = [];
     for (let c = 0; c < cfg.COLS; c++) { if (c === center) continue; let r = grid.length - 1;
       while (r >= 0) { if (body(r, c)) { const r1 = r; while (body(r, c)) r--; runs.push({ c, r0: r + 1, r1 }); } else r--; } }
+    // v0.17.1：リングの ない よこの 列が 段の さかいめ（まんなかの リングの 行）を またぐ ときは、段ごとに わける
+    //   （まえは 列 ぜんぶが 1つの よこの 段に なり、上の エンジンが 埋もれて もえなかった）。リングの ある 列は まえの まま（ふつうの 段の 部品）
+    const hasRing = q => { for (let r = q.r0; r <= q.r1; r++) if (base(r, q.c) === 'ring') return true; return false; };
+    for (let i = runs.length - 1; i >= 0; i--) { const q = runs[i]; if (hasRing(q)) continue;
+      const parts = []; let r1 = q.r1;
+      for (let r = q.r1; r >= q.r0; r--) if (r === q.r0 || SR.of(r - 1) !== SR.of(r)) { parts.push({ c: q.c, r0: r, r1 }); r1 = r - 1; }
+      if (parts.length > 1) runs.splice(i, 1, ...parts); }
     const okRun = q => RL.ENGINES[grid[q.r1][q.c]] && !Array.from({ length: q.r1 - q.r0 + 1 }, (_, i) => base(q.r0 + i, q.c)).includes('ring');
     const touch = (q, c) => { for (let r = q.r0; r <= q.r1; r++) if (c === center ? body(r, c) : pods.some(p => p.c === c && r >= p.r0 && r <= p.r1)) return true; return false; };
     let grew = true;

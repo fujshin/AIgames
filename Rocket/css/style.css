@@ -90,8 +90,7 @@ body.tutorial #btnAbort{display:none}
 #fctl button svg{width:72%;height:72%;pointer-events:none}
 #fctl button.off{opacity:.3}
 #btnEng.on{background:rgba(200,60,20,.85)}
-#btnEng.hint,#btnDone{animation:pulse .5s infinite alternate}
-#btnDone{background:rgba(30,150,50,.9)!important}
+#btnEng.hint{animation:pulse .5s infinite alternate}
 #confirm{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,30,.7);z-index:40}
 #confirm .box{background:#24357a;border-radius:28px;padding:24px 28px;display:flex;flex-direction:column;align-items:center;gap:22px;box-shadow:0 8px 0 #121b45}
 #cfIcon{display:flex;gap:10px;align-items:center;font-size:64px}
@@ -239,3 +238,10 @@ body.mission #misBadge{display:block}
 #misBadge .misImg{display:inline-block;width:30px;height:30px;vertical-align:middle}
 #mgIcon .misImg{width:min(260px,60vw);height:min(260px,60vw);border-radius:24px}
 @media (max-width:460px){.misCard{width:84px;height:100px}.misCard .ic .misImg{width:64px;height:64px}}
+/* v0.17.1 🏁 おわる：左上（中止✋・⏪ の ならび）。ふだんは 光らせない（右の ボタンの 列から はなして、まちがえて おさない ように） */
+#btnDone{position:absolute;left:172px;top:10px;width:64px;height:64px;border-radius:32px;border:3px solid #fff;background:rgba(30,130,50,.85);cursor:pointer;z-index:3;display:none;align-items:center;justify-content:center;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+#fly.orbit #btnDone{display:flex}
+#btnDone svg{width:60%;height:60%;pointer-events:none}
+@media (max-width:420px){#btnDone{width:54px;height:54px;left:152px}}
+/* せまい 画面では ミッションの しるしを 左上の ボタンと かさならない ところへ（飛行中だけ） */
+@media (max-width:680px){body.flying #misBadge{top:84px;font-size:16px;padding:2px 10px}body.flying #misBadge .misImg{display:none}}

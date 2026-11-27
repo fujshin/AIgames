@@ -103,7 +103,7 @@ RL.Orbit = (function () {
     sim.relVel = relVel;
     // v0.11：いまの 段の 液体エンジンの 全力（しぼる 前）
       const coreFull = rho => { const c = S[sim.si], vpow = P.VAIR + (1 - P.VAIR) * (1 - rho), on = c.fuel > 0 ? 1 : 0;
-        return (c.eng * P.THRUST + c.veng * P.VTHRUST * vpow) * on + st.filter(podLive).reduce((z, s) => z + s.eng * P.THRUST + s.veng * P.VTHRUST * vpow, 0); };
+        return (c.eng * P.THRUST + c.veng * P.VTHRUST * vpow) * on + st.filter(s => podLive(s) && s.ignT !== null && sim.t >= s.ignT).reduce((z, s) => z + s.eng * P.THRUST + s.veng * P.VTHRUST * vpow, 0); };
     sim.fuelBase = coreFuel() || 1;   // v0.11.1：燃料メーターの 100%（切りはなしの たびに その ときの のこりを 100% に）
     sim.isPowered = () => (sim.engineOn && canBurnCore()) || boosting() || (S[sim.si].ignT > sim.t);
     // ---- ピッチ（地平線からの角度）を自動で きめる ----
@@ -472,14 +472,14 @@ RL.Orbit = (function () {
       return Math.max(wMin, Math.min(base, evW));
     }
     // のこりの Δv（くうきの外。ツール・表示用）
-      function dvRest() { let dv = 0;
-        // v0.16 よこの 段：さきに もえる（見つもり）
-        const pl = st.filter(podLive), above0 = sum(S.slice(sim.si), y => y.dry + y.fuel) + sum(st.filter(attached), y => y.dry + y.fuel);
-        if (pl.length) { const Tp = sum(pl, s => s.eng * P.THRUST + s.veng * P.VTHRUST), md = sum(pl, s => s.eng * P.BURN + s.veng * P.VBURN * (O.VAC_VBURN_K || 1)), f = sum(pl, s => s.fuel);
-          dv += Tp / md * Math.log(above0 / (above0 - f)); }
-        for (let i = last; i >= sim.si; i--) { const x = S[i]; if (!(x.eng + x.veng) || x.fuel <= 0) continue;
-      const ve = (x.eng * P.THRUST + x.veng * P.VTHRUST) / (x.eng * P.BURN + x.veng * P.VBURN * (O.VAC_VBURN_K || 1)), above = S.slice(i + 1).reduce((z, y) => z + y.dry + y.fuel, 0);
-      dv += ve * Math.log((above + x.dry + x.fuel) / (above + x.dry)); } return dv; }
+      // v0.17.1：いまの 段から 上へ じゅんに（段ごとに よこの 段 → まんなか）。上の 段の よこの 段も その 段で かぞえる
+      function dvRest() { let dv = 0, m = sum(S.slice(sim.si), y => y.dry + y.fuel) + sum(st.filter(s => s.pod && attached(s)), y => y.dry + y.fuel);
+        const KV = O.VAC_VBURN_K || 1, ve = x => (x.eng * P.THRUST + x.veng * P.VTHRUST) / (x.eng * P.BURN + x.veng * P.VBURN * KV);
+        for (let i = sim.si; i <= last; i++) { const x = S[i];
+          st.filter(s => s.pod && attached(s) && s.stage === i).forEach(s => { if (s.fuel > 0 && s.eng + s.veng) dv += ve(s) * Math.log(m / (m - s.fuel)); m -= s.fuel + s.dry; });
+          if (x.eng + x.veng && x.fuel > 0) dv += ve(x) * Math.log(m / (m - x.fuel));
+          m -= x.fuel + x.dry; }
+        return dv; }
     function elements() { return sim.el || (sim.lifted ? SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t) : null); }
     // 早送りの おすすめ倍率
     //  - くうきの中で 燃えている間・発射台の上は 実時間

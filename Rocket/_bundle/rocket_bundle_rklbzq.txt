@@ -1,60 +1,62 @@
 rklbzq ROCKET LAB BUNDLE
-created: 2026-11-25 19:46:54
+created: 2026-11-27 11:57:26
 root: Rocket
-files: 51
+files: 53
 
 ## INDEX (path / lines / bytes / modified)
-- css/style.css / 239 / 20585 / 2026-11-25 19:06
-- docs/DESIGN_v0.10.md / 47 / 4041 / 2026-11-25 19:06
-- docs/DESIGN_v0.11.md / 53 / 5199 / 2026-11-25 19:06
-- docs/DESIGN_v0.12.md / 76 / 7275 / 2026-11-25 19:06
-- docs/DESIGN_v0.13.md / 57 / 6221 / 2026-11-25 19:06
-- docs/DESIGN_v0.14.md / 188 / 21759 / 2026-11-25 19:06
-- docs/DESIGN_v0.14_missions.md / 242 / 19457 / 2026-11-25 19:06
-- docs/DESIGN_v0.15.md / 40 / 4100 / 2026-11-25 19:06
-- docs/DESIGN_v0.7.md / 47 / 3314 / 2026-11-25 19:06
-- docs/DESIGN_v0.8.2.md / 83 / 5460 / 2026-11-25 19:06
-- docs/DESIGN_v0.8.3.md / 32 / 2780 / 2026-11-25 19:06
-- docs/DESIGN_v0.8.md / 106 / 8809 / 2026-11-25 19:06
-- docs/DESIGN_v0.9.md / 57 / 4271 / 2026-11-25 19:06
-- index.html / 99 / 5010 / 2026-11-25 19:06
-- js/audio.js / 44 / 3326 / 2026-11-25 19:06
-- js/builder.js / 140 / 10110 / 2026-11-25 19:06
-- js/config.js / 102 / 8788 / 2026-11-25 19:06
-- js/flight.js / 260 / 21009 / 2026-11-25 19:06
-- js/flight2d.js / 713 / 67984 / 2026-11-25 19:06
-- js/icons.js / 34 / 7470 / 2026-11-25 19:06
-- js/main.js / 442 / 37495 / 2026-11-25 19:06
-- js/missions.js / 375 / 45928 / 2026-11-25 19:06
-- js/parts.js / 149 / 12168 / 2026-11-25 19:06
-- js/physics.js / 123 / 8809 / 2026-11-25 19:06
-- js/physics2d.js / 560 / 44296 / 2026-11-25 19:06
-- js/predict.js / 150 / 10035 / 2026-11-25 19:06
-- js/save.js / 71 / 5941 / 2026-11-25 19:06
-- js/space.js / 97 / 5559 / 2026-11-25 19:06
-- js/tutorial.js / 207 / 21630 / 2026-11-25 19:06
-- README.md / 56 / 5760 / 2026-11-25 19:06
-- tools/balance_check.js / 37 / 3614 / 2026-11-25 19:06
-- tools/balance_v0.7.txt / 17 / 1816 / 2026-11-25 19:06
-- tools/capture_check.js / 39 / 2683 / 2026-11-25 19:06
-- tools/ch4_time.js / 22 / 1651 / 2026-11-25 19:06
-- tools/dv.js / 43 / 3119 / 2026-11-25 19:06
-- tools/earth_land_check.js / 59 / 4424 / 2026-11-25 19:06
-- tools/kepler_test.js / 26 / 2190 / 2026-11-25 19:06
-- tools/landing_check.js / 74 / 6682 / 2026-11-25 19:06
-- tools/lib.js / 11 / 811 / 2026-11-25 19:06
-- tools/lib2d.js / 8 / 762 / 2026-11-25 19:06
-- tools/make_rocket_bundle.ps1 / 62 / 2859 / 2026-11-25 19:06
-- tools/mission_check.js / 80 / 6864 / 2026-11-25 19:06
-- tools/moon_test.js / 19 / 1180 / 2026-11-25 19:06
-- tools/orbit_check.js / 33 / 2451 / 2026-11-25 19:06
-- tools/orbit_v0.8.txt / 11 / 1666 / 2026-11-25 19:06
-- tools/predict_test.js / 50 / 3571 / 2026-11-25 19:06
-- tools/realtime_check.js / 31 / 2547 / 2026-11-25 19:06
-- tools/return_check.js / 49 / 4262 / 2026-11-25 19:06
-- tools/search_max.js / 20 / 1581 / 2026-11-25 19:06
-- tools/slow_check.js / 30 / 2345 / 2026-11-25 19:06
-- tools/wait_check.js / 23 / 1879 / 2026-11-25 19:06
+- css/style.css / 248 / 21654 / 2026-11-27 11:56
+- docs/DESIGN_v0.10.md / 47 / 4041 / 2026-11-25 19:59
+- docs/DESIGN_v0.11.md / 53 / 5199 / 2026-11-25 19:59
+- docs/DESIGN_v0.12.md / 76 / 7275 / 2026-11-25 19:59
+- docs/DESIGN_v0.13.md / 57 / 6221 / 2026-11-25 19:59
+- docs/DESIGN_v0.14.md / 188 / 21759 / 2026-11-25 19:59
+- docs/DESIGN_v0.14_missions.md / 242 / 19457 / 2026-11-25 19:59
+- docs/DESIGN_v0.15.md / 40 / 4100 / 2026-11-25 19:59
+- docs/DESIGN_v0.17.md / 53 / 7531 / 2026-11-27 11:56
+- docs/DESIGN_v0.7.md / 47 / 3314 / 2026-11-25 19:59
+- docs/DESIGN_v0.8.2.md / 83 / 5460 / 2026-11-25 19:59
+- docs/DESIGN_v0.8.3.md / 32 / 2780 / 2026-11-25 19:59
+- docs/DESIGN_v0.8.md / 106 / 8809 / 2026-11-25 19:59
+- docs/DESIGN_v0.9.md / 57 / 4271 / 2026-11-25 19:59
+- index.html / 99 / 5033 / 2026-11-27 11:56
+- js/audio.js / 44 / 3326 / 2026-11-25 19:59
+- js/builder.js / 144 / 10748 / 2026-11-25 19:59
+- js/config.js / 105 / 9577 / 2026-11-27 11:56
+- js/flight.js / 260 / 21160 / 2026-11-25 19:59
+- js/flight2d.js / 716 / 68898 / 2026-11-27 11:56
+- js/icons.js / 34 / 7470 / 2026-11-25 19:59
+- js/main.js / 444 / 37870 / 2026-11-25 19:59
+- js/missions.js / 460 / 59000 / 2026-11-27 11:56
+- js/parts.js / 149 / 12168 / 2026-11-25 19:59
+- js/physics.js / 153 / 12490 / 2026-11-27 11:56
+- js/physics2d.js / 588 / 47990 / 2026-11-27 11:56
+- js/predict.js / 150 / 10035 / 2026-11-25 19:59
+- js/save.js / 72 / 6041 / 2026-11-25 19:59
+- js/space.js / 97 / 5559 / 2026-11-25 19:59
+- js/tutorial.js / 207 / 21630 / 2026-11-25 19:59
+- README.md / 56 / 5760 / 2026-11-27 11:56
+- tools/balance_check.js / 37 / 3614 / 2026-11-25 19:59
+- tools/balance_v0.7.txt / 17 / 1816 / 2026-11-25 19:59
+- tools/budget.js / 21 / 1707 / 2026-11-25 19:59
+- tools/capture_check.js / 39 / 2683 / 2026-11-25 19:59
+- tools/ch4_time.js / 22 / 1784 / 2026-11-25 19:59
+- tools/dv.js / 43 / 3119 / 2026-11-25 19:59
+- tools/earth_land_check.js / 59 / 4424 / 2026-11-25 19:59
+- tools/kepler_test.js / 26 / 2190 / 2026-11-25 19:59
+- tools/landing_check.js / 74 / 6682 / 2026-11-25 19:59
+- tools/lib.js / 11 / 811 / 2026-11-25 19:59
+- tools/lib2d.js / 8 / 762 / 2026-11-25 19:59
+- tools/make_rocket_bundle.ps1 / 62 / 2859 / 2026-11-25 19:59
+- tools/mission_check.js / 81 / 7208 / 2026-11-25 19:59
+- tools/moon_test.js / 19 / 1180 / 2026-11-25 19:59
+- tools/orbit_check.js / 33 / 2451 / 2026-11-25 19:59
+- tools/orbit_v0.8.txt / 11 / 1666 / 2026-11-25 19:59
+- tools/predict_test.js / 50 / 3571 / 2026-11-25 19:59
+- tools/realtime_check.js / 31 / 2547 / 2026-11-25 19:59
+- tools/return_check.js / 49 / 4262 / 2026-11-25 19:59
+- tools/search_max.js / 20 / 1581 / 2026-11-25 19:59
+- tools/slow_check.js / 30 / 2345 / 2026-11-25 19:59
+- tools/wait_check.js / 23 / 1879 / 2026-11-25 19:59
 
 ===FILE: css/style.css===
 *{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -149,8 +151,7 @@ body.tutorial #btnAbort{display:none}
 #fctl button svg{width:72%;height:72%;pointer-events:none}
 #fctl button.off{opacity:.3}
 #btnEng.on{background:rgba(200,60,20,.85)}
-#btnEng.hint,#btnDone{animation:pulse .5s infinite alternate}
-#btnDone{background:rgba(30,150,50,.9)!important}
+#btnEng.hint{animation:pulse .5s infinite alternate}
 #confirm{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,30,.7);z-index:40}
 #confirm .box{background:#24357a;border-radius:28px;padding:24px 28px;display:flex;flex-direction:column;align-items:center;gap:22px;box-shadow:0 8px 0 #121b45}
 #cfIcon{display:flex;gap:10px;align-items:center;font-size:64px}
@@ -290,11 +291,21 @@ body.mission #misBadge{display:block}
 #btnOrbit.locked svg{opacity:.45;filter:grayscale(.6)}
 /* v0.14.6 ミッションの 絵 */
 .misImg{display:block;pointer-events:none}
+/* v0.16 もえない エンジン（同じ 段で 下に 部品が ある） */
+.cell.buried svg{opacity:.45;filter:grayscale(.7)}
+.cell.buried::after{content:'\1F4A4';position:absolute;right:2px;top:0;font-size:min(22px,45%);pointer-events:none}
 .misCard{width:96px;height:112px}
 .misCard .ic .misImg{width:76px;height:76px}
 #misBadge .misImg{display:inline-block;width:30px;height:30px;vertical-align:middle}
 #mgIcon .misImg{width:min(260px,60vw);height:min(260px,60vw);border-radius:24px}
 @media (max-width:460px){.misCard{width:84px;height:100px}.misCard .ic .misImg{width:64px;height:64px}}
+/* v0.17.1 🏁 おわる：左上（中止✋・⏪ の ならび）。ふだんは 光らせない（右の ボタンの 列から はなして、まちがえて おさない ように） */
+#btnDone{position:absolute;left:172px;top:10px;width:64px;height:64px;border-radius:32px;border:3px solid #fff;background:rgba(30,130,50,.85);cursor:pointer;z-index:3;display:none;align-items:center;justify-content:center;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+#fly.orbit #btnDone{display:flex}
+#btnDone svg{width:60%;height:60%;pointer-events:none}
+@media (max-width:420px){#btnDone{width:54px;height:54px;left:152px}}
+/* せまい 画面では ミッションの しるしを 左上の ボタンと かさならない ところへ（飛行中だけ） */
+@media (max-width:680px){body.flying #misBadge{top:84px;font-size:16px;padding:2px 10px}body.flying #misBadge .misImg{display:none}}
 ===END: css/style.css===
 ===FILE: docs/DESIGN_v0.10.md===
 # Rocket Lab v0.10 設計：向きボタン（前へ／うしろへ）と 月を まわる
@@ -1006,6 +1017,60 @@ v0.13 の 上に 足す。
 - landing_check・return_check・predict_test 46/46・30/30 は かわらない
 - ブラウザでは 確かめて いない（地図の しるしの 見え方・⏸ の タイミング）
 ===END: docs/DESIGN_v0.15.md===
+===FILE: docs/DESIGN_v0.17.md===
+# v0.16〜v0.17：段の 点火の きまり・よこならび・ミッション 5章「つきに おりる」
+※ 受け取った バンドルが v0.15.0 だった ため、v0.16.0 の 変更を 入れなおした うえで 5章を 足した。
+
+## v0.16（入れなおし）
+| 項目 | 中身 |
+|---|---|
+| 埋もれた エンジン | `PHYS.BURIED_ENGINE: 'off'`。同じ 段で すぐ 下に 胴体の 部品が ある エンジンは もえない（おもり・ほのおなし）。くみたてで うすく 💤・声。うちゅうモードで 発射する とき 1回 声 |
+| よこの 段 | `PHYS.PODS`。うちゅうモードだけ。まど の 列の となりで、下が エンジン・リングなし の 胴体の かたまり。1段目と いっしょに もえ、からに なると その 列だけ はずれる（声「よこの だん、きりはなし！」） |
+| クロスフィード | `ORBIT.CROSSFEED: false`（ためすと Δv が へった） |
+| 燃費 | `VAC_VBURN_K` 0.7 → 0.6。見本（3段3列）の 低い軌道での のこり Δv 489 → 630（必要 473＋子どもの むだ 25%） |
+| ミッション 4-7 | よこに ならべよう |
+
+## v0.17 5章「つきに おりる」
+| # | おしえる もの | はじまり | クリア | あんない（⏸＝とめて まつ） |
+|---|---|---|---|---|
+| 5-1 | うしろむきで ▼ を さげる | 月を まわる（2500〜2700） | ▼ 150 以下で エンジン停止 | ⏸ → ⏸向き → ⏸🔥 → ⏸🔥 とめる |
+| 5-2 | 月の メーター・ぎりぎりの ブレーキ | 月の 上 1500・下むき 12 | 月面に 着陸 | ⏸ → ⏸向き → メーターで ⏸ → いまだ ⏸🔥（つけた まま） |
+| 5-3 | 🚩 と 🏁 | 月の 上 400 | 🚩 を たてて 🏁 | ⏸向き → ⏸🔥 → 着陸 ⏸🚩 → ⏸🏁。⭐3＝🦵 ふんわり |
+| 5-4 | よこの はやさを けす | 月を まわる（2200〜2400） | 月面に 着陸 | ⏸向き → ⏸🔥 → よこ 0 で ⏸🔥 → メーター ⏸ → ⏸🔥 |
+| 5-5 | まとめ | じぶんで（見本 MOONSHIP） | 地上から 月に 着陸 | 4-6 の あんない ＋ よこの はやさ ＋ さいごの ブレーキ |
+- 章の 勲章 🥇（mis5）。絵：img/mis/4-7・5-1〜5-5.webp（Microsoft Copilot で 生成）
+- ブレーキの「いまだ」＝ `brakeNow`：いまから とまれる きょりが 高さの 85% を こえた とき（とめて まつ ので こどもの 反応の おそさは かんけい ない）
+
+## 物理の かわった ところ
+| 項目 | 中身 |
+|---|---|
+| `start.moon` | 月の まわり（`{ pe, ap }`）／月の 上から おちる（`{ h, vDown, vSide }`） |
+| 月の ゆっくり おりる | `LAND.moon.HOVER_VD 1.4`：うしろむきの エンジンを つけた まま なら ゆっくり おりて ふんわり 着陸（地球の 3-4 と 同じ あそび方）。`HOVER_K 0.15`・`HOVER_MAX 30`：たかい ところでは はやく おりる（高さ×0.15、30 まで）＝ 重力の むだを へらす |
+| 月の ブレーキ中の 早送り | `BRAKE_WARP 3`：うしろむきで まにあう（とまる きょり ＜ 高さの 7わり）ときは 3倍 |
+| じゆうモード への 影響 | 月で うしろむきの エンジンを つけた ままに すると 浮かずに ゆっくり おりる（まえは 浮いて とまり、とめて おちる） |
+
+## 確かめ
+- mission_check 26/26（5-5 は ⭐2：地上から 着陸まで 自動で とおる）
+- ch4_time（5章も）：5-1 2秒・5-2 22秒・5-3 19秒・5-4 28秒（とめて 話す 時間は ふくまない）
+- landing_check（月 5構成）・return_check（2構成とも 往還。まえは 1つ）・predict_test 46/46・30/30・realtime_check・earth_land_check・balance_check：とおる
+- tools/budget.js：見本 630・ORBIT 458・MOONSHIP 405
+- ブラウザでは 確かめて いない（月の ゆっくり おりる 見え方、🚩・🏁 の ⏸）
+---
+# v0.17.1：🏁 の 場所・4-3 が おわらない・よこの 列が 段を またぐ とき
+| なおした こと | 原因／中身 |
+|---|---|
+| 🏁（おわる）を まちがえて おす | 右の ボタンの 列（🔥 の 下）に あって、いつも ぱたぱた 光っていた。**左上の ✋・⏪ の となり**（left 172。せまい 画面 152）に うつし、ふだんは 光らせない。ミッションで 🏁 を おす あんない（2-1 の さいご・5-3 の さいご）の ときだけ 光る。右の 列は 🔥・向き・🪂・🗺️ の 4つに なり、1つぶん 下に さがる |
+| 🏁 の 声 | 「ゴールの はた」→「ひだりうえの ゴールの はた」（月面・月面で まつ・2-1・2-5・5-3） |
+| せまい 画面の ミッションの しるし | 飛行中は 左上の ボタンと かさならない ように 高さ 84 に さげて 小さく（680px 以下） |
+| 4-3 が おわらない | 月の 重力圏に 入った ときの ふだんの 声「いちばん ちかづいたら うしろむきに…」と、いちばん ちかい ところの「いまだ！ うしろむきに して、エンジン！」（🔥・向きが 光る）が ミッション中も 出ていた。そのとおり ブレーキすると 月を まわる 軌道に なって、重力圏から 出ない（＝クリアの 条件に ならない）。tools で 再現：「いまだ」で ブレーキ → 月を まわる → クリアに ならず |
+| 4-3 の なおし方 | quiet の ミッションでは この 2つの 声を ださない（4-4 も 同じ。4-4 では「はやすぎる！」も ださない）。4-3 は みている だけの ミッション（\`watch\`）：🔥 は うすく、おすと「みている だけで いいよ」、向きボタンは 出さない。はじめの 声に「まるに はいって、また そとに でたら ミッション クリア！」 |
+| よこの 列の 上の エンジンが もえない | よこの 段（v0.16）は「リングの ない 胴体の かたまり」を 列 ぜんぶで 1つに していた。まんなかに リングが あっても、よこの 列（エンジン＋タンク3＋エンジン＋タンク3）は 1つの よこの 段に なり、上の エンジンは 埋もれて 💤。**リングの ない よこの 列が 段の さかいめ（リングの 行）を またぐ ときは 段ごとに わける**。上の 段の ぶんは その 段の よこの 段（その 段の 点火で もえ、からで はずれる）。リングの ある よこの 列（3段3列の 見本）は まえの まま |
+| そのほか | 着陸の しぼり（coreFull）に まだ 点火していない 上の 段の よこの 段を ふくめない。のこりの Δv（dvLeftV）を 段ごと（よこの 段 → まんなか）に けいさん（よこの 段が ない ロケットは 同じ 値） |
+## 確かめ
+- 「エンジン＋タンク3＋エンジン＋タンク3｜まんなか エンジン＋タンク2＋リング＋エンジン＋タンク3｜おなじ」：💤 なし。よこの 段 4つ（1段目 2・2段目 2）。2段目の 力 564（まえは 376＝上の よこの エンジンが もえない）
+- mission_check 26/26、ch4_time・budget（630／458／405）・predict_test 46/46・30/30・earth_land_check・realtime_check・slow_check・return_check・landing_check（18行）：v0.17.0 と 同じ
+- ブラウザでは 確かめて いない（🏁 の 位置・せまい 画面の しるし）
+===END: docs/DESIGN_v0.17.md===
 ===FILE: docs/DESIGN_v0.7.md===
 # Rocket Lab v0.7 設計：2段式と宇宙用エンジン
 
@@ -1364,12 +1429,12 @@ v0.8.3 の上に足す。物理（physics2d.js / physics.js）は かえてい�
 <div id="fly"><canvas id="cv"></canvas><div id="rkWrap"><div id="flyRocket"></div></div><button id="btnPip" aria-label="ロケットを ちかくで みる"></button><div id="count"></div>
   <button id="btnAbort" aria-label="ちゅうし（ながおし）"><span class="ring"></span></button>
   <button id="btnRew" aria-label="ここから やりなおし（ながおし）"><span class="ring"></span></button>
+  <button id="btnDone" aria-label="おわる（ゴールの はた）"></button>
   <div id="fctl">
     <button id="btnEng" aria-label="エンジン"></button>
     <button id="btnDir" aria-label="むき（まえ／うしろ）"></button>
     <button id="btnChute" aria-label="パラシュート"></button>
     <button id="btnMap" aria-label="ちず"></button>
-    <button id="btnDone" aria-label="おわる"></button>
   </div>
   <div id="fctl2">
     <button id="btnSep" aria-label="きりはなす（2かい おす）">✂️</button>
@@ -1486,7 +1551,7 @@ RL.Audio = (function () {
 //  v0.12：つける部品（脚→エンジン、パラシュート→まど）。うちゅうモードは 縦14行で、見えるのは 9行（▲▼・指で 上下に うごかす）
 RL.Builder = (function () {
   const $ = id => document.getElementById(id);
-  let grid, sel = 'engine', allowed = null, gridLocked = false, hlCells = [], cs0 = 30;
+  let saidBuried = false, grid, sel = 'engine', allowed = null, gridLocked = false, hlCells = [], cs0 = 30;
   const S = { best: 0, last: null };
   const empty = () => Array.from({ length: RL.CFG.ROWS }, () => Array(RL.CFG.COLS).fill(null));
   const VIS = () => Math.min(RL.CFG.ROWS, RL.CFG.VIS_ROWS || 9);
@@ -1512,6 +1577,7 @@ RL.Builder = (function () {
     $('gridView').style.height = VIS() * cs + 'px'; $('gridView').style.width = C * cs + 'px';
     $('scrollBtns').style.display = scrolls() ? 'flex' : 'none';
     const map = {}; RL.layout(grid).forEach(q => map[q.r + ',' + q.c] = q);
+    const bur = {}; try { RL.analyze(grid).cells.forEach(q => { if (q.buried) bur[q.r + ',' + q.c] = 1; }); } catch (e) {}   // v0.16：もえない エンジン
     const SR = RL.stageRows(grid);
     for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
       const d = document.createElement('div'); d.className = 'cell'; d.style.width = d.style.height = cs + 'px';
@@ -1520,6 +1586,7 @@ RL.Builder = (function () {
       if (hlCells.some(h => h[0] === r && h[1] === c)) d.classList.add('hl');
       const q = map[r + ',' + c]; if (q) { d.innerHTML = RL.drawPart(q.k, q.ctx);
         if (q.ctx.loose) d.classList.add('loose');
+        if (bur[r + ',' + c]) d.classList.add('buried');
         // v0.12：つけたものは さいごの 段に ついて いないと やくに たたない（切りはなしで すてられる）ので うすく
         if (q.ctx.att && q.ctx.att.length && SR.of(r) !== SR.n - 1) d.classList.add('attLoose'); }
       d.addEventListener('click', () => tap(r, c)); g.appendChild(d);
@@ -1569,6 +1636,8 @@ RL.Builder = (function () {
     }
     render(); RL.emit('change', { action, grid });
     if (placedRow !== null) showRow(placedRow);
+    // v0.16：エンジンの うえに エンジン（同じ 段）は もえない。はじめて の とき 声で
+    if (placedRow !== null && !saidBuried && !(RL.Tutorial && RL.Tutorial.active) && document.querySelector('.cell.buried')) { saidBuried = true; RL.Audio.say('エンジンの うえに エンジンを のせても、もえないよ。 リングで だんを わけよう。'); }
   }
   // ---- v0.12 上下に うごかす ----
   const gv = () => $('gridView');
@@ -1626,7 +1695,7 @@ RL.Builder = (function () {
 // 全体設定。数値の調整はここだけで行う
 window.RL = window.RL || {};
 RL.CFG = {
-  COLS: 5, ROWS: 9, VERSION: 'v0.15.0',
+  COLS: 5, ROWS: 9, VERSION: 'v0.17.1',
   ROWS_FREE: 9, ROWS_ORBIT: 18, VIS_ROWS: 9,   // v0.12：うちゅうモードは 縦14行（見えるのは 9行。上下に うごかす）。ROWS は いまの モードの 行数
   PHYS: {
     G: 10,
@@ -1643,7 +1712,9 @@ RL.CFG = {
     BOOST_THRUST: 110, BOOST_FUEL: 0.7, BOOST_BURN: 0.45, BOOST_DRAG: 0.15,
     BOOST_SEG_POW: 0.5, // 長いブースターほど 力が強く、長く もえる（√長さ 倍）
     IGN_DELAY: 0.3,   // 切りはなしから つぎの段が 点火するまで（秒）
-    TIME_STRETCH: 1.3, DT: 0.02, MAX_T: 120
+      BURIED_ENGINE: 'off',  // v0.16：'off'＝同じ 段の 中で すぐ 下に 胴体の 部品が ある エンジンは もえない（おもり）。'on'＝まえの きまり
+      PODS: true,           // v0.16：よこの 段（液体の よこならび。うちゅうモードだけ）
+      TIME_STRETCH: 1.3, DT: 0.02, MAX_T: 120
   },
   PLAY: { MAX_SEC: 30, COAST_SEC: 4, FF_MIN: 3 },   // 燃えている間は実時間。燃料が なくなったら 早送り
   VOICE_RATE: 1.2,
@@ -1677,6 +1748,7 @@ RL.CFG = {
     SLOW: { DV: 60, AHEAD_SEC: 3, LOOK: 200, DV_MIN: 1.5, LOOK_MOON: 10 },
     ORBIT_DONE: 1.2,   // 燃料が もう ないとき：安定した軌道を この周回ぶん まわったら おしまい
     IDLE_TURNS: 12,    // v0.8.3：燃料が のこっていても、エンジンを つかわずに この周回ぶん まわったら おしまい（ずっと おわらない のを ふせぐ）
+    CROSSFEED: false,  // v0.16：よこの 段の 燃料を まんなかの エンジンも つかう。しらべたら Δv が へった ので いまは つかわない
     MOON_WARP_K: 2.5,  // v0.15：月の 重力圏の 中の 早送り（月の 高さ÷速さ を この 数で わる。まえは 6）
     MOON_WAIT: 4,      // v0.8.3：燃料が もう ないとき、月まで とどく軌道は 月と であうのを この周回ぶん まつ
     // v0.11 月着陸：下むき V_DOWN・よこ V_SIDE 以下で 着陸（HARD_K 倍までは「あぶなかった」）。着陸脚で LEG_K 倍
@@ -1685,7 +1757,7 @@ RL.CFG = {
     //   v0.12：天体ごと（moon／earth）。地球は 地面に たいする 速さ（地面は まわっている）。MIN_ALT より たかく とんだ あとだけ 着陸に なる
     LAND: {
       moon:  { V_DOWN: 4, V_SIDE: 3, HARD_K: 1.5, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 2000, TWR: 3,
-               V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5 },
+               V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 6, WARP_MIN: 0.3, WARP_MAX: 30, SOFT: 1.5, HOVER_VD: 1.4, HOVER_K: 0.15, HOVER_MAX: 30, HOVER_SEC: 5, BRAKE_WARP: 3 },   // v0.17：月も うしろむきの エンジンを つけた まま なら 速さ 1.4 で ゆっくり おりる（脚なしでも 着陸できる）
       earth: { V_DOWN: 5, V_SIDE: 3, HARD_K: 1.2, LEG_K: 2.5, TILT_MAX: 35, TILT_MAX_LEG: 50, NEAR: 600, TWR: 3,
                V_HOVER: 1.5, HOVER_GAIN: 0.8, SLOW_SEC: 4, WARP_MIN: 1, WARP_MAX: 30, SOFT: 1.5, MIN_ALT: 100, HOVER_VD: 8, HOVER_SEC: 4 }   // v0.14.7：地球は スローに しない（WARP_MIN 1）。HOVER_SEC：エンジンで ゆっくり おりる ときは 地面まで 実時間 約 HOVER_SEC 秒   // v0.14.6 HOVER_VD：うしろむきの エンジンで この 速さで おりる（脚なら 着陸、脚なしは こわれる）
     },
@@ -1697,7 +1769,7 @@ RL.CFG = {
     // v0.13 くうきに 入る：くうきに たいする 速さが HOT より はやい 間は 🔥 の 光（演出だけ）
     REENTRY: { HOT: 150 },
     MOON_IDLE_SEC: 60,  // v0.13：月面で なにも しないと この 秒数（実時間）で 声で さそう
-    VAC_VBURN_K: 0.7,  // v0.11：うちゅうモードだけ、宇宙用エンジンは くうきの外で 燃料の へりが この割合（燃費が よい）。月着陸に 燃料が とどくように
+    VAC_VBURN_K: 0.6,   // v0.16：0.7 → 0.6（月往還に 子どもの むだ 25% ぶんの よゆう）。  // v0.11：うちゅうモードだけ、宇宙用エンジンは くうきの外で 燃料の へりが この割合（燃費が よい）。月着陸に 燃料が とどくように
     CHECKPOINT: { STAR_PENALTY: [0, 1, 1, 2] },   // ⏪ の 回数（0,1,2,3回〜）で へらす 星
     TURN_START: 20,    // この高さから かたむけ はじめる
     PITCH_RATE: 15,    // v0.8.2：自動で かたむける速さの上限（度／秒）。切りはなしで 急に 真上へ もどらない
@@ -1752,10 +1824,10 @@ RL.Flight = (function () {
         d.dataset.side = s.c < (RL.CFG.COLS - 1) / 2 ? -1 : 1;
         d.style.transformOrigin = `${(s.c - q.c + 0.5) * cs}px ${((s.r0 + s.r1 + 1) / 2 - q.r) * cs}px`;
       }
-      const isEng = RL.ENGINES[q.k], isB = q.k === 'booster' && !q.ctx.down;
+      const isEng = RL.ENGINES[q.k] && !q.buried, isB = q.k === 'booster' && !q.ctx.down;   // v0.16：埋もれた エンジンは ほのおなし
       if (isEng || isB) {
         const f = document.createElement('div'); f.className = 'flame'; f.innerHTML = q.k === 'vengine' ? RL.VFLAME : RL.FLAME;
-        f.dataset.kind = isB ? 'b' : q.k === 'vengine' ? 'v' : 'e'; f.dataset.stage = q.stage; if (isB) f.dataset.stackFlame = q.stackId;
+        f.dataset.kind = isB ? 'b' : q.k === 'vengine' ? 'v' : 'e'; f.dataset.stage = q.stage; if (isB || q.pod) f.dataset.stackFlame = q.stackId;   // v0.16 よこの 段の エンジンも その 段と いっしょ
         const fw = q.k === 'vengine' ? 0.95 : 0.76;
         Object.assign(f.style, { left: q.c * cs + cs * (1 - fw) / 2 + 'px', top: (q.r + 1) * cs - 4 + 'px', width: cs * fw + 'px', height: cs * 1.1 + 'px' });
         f.dataset.l = q.c * cs + cs * (1 - fw) / 2; f.dataset.w = cs * fw; f.dataset.h = cs * 1.1;
@@ -2317,8 +2389,10 @@ RL.Flight2D = (function () {
     };
     bChute.style.visibility = 'hidden'; bChute._said = false;
     let engShown = null;
-    const engUI = () => { const ok = sim.liquidLeft() && !sim.done; bEng.classList.toggle('off', !ok); if (engShown !== sim.engineOn) { engShown = sim.engineOn; bEng.innerHTML = sim.engineOn ? RL.ICON.engStop : RL.ICON.engGo; } bEng.classList.toggle('on', sim.engineOn); };
+    const watch = () => !!(RL.Missions && RL.Missions.active && RL.Missions.active.watch);   // v0.17.1：みている だけの ミッション（4-3）は エンジン・向きを つかわない
+    const engUI = () => { const ok = sim.liquidLeft() && !sim.done && !watch(); bEng.classList.toggle('off', !ok); if (engShown !== sim.engineOn) { engShown = sim.engineOn; bEng.innerHTML = sim.engineOn ? RL.ICON.engStop : RL.ICON.engGo; } bEng.classList.toggle('on', sim.engineOn); };
     bEng.onclick = () => { RL._engClick = (RL._engClick || 0) + 1; idleAt = performance.now();
+      if (watch()) { A.tone(150, 0.15, 'square', 0.08); A.say('この ミッションは、みている だけで いいよ。', null, { interrupt: true }); return; }
       if (sim.surface && !sim.liquidLeft() && sim.canSep()) { A.tone(150, 0.15, 'square', 0.08); A.say('この だんには ねんりょうが ないよ。 はさみで きりはなそう。'); bSep.classList.add('hint'); setTimeout(() => bSep.classList.remove('hint'), 3000); return; }
       if (!sim.lifted || !sim.liquidLeft() || sim.done) { A.tone(150, 0.15, 'square', 0.08); return; }
       if (sim.surface) saveCp('surface', true);   // v0.13：月面（離陸の 前）を おぼえる
@@ -2326,7 +2400,7 @@ RL.Flight2D = (function () {
       sim.setEngine(!sim.engineOn); engUI(); };
     // ---- v0.10 向きボタン：前へ ⇄ うしろへ（くうきの外だけ。いつも 同じ場所。つかえない ときは かくす） ----
     let dirShown = null;
-    const dirUI = () => { const ok = sim.canDir() && sim.liquidLeft() && !ended; bDir.style.visibility = ok ? 'visible' : 'hidden';
+    const dirUI = () => { const ok = sim.canDir() && sim.liquidLeft() && !ended && !watch(); bDir.style.visibility = ok ? 'visible' : 'hidden';
       const d = sim.dir === 'retro' ? 'retro' : 'pro'; if (dirShown !== d) { dirShown = d; bDir.innerHTML = d === 'retro' ? RL.ICON.dirRetro : RL.ICON.dirPro; bDir.classList.toggle('retro', d === 'retro'); } };
     bDir.onclick = () => { if (bDir.style.visibility === 'hidden') return; sim.setDir(sim.dir === 'retro' ? 'pro' : 'retro'); dirUI(); };
     bDir.style.visibility = 'hidden';
@@ -2344,7 +2418,7 @@ RL.Flight2D = (function () {
       if (!lastCp || ended) return;
       pause = null;
       sim.restore(lastCp.snap); trail.length = Math.min(trail.length, lastCp.trailLen); prCache = null; prKind = null;
-      rewinds++; sim.rewinds = rewinds; saidPeri = lastCp.tag !== 'soi'; saidHover = false; warnAt = 0;
+      rewinds++; sim.rewinds = rewinds; saidPeri = lastCp.tag !== 'soi' || quiet(); saidHover = false; warnAt = 0;
       syncParts(); engShown = null; dirShown = null; sepFlash = 30;
       [784, 659, 523].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'triangle'), i * 80)); A.say('もどったよ！ もういちど やってみよう。');
     };
@@ -2378,7 +2452,7 @@ RL.Flight2D = (function () {
     function events() {
       sim.events.splice(0).forEach(e => {
         if (RL.Missions && RL.Missions.active) RL.Missions.event(e, sim);   // v0.14
-        if (e.type === 'booster-sep') { sepReal[e.id] = performance.now(); sepFlash = 25; A.tone(180, 0.25, 'square', 0.15); if (!saidSep) { saidSep = true; A.say('ブースター、きりはなし！', null, { interrupt: false }); } }
+        if (e.type === 'booster-sep') { sepReal[e.id] = performance.now(); sepFlash = 25; A.tone(180, 0.25, 'square', 0.15); if (e.pod) A.say('よこの だん、きりはなし！', null, { interrupt: false }); else if (!saidSep) { saidSep = true; A.say('ブースター、きりはなし！', null, { interrupt: false }); } }
         if (e.type === 'stage-sep' && e.surface) { sepFlash = 20; A.tone(220, 0.3, 'square', 0.18); A.say('きりはなし！ したの だんは つきに のこるよ。', null, { interrupt: true }); fuelFlash = 1; }
         else if (e.type === 'stage-sep') { stageReal[e.i] = performance.now(); sepFlash = 40; A.tone(220, 0.3, 'square', 0.18); setTimeout(() => A.tone(140, 0.4, 'square', 0.12), 140);
           A.say((STAGE_NAME[e.i] || '') + 'だん、きりはなし！', null, { interrupt: false });
@@ -2388,10 +2462,11 @@ RL.Flight2D = (function () {
         if (e.type === 'engine-off') { A.tone(400, 0.12, 'square', 0.1); setTimeout(() => A.tone(260, 0.2, 'square', 0.1), 110); }
         if (e.type === 'engine-on') { A.tone(523, 0.1, 'triangle'); setTimeout(() => A.tone(784, 0.15, 'triangle'), 90); }
         if (e.type === 'soi') {
+          // v0.17.1：ミッション（quiet）では ブレーキの おしえを ださない（4-3・4-4 で ブレーキすると 月を まわって おわらなくなる）
           if (e.body === 'moon' && sim.liquidLeft()) {   // v0.10：ブレーキの おしえ
-            saidPeri = false; saveCp('soi');
-            A.say('つきの じゅうりょくけんに はいったよ！ つきに いちばん ちかづいたら、うしろむきに ふかすと、つきを まわれるよ。', null, { interrupt: false });
-          } else A.say(e.body === 'moon' ? 'つきの じゅうりょくけんに はいったよ！' : 'ちきゅうの じゅうりょくけんに もどったよ。', null, { interrupt: false });
+            saidPeri = quiet(); saveCp('soi');
+            if (!quiet()) A.say('つきの じゅうりょくけんに はいったよ！ つきに いちばん ちかづいたら、うしろむきに ふかすと、つきを まわれるよ。', null, { interrupt: false });
+          } else if (!quiet()) A.say(e.body === 'moon' ? 'つきの じゅうりょくけんに はいったよ！' : 'ちきゅうの じゅうりょくけんに もどったよ。', null, { interrupt: false });
         }
         if (e.type === 'dir') { A.tone(e.dir === 'retro' ? 440 : 660, 0.1, 'triangle'); A.say(e.dir === 'retro' ? 'うしろむき。ブレーキ！' : 'まえむき。かそく！'); }
         // v0.11 月着陸
@@ -2408,7 +2483,7 @@ RL.Flight2D = (function () {
         // v0.13 月面・離陸
         if (e.type === 'surface') { idleAt = performance.now(); rocket.classList.add('legsOut', 'landedOk'); saveCp('surface', true);
           [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.22, 'triangle'), i * 120));
-          A.say('つきに ちゃくりく！ はたを たてたり、ほのおの ボタンで ちきゅうに かえったり できるよ。 おわるときは ゴールの はた。', null, { interrupt: true });
+          A.say('つきに ちゃくりく！ はたを たてたり、ほのおの ボタンで ちきゅうに かえったり できるよ。 おわるときは ひだりうえの ゴールの はた。', null, { interrupt: true });
           bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 4000); }
         if (e.type === 'moon-liftoff') { rocket.classList.remove('landedOk'); A.rumble(1.5); A.say('つきから りりく！', null, { interrupt: true }); }
         if (e.type === 'ascent-done') { [659, 880, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
@@ -2498,7 +2573,7 @@ RL.Flight2D = (function () {
       const now = performance.now();
       rocket.querySelectorAll('.flame').forEach(f => {
         let on;
-        if (f.dataset.kind === 'b') { const s = sim.stacks.find(x => x.id === f.dataset.stackFlame); on = !!s && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0; }
+        if (f.dataset.stackFlame) { const s = sim.stacks.find(x => x.id === f.dataset.stackFlame); on = !!s && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0 && (!s.pod || (sim.engineOn && sim.burnC)); }
         else on = +f.dataset.stage === sim.si && sim.burnC;
         if (!sim.lifted && sim.t < 0.01) on = false;
         f.style.display = on ? 'block' : 'none';
@@ -2577,7 +2652,7 @@ RL.Flight2D = (function () {
         A.say(txt, () => { if (pause === my && my.until === 'speech') speechDone(); }, { interrupt: true });   // 光らせるのは missions.js（つぎの あんないまで ずっと）
       });
       // v0.13 月面で なにも しない とき：1回だけ さそう
-      if (sim.surface && !ended && !saidIdle && idleAt && ts - idleAt > (O.MOON_IDLE_SEC || 60) * 1000) { saidIdle = true; A.say('ほのおの ボタンで ちきゅうに かえろう。 おわるときは ゴールの はた。'); }
+      if (sim.surface && !ended && !saidIdle && idleAt && ts - idleAt > (O.MOON_IDLE_SEC || 60) * 1000) { saidIdle = true; A.say('ほのおの ボタンで ちきゅうに かえろう。 おわるときは ひだりうえの ゴールの はた。'); }
       // v0.13 くうきに 入る（🔥 の 光・声）。月から かえる ときは くうきの 手前を ⏪ に おぼえる
       let hot = 0;
       if (sim.body === E && sim.lifted && !sim.done) { const hh = Math.hypot(sim.x, sim.y) - E.R, wv = Math.hypot(sim.vx + E.rot * sim.y, sim.vy - E.rot * sim.x);
@@ -2601,7 +2676,7 @@ RL.Flight2D = (function () {
       //  v0.12：地球でも。パラシュートが ひらいて いる ときは いわない
       if (sim.near && !sim.done && !(sim.chute === 'open' || sim.chute === 'opening')) {
         const LD = LDb(), rr = Math.hypot(sim.x, sim.y), hh = rr - sim.body.R, gg = sim.body.mu / (rr * rr), vd = Math.max(0, -(sim.vx * sim.x + sim.vy * sim.y) / rr);
-        if (!sim.isPowered() && sim.liquidLeft() && vd * vd / (2 * (LD.TWR - 1) * gg) > hh * 0.8 && ts - warnAt > 4000) {
+        if (!sim.isPowered() && sim.liquidLeft() && !(RL.Missions && RL.Missions.active && RL.Missions.active.noSlow) && vd * vd / (2 * (LD.TWR - 1) * gg) > hh * 0.8 && ts - warnAt > 4000) {   // v0.17.1：4-4（ぶつけて よい）では いわない
           const td = RL.Predict.touchdown(sim), ok = LD.V_DOWN * (sim.legs().n ? LD.LEG_K : 1);
           if (!td || td.vDown > ok) { warnAt = ts; A.say(sim.dir === 'retro' ? 'はやすぎる！ エンジン！' : 'はやすぎる！ うしろむきで エンジン！', null, { interrupt: true });
             bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 2500); }
@@ -2935,12 +3010,13 @@ RL.ICON = {
         if (ok.need) { A.say(ok.need === 'up' ? 'まずは、まっすぐ うえに うちあげて みよう。' : PROF_SAY[ok.need] + ' とぶ うちあげかたに しよう。 したの ひかっている ボタンだよ。'); MS.setHl('prof'); }
         else { A.say(ok.say.join(' ')); MS.setHl(ok.hl); } return; } }
     RL.emit('launch', s);
+    if (mode === 'orbit' && !saidBur && a.cells.some(q => q.buried)) { saidBur = true; A.say('エンジンの うえの エンジンは もえないよ。 リングで だんを わけよう。', null, { interrupt: false }); }   // v0.16
     if (mode === 'orbit') { lastA = a; lastProf = profile; RL.Flight2D.run(a, profile, sim => result2d(sim), aborted, null, MS.active && MS.active.start); return; }   // v0.14.6：とちゅうから の ミッション（3-4）は くみたての あとも とちゅうから
     RL.Flight.run(a, s, () => result(s), aborted);
   }
   // 中止：結果は出さず、組み立てたロケットのまま もどる（うちゅうモードは ワールドの 時計だけ すすむ）
   // v0.11 ⏪：結果画面から 最後に おぼえた ところへ もどって つづける（さっきの 結果で ふえた ものは もどす）
-  let lastA = null, lastProf = 'side', lastRec = null;
+  let lastA = null, lastProf = 'side', lastRec = null, saidBur = false;
   $('resRew').addEventListener('click', () => {
     const lr = RL.Flight2D.lastRun; if (!lr || !lr.cp || !lastA) return;
     if (lastRec) SV.update(p => { p.world.clock -= lastRec.clock; p.flights = Math.max(0, (p.flights || 1) - 1); if (lastRec.obj) p.world.objs.pop(); });
@@ -2992,7 +3068,8 @@ RL.ICON = {
         if (d.vDown != null) { say += ' はやさ ' + Math.round(d.vDown) + '。' + (d.vDown < 40 ? 'もうすこし ゆっくり おりれば ちゃくりく できるよ！' : 'つきの ちかくで うしろむきに エンジンを つかうと、ゆっくり おりられるよ。'); }
         SV.addObj({ kind: 'flag', ang: Math.atan2(sim.y, sim.x), abs: W0 + sim.t }); objAdded = true; break;
       case 'heavy': icon = '🏋️'; say = 'おもくて あがらなかった！'; break;
-      case 'mission': icon = '\u{1F389}'; stars = 3; break;   // v0.14：とちゅうで ミッション クリア
+        case 'mission': icon = '\u{1F389}'; stars = 3; break;
+        case 'nofuel': icon = '\u26FD'; say = 'ねんりょうが なくなっちゃった。'; break;   // v0.16 4-7   // v0.14：とちゅうで ミッション クリア
       default: icon = '⏱️'; say = 'じかん ぎれ！';
     }
     // v0.13：月面に のこした もの（✂️ した 段＝着陸機、🚩）。月面で おわった ときの 着陸機は 上で のこしている
@@ -3199,7 +3276,12 @@ RL.Missions = (function () {
     // v0.14.1：よこ なら ちきゅうを まわれる、まっすぐ だと おちてくる（tools/mission_check.js）
     FIRST: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine', 'tank', 'win', 'nose'], ['fin'], []],
     // v0.14.1：ねんりょうが たりない（タンクを 1つ のせると まわれる）
-    SHORT: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine'], ['fin'], []]
+    SHORT: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine'], ['fin'], []],
+      // v0.16 4-7：まんなか だけでは つきの たかさに とどかない（よこに エンジン＋タンク2 を ならべると とどく。tools/mission_check.js）
+    // v0.17 5章：月着陸の 1段（宇宙用＋脚）、地上から 月に おりる 見本（landing_check の 見本）
+    LANDER: [[], [], ['vengine+leg', ...T(3), 'win', 'nose'], [], []],
+    MOONSHIP: [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine+leg', ...T(2), 'win', 'nose'], B(5), ['fin']],
+    POD0: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine', 'tank', 'win+chute', 'nose'], ['fin'], []]
   };
   const ORB = ['low', 'high'];  const E = s => s.bodies.earth, TAU = Math.PI * 2;
 const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; };
@@ -3211,6 +3293,10 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
   const LEAD = 0.06;   // ふかす しるしの すこし 手前で とめる（ふかす 間に すすむ ぶん）
   const encNow = (s, c) => { c.encK = (c.encK || 0) + 1; if (c.encK % 6) return !!c.encLast; const e = M.encInfo(s); c.encLast = e.enc && !e.hit; if (c.encLast) c.enc = true; return c.encLast; };
   const hitNow = s => M.encInfo(s).hit;
+  // v0.17：いまから エンジンで とまれる ぎりぎりの すこし 手前（月の 地面ちかく）
+  const brakeNow = s => { if (!s.near || s.surface) return false; const v = Math.max(0, -s.relVel().vr), a = Math.max(0.1, s.brakeAcc()); return v > 1 && v * v / (2 * a) > s.alt() * 0.85; };
+  // v0.16：よこの 段の 数（seg＝たての ながさ 以上）
+  const podCount = (g, seg) => { try { return RL.analyze(g).stacks.filter(x => x.pod && x.seg >= seg).length; } catch (e) { return 0; } };
   const sats = () => (RL.World && RL.Save && RL.Save.cur ? RL.World.counts(RL.Save.cur).sats : 0);
 
   const LIST = [
@@ -3274,7 +3360,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
           say: ['エンジンを つけっぱなし だと、どんどん はやく なって、ちきゅうから とびだしちゃうんだ。', 'みどりの せんに なったら、ほのおの ボタンで エンジンを とめよう。 みどりの ボタンで もういちど。'] },
         { at: 'build', hl: 'launch', say: ['こんどは、みどりの せんに なったら とめるよ。 はっしゃ！'] },
         { at: 'fly', when: s => ORB.includes(s.cls) && s.isPowered(), hl: 'btnEng', pause: 'btnEng', say: ['みどりに なった！ いったん ストップ。 いまだ、ひかっている ほのおの ボタンで とめよう！'] },
-        { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnDone', say: ['とまった！ もう ずっと まわりつづけるよ。', 'ゴールの はたで おわると、ロケットは えいせいに なって、ワールドに のこるよ。'] }
+        { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnDone', say: ['とまった！ もう ずっと まわりつづけるよ。', 'ひだりうえの ゴールの はたで おわると、ロケットは えいせいに なって、ワールドに のこるよ。'] }
       ], help: 'みどりの せんに なったら、すぐ とめると ねんりょうが のこるよ。' },
     { id: '2-2', ch: 2, quiet: true, icon: ['\u23E9', '\u25B2'], rocket: 'UP', start: { orbit: { pe: 500, ap: 600 } },
       goal: { tick: (s, c) => off(s) && (c.ui.btnEng || 0) >= 2 && ap(s) >= 2000 }, star3: s => s.cls === 'high',
@@ -3307,7 +3393,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', when: s => s.isPowered() && ap(s) - pe(s) <= 80, hl: 'btnEng', pause: 'btnEng', say: ['ストップ！ ▼ と ▲ が おなじ くらいに なった。 まんまるだ！ ほのおの ボタンで とめよう！'] }
       ], help: 'はやおくりで ▲ まで まって、そこで エンジンを つけよう。' },
     { id: '2-5', ch: 2, icon: ['\u{1F6E0}\uFE0F', '\u{1F6F0}\uFE0F'], preset: null, allow: null, hl: 'launch',
-      say: ['さいごは、じぶんで ロケットを つくって、ちきゅうを まわろう！', 'ゴールの はたで おわったら クリア だよ。'],
+      say: ['さいごは、じぶんで ロケットを つくって、ちきゅうを まわろう！', 'ひだりうえの ゴールの はたで おわったら クリア だよ。'],
       goal: { done: d => d.type === 'orbit' && onEarth(d) }, star3: (d, s) => s.fuelAll() >= 0.15,
       help: 'ブースターと、2だんの ロケットが おすすめ だよ。' },
     // ===== 3章 ちきゅうに かえる =====
@@ -3394,10 +3480,10 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', when: (s, c) => s.isPowered() && encNow(s, c), hl: 'btnEng', pause: 'btnEng',
           say: ['ストップ！ うすい つきが でたよ。 つきと であえる せんに なった！', 'ほのおの ボタンで とめよう。'] }
       ], help: 'ひかっている しるしで ふかして、うすい つきが でたら とめよう。' },
-    { id: '4-3', ch: 4, quiet: true, map: true, icon: ['\u2B55', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.3 } },
+    { id: '4-3', ch: 4, quiet: true, map: true, watch: true, icon: ['\u2B55', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.3 } },
       goal: { tick: (s, c) => c.inMoon && s.body === E(s) },
       steps: [
-        { at: 'fly', pause: 'speech', say: ['いま、つきへ むかって とんでいる ところ。 うすい つきの まわりの てんせんの まるを みてね。', 'あの まるの なかは、つきに ひっぱられる ところ。 じゅうりょくけん って いうんだ。'] },
+        { at: 'fly', pause: 'speech', say: ['いま、つきへ むかって とんでいる ところ。 うすい つきの まわりの てんせんの まるを みてね。', 'あの まるの なかは、つきに ひっぱられる ところ。 じゅうりょくけん って いうんだ。', 'こんどは みている だけで いいよ。 まるに はいって、また そとに でたら ミッション クリア！'] },
         { at: 'fly', when: s => s.body === s.bodies.moon, pause: 'speech',
           say: ['まるの なかに はいった！ ここからは つきに ひっぱられて、せんが まがるよ。', 'この せんは、つきの よこを とおりぬける せん。 みていてね。'] },
         { at: 'fly', when: (s, c) => c.inMoon && s.body === E(s), pause: 'speech', say: ['まるの そとに でた！ つきの よこを とおりぬけたね。'] }
@@ -3433,10 +3519,84 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
               { t: s => s.body === s.bodies.moon, pause: 'btnDir', hl: 'btnDir', say: 'じゅうりょくけんに はいった！ うしろむき に しよう。' },
               { t: s => s.body === s.bodies.moon && vr(s) >= 0, pause: 'btnEng', hl: 'btnEng', say: 'いまだ！ ブレーキ！ つけた まま だよ。' },
               { t: s => s.body === s.bodies.moon && s.cls === 'moonOrbit', pause: s => (s.isPowered() ? 'btnEng' : null), hl: 'btnEng', say: 'つきを かこんだ！ とめよう。' }],
-      help: 'まず ちきゅうを まわって、しるしで ふかそう。 つきに ちかづいたら うしろむき で ブレーキ。' }
+      help: 'まず ちきゅうを まわって、しるしで ふかそう。 つきに ちかづいたら うしろむき で ブレーキ。' },
+    // v0.16 よこに ならべよう：まんなか だけで つきの たかさを めざす → ねんりょうが たりない → よこに エンジン＋タンクを ならべる（よこの だん）→ からに なったら はずれて とどく
+    { id: '4-7', ch: 4, quiet: true, map: false, icon: ['\u{1F680}', '\u2194\uFE0F'], rocket: 'POD0', allow: ['engine', 'tank'], profile: 'side', need: 'side',
+      goal: { tick: (s, c) => s.cls === 'toMoon' && off(s) && c.podSep >= 1 }, star3: s => s.fuelRatio() >= 0.1,
+      steps: [
+        { at: 'build', hl: 'launch', say: ['この ロケットで、つきの たかさまで とどく せんを つくろう。 はっしゃ！'] },
+        { at: 'fly', when: s => ORB.includes(s.cls) && s.isPowered(), hl: 'btnEng', pause: 'btnEng', say: ['みどりの せんに なった！ ほのおの ボタンで いったん とめよう。'] },
+        { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnEng', pause: 'btnEng', say: ['こんどは つきの たかさまで ふかそう。 ほのおの ボタンを おして、つけた まま だよ。'] },
+        { at: 'fly', when: (s, c) => (c.ui.btnEng || 0) >= 2 && !s.liquidLeft() && s.cls !== 'toMoon', pause: 'speech', end: 'nofuel',
+          say: ['あっ、ねんりょうが なくなっちゃった。 つきの たかさまで とどかないね。'] },
+        { at: 'result', fail: d => d.type === 'nofuel', hl: 'again',
+          say: ['タンクを うえに つむと おもすぎる。 そんな ときは、よこに ならべよう！', 'みどりの ボタンで もどってね。'] },
+        { at: 'build', block: true, hl: 'pal:engine', cells: 'pod', say: ['エンジンを、まんなかの ロケットの よこに おこう。 ひかっている ところ、りょうがわ だよ。'] },
+        { at: 'build', block: true, when: x => podCount(x.grid, 1) >= 2, hl: 'pal:tank', cells: 'pod', say: ['よこの エンジンの うえに、タンクを ふたつずつ のせよう。 りょうがわ だよ。'] },
+        { at: 'build', when: x => podCount(x.grid, 3) >= 2, hl: 'launch', say: ['よこに ならんだ！ よこの だんは、からっぽに なったら はずれるよ。 はっしゃ！'] },
+        { at: 'fly', when: (s, c) => c.podSep >= 1, pause: 'speech', say: ['よこの だんが からっぽに なって、はずれたよ！ かるく なって、まんなかの ロケットが もっと とおくへ いけるんだ。'] },
+        { at: 'fly', when: s => ORB.includes(s.cls) && s.isPowered(), hl: 'btnEng', pause: 'btnEng', say: ['みどりの せんだ！ いったん とめよう。'] },
+        { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnEng', pause: 'btnEng', say: ['つきの たかさまで ふかそう！ つけた まま だよ。'] },
+        { at: 'fly', when: s => s.cls === 'toMoon', hl: 'btnEng', pause: s => (s.isPowered() ? 'btnEng' : null), say: ['とどいた！ ほのおの ボタンで とめよう。'] }
+      ], help: 'まんなかの ロケットの よこに、エンジンと タンクを ならべよう。' },
+    // ===== 5章 つきに おりる（v0.17）=====
+    //  月の まわり（または 月の 上）から はじめる。月の 地面ちかくは メーター（みどり＝ふんわり）。うしろむきの エンジンを つけた ままなら ゆっくり おりる（LAND.moon.HOVER_VD）
+    //  ブレーキの タイミングは とめて まつ（brakeNow：いまから エンジンで とまれる ぎりぎりの すこし 手前）
+    //  5-1 ▼を さげる／5-2 メーターと ブレーキ／5-3 🚩 と 🏁／5-4 よこの はやさを けす／5-5 ぜんぶ じぶんで
+    { id: '5-1', ch: 5, quiet: true, map: true, icon: ['\u{1F319}', '\u25BC'], rocket: 'LANDER', start: { moon: { pe: 2500, ap: 2700 } }, dvRate: 4,
+      goal: { tick: s => off(s) && s.body === s.bodies.moon && pe(s) <= 150 && pe(s) > -s.body.R * 0.5 },
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['つきを まわっているよ。 こんどは つきに おりる じゅんびを しよう。', 'ちきゅうと おなじ。 うしろむき に ふかすと、はんたいがわの ▼ が さがって、つきに ちかづくよ。'] },
+        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['むきの ボタンで、うしろむき に しよう。'] },
+        { at: 'fly', hl: 'btnEng', pause: 'btnEng', say: ['ほのおの ボタンで ふかそう。 ▼ の かずを みててね。 つけた まま だよ。'] },
+        { at: 'fly', when: s => s.isPowered() && pe(s) <= 150, hl: 'btnEng', pause: 'btnEng', say: ['ストップ！ ▼ が つきの すぐ ちかくまで さがった。 ほのおの ボタンで とめよう。'] }
+      ], help: 'うしろむき で ふかして、▼ が 150 より ちいさく なったら とめよう。' },
+    { id: '5-2', ch: 5, quiet: true, icon: ['\u{1F7E2}', '\u{1F525}'], rocket: 'LANDER', start: { moon: { h: 1500, vDown: 12 } },
+      goal: { tick: s => s.surface },
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['いま、つきの うえから おちていく ところ。 つきには くうきが ないから、パラシュートは つかえないよ。', 'エンジンで ブレーキを かけて おりよう。'] },
+        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['まず、むきの ボタンで うしろむき に しよう。'] },
+        { at: 'fly', when: s => s.near, pause: 'speech',
+          say: ['ひだりの メーターを みてね。 ちきゅうと おなじ、しろい さんかくが みどりの ところで つけば ふんわり。', 'いまは あか。 このままだと どーん、だね。 でも まだ ブレーキは はやいよ。 ぎりぎりまで まとう。'] },
+        { at: 'fly', when: s => brakeNow(s), hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'),
+          say: ['いまだ！ ほのおの ボタンで ブレーキ！ つけた まま だよ。 さんかくが みどりに うごくのを みてね。'] },
+        { at: 'fly', when: s => s.hover, say: ['みどりに なった！ そのまま ゆっくり おりていくよ。'] }
+      ], help: 'うしろむき に して、「いまだ」で エンジンを つけた まま に しよう。' },
+    { id: '5-3', ch: 5, quiet: true, icon: ['\u{1F6A9}', '\u{1F3C1}'], rocket: 'LANDER', start: { moon: { h: 400, vDown: 4 } },
+      goal: { done: (d, s) => d.type === 'landed' && d.body === 'moon' && s.flagPlanted }, star3: d => !!d.soft,
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['つきに おりて、はたを たてよう！'] },
+        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['うしろむき に しよう。'] },
+        { at: 'fly', when: s => brakeNow(s), hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'), say: ['いまだ！ ブレーキ！ つけた まま だよ。'] },
+        { at: 'fly', when: s => s.surface, hl: 'btnFlag', pause: 'btnFlag', say: ['ちゃくりく！ あたらしい ボタンが でたよ。 はたの ボタンで、つきに はたを たてよう！'] },
+        { at: 'fly', when: s => s.surface && s.flagPlanted, hl: 'btnDone', pause: 'btnDone', say: ['はたが たった！ たてた はたは、ワールドの つきに ずっと のこるよ。', 'ひだりうえの ゴールの はたで おわろう。'] }
+      ], help: 'おりたら、はたの ボタン、ひだりうえの ゴールの はた の じゅんばんで おそう。' },
+    { id: '5-4', ch: 5, quiet: true, map: true, icon: ['\u27A1\uFE0F', '\u2B07\uFE0F'], rocket: 'LANDER', start: { moon: { pe: 2200, ap: 2400 } }, dvRate: 12,
+      goal: { tick: s => s.surface }, star3: s => s.surfJ && s.surfJ.vDown <= RL.CFG.ORBIT.LAND.moon.SOFT * 2,
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['つきを まわっている ところから おりよう。', 'まわっている ときは、よこに すごく はやく うごいているんだ。 そのまま おりると、よこに すべって ころんじゃう。'] },
+        { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['うしろむき に して、よこの はやさを けそう。 むきの ボタン！'] },
+        { at: 'fly', hl: 'btnEng', pause: 'btnEng', say: ['ほのおの ボタン！ つけた まま だよ。 したの スピードメーターが へっていくよ。'] },
+        { at: 'fly', when: s => s.isPowered() && Math.abs(s.relVel().vt) < 2, hl: 'btnEng', pause: 'btnEng',
+          say: ['ストップ！ よこの はやさが ほとんど なくなった。 ほのおの ボタンで とめよう。 こんどは まっすぐ したに おちていくよ。'] },
+        { at: 'fly', when: s => s.near, pause: 'speech', say: ['メーターが でた。 さっきと おなじ。 ぎりぎりまで まって ブレーキ だよ。'] },
+        { at: 'fly', when: s => brakeNow(s), hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'), say: ['いまだ！ ブレーキ！ つけた まま だよ。'] }
+      ], help: 'よこの はやさを けしてから、おちる とちゅうで ブレーキ。' },
+    { id: '5-5', ch: 5, mark: true, icon: ['\u{1F6E0}\uFE0F', '\u{1F9D1}\u200D\u{1F680}'], preset: 'MOONSHIP', allow: null, hl: 'launch',
+      say: ['さいごは、じぶんの ロケットで ちきゅうから つきに おりよう！', 'つきを まわったら、うしろむき で よこの はやさを けして、ブレーキで ふんわり。'],
+      goal: { tick: s => s.surface, done: d => d.type === 'landed' && d.body === 'moon' }, star3: (d, s) => !!(s.surfJ ? s.surfJ.soft : d && d.soft),
+      hints: [{ t: s => ORB.includes(s.cls) && off(s) && !!M.burnAng(s), say: 'ちきゅうを まわれた！ ちずの ひかる しるしまで まとう。', hl: 'btnMap' },
+              { t: s => { const b = M.burnAng(s); return off(s) && !!b && b.dt * Math.sqrt(E(s).mu / Math.pow(b.r, 3)) < LEAD; }, pause: 'btnEng', hl: 'btnEng', say: 'しるしに ついた！ ほのおの ボタンで ふかそう。' },
+              { t: (s, c) => s.isPowered() && encNow(s, c), pause: 'btnEng', hl: 'btnEng', say: 'うすい つきが でた！ とめよう。' },
+              { t: s => s.body === s.bodies.moon, pause: 'btnDir', hl: 'btnDir', say: 'じゅうりょくけんに はいった！ うしろむき に しよう。' },
+              { t: s => s.body === s.bodies.moon && vr(s) >= 0, pause: 'btnEng', hl: 'btnEng', say: 'いまだ！ ブレーキ！ つけた まま だよ。' },
+              { t: s => s.body === s.bodies.moon && s.cls === 'moonOrbit', pause: 'speech', say: 'つきを まわる せんに なった。 このまま つけて、よこの はやさを けすよ。' },
+              { t: s => s.body === s.bodies.moon && s.isPowered() && Math.abs(s.relVel().vt) < 2, pause: 'btnEng', hl: 'btnEng', say: 'よこの はやさが なくなった！ とめよう。' },
+              { t: s => s.near && off(s) && brakeNow(s), pause: 'btnEng', hl: 'btnEng', say: 'いまだ！ さいごの ブレーキ！ つけた まま だよ。' }],
+      help: 'しるしで ふかす → うすい つき → うしろむき で ブレーキ → よこの はやさを けす → さいごの ブレーキ。' }
   ];
   const CHAPTERS = [
-    { ch: 1, icon: '\u{1F680}', medal: 'mis1' }, { ch: 2, icon: '\u{1F6F0}\uFE0F', medal: 'mis2' }, { ch: 3, icon: '\u{1FA82}', medal: 'mis3' }, { ch: 4, icon: '\u{1F319}', medal: 'mis4' }
+    { ch: 1, icon: '\u{1F680}', medal: 'mis1' }, { ch: 2, icon: '\u{1F6F0}\uFE0F', medal: 'mis2' }, { ch: 3, icon: '\u{1FA82}', medal: 'mis3' }, { ch: 4, icon: '\u{1F319}', medal: 'mis4' }, { ch: 5, icon: '\u{1F9D1}\u200D\u{1F680}', medal: 'mis5' }
   ];
   const byId = id => LIST.find(m => m.id === id);
   const toGrid = cols => { const R = RL.CFG.ROWS_ORBIT, C = RL.CFG.COLS, g = Array.from({ length: R }, () => Array(C).fill(null)); (cols || []).forEach((s, c) => s.slice(0, R).forEach((k, i) => { g[R - 1 - i][c] = k; })); return g; };
@@ -3470,6 +3630,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
   function hlCells(st) {
     if (!st || !st.cells || !RL.Builder) return;
     const g = RL.Builder.grid; let top = g.length; g.forEach((r, i) => { if (r[2] && i < top) top = i; });
+    if (st.cells === 'pod') { const w = []; [1, 3].forEach(cc => { for (let i = g.length - 1; i >= 0; i--) if (!g[i][cc]) { w.push([i, cc]); break; } }); if (w.length) RL.Builder.highlightCell(w); return; }   // v0.16
     if (st.cells === 'engine') { const w = []; g.forEach((r, i) => r.forEach((k, j) => { if (RL.ENGINES[k]) w.push([i, j]); })); if (w.length) RL.Builder.highlightCell(w); return; }   // v0.14.6
     if (st.cells === 'win') { const w = []; g.forEach((r, i) => r.forEach((k, j) => { if (RL.base(k) === 'win') w.push([i, j]); })); if (w.length) RL.Builder.highlightCell(w); return; }
     if (top > 0) RL.Builder.highlightCell([top - 1, 2]);
@@ -3497,7 +3658,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
     if (need && profile !== need) return { need };
     c.prof = profile; c.profs.add(profile);
     c.topRow = 99; grid.forEach((row, r) => { if (row.some(Boolean)) c.topRow = Math.min(c.topRow, r); });
-    c.ui = {}; c.enc = false; c.encLast = false; c.inMoon = false; c.aborts = 0; c.dirs = new Set(['pro']); c.cleared = null; c.manualSep = 0; c.sepAlt = 0; c.mapT0 = 0; c.cutFuel = 0; c.siLaunch = c.si;
+    c.ui = {}; c.podSep = 0; c.enc = false; c.encLast = false; c.inMoon = false; c.aborts = 0; c.dirs = new Set(['pro']); c.cleared = null; c.manualSep = 0; c.sepAlt = 0; c.mapT0 = 0; c.cutFuel = 0; c.siLaunch = c.si;
     return true;
   };
   M.buildInfo = (grid, profile) => ({ grid, profile, tanks: countTanks(grid) });
@@ -3505,6 +3666,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
   M.event = (e, s) => {
     const c = M.ctx; if (!c) return;
     if (e.type === 'dir') c.dirs.add(e.dir);
+    if (e.type === 'booster-sep' && e.pod) c.podSep = (c.podSep || 0) + 1;   // v0.16
     if (e.type === 'stage-sep' && e.manual) { c.manualSep++; if (!c.sepAlt) c.sepAlt = Math.hypot(s.x, s.y) - s.body.R; }
   };
   // 毎こま：あんない と、とちゅうで クリア（tick）。もどり値：あんない の ならび、クリアは { clear: true }
@@ -3726,6 +3888,32 @@ RL.analyze = function (grid) {
     }
   }
   stacks.forEach((s, i) => { s.id = s.c + ':' + s.r0; s.dry = s.seg * P.MASS.booster; s.fuel = s.seg * P.BOOST_FUEL; for (let r = s.r0; r <= s.r1; r++) stackAt[r + ',' + s.c] = i; });
+  // v0.16 よこの 段（液体の よこならび。うちゅうモードの 18行だけ）：まど の ない 列で、下が エンジン・リングを ふくまない 胴体の かたまり
+  //   まんなかの 列（まど の ある 列）の となり か、よこの 段の となり。1段目と いっしょに もえて、燃料が なくなったら その 列だけ はずれる
+  if (grid.length >= cfg.ROWS_ORBIT && cfg.PHYS.PODS !== false) {
+    const base = (r, c) => RL.base(grid[r][c]), body = (r, c) => c >= 0 && c < cfg.COLS && r >= 0 && r < grid.length && RL.BODY[grid[r][c]];
+    let center = -1; for (let c = 0; c < cfg.COLS; c++) for (let r = 0; r < grid.length; r++) if (base(r, c) === 'win') center = center < 0 ? c : center;
+    if (center < 0) { let bc = 0; for (let c = 0; c < cfg.COLS; c++) { const k = grid.reduce((z, row) => z + (RL.BODY[row[c]] ? 1 : 0), 0); if (k > bc || (k === bc && c === 2)) { bc = k; center = c; } } }
+    const runs = [], pods = [];
+    for (let c = 0; c < cfg.COLS; c++) { if (c === center) continue; let r = grid.length - 1;
+      while (r >= 0) { if (body(r, c)) { const r1 = r; while (body(r, c)) r--; runs.push({ c, r0: r + 1, r1 }); } else r--; } }
+    // v0.17.1：リングの ない よこの 列が 段の さかいめ（まんなかの リングの 行）を またぐ ときは、段ごとに わける
+    //   （まえは 列 ぜんぶが 1つの よこの 段に なり、上の エンジンが 埋もれて もえなかった）。リングの ある 列は まえの まま（ふつうの 段の 部品）
+    const hasRing = q => { for (let r = q.r0; r <= q.r1; r++) if (base(r, q.c) === 'ring') return true; return false; };
+    for (let i = runs.length - 1; i >= 0; i--) { const q = runs[i]; if (hasRing(q)) continue;
+      const parts = []; let r1 = q.r1;
+      for (let r = q.r1; r >= q.r0; r--) if (r === q.r0 || SR.of(r - 1) !== SR.of(r)) { parts.push({ c: q.c, r0: r, r1 }); r1 = r - 1; }
+      if (parts.length > 1) runs.splice(i, 1, ...parts); }
+    const okRun = q => RL.ENGINES[grid[q.r1][q.c]] && !Array.from({ length: q.r1 - q.r0 + 1 }, (_, i) => base(q.r0 + i, q.c)).includes('ring');
+    const touch = (q, c) => { for (let r = q.r0; r <= q.r1; r++) if (c === center ? body(r, c) : pods.some(p => p.c === c && r >= p.r0 && r <= p.r1)) return true; return false; };
+    let grew = true;
+    while (grew) { grew = false; runs.forEach(q => { if (q.pod || !okRun(q)) return; if (touch(q, q.c - 1) || touch(q, q.c + 1)) { q.pod = true; pods.push(q); grew = true; } }); }
+    pods.forEach(q => { const i = stacks.length; stacks.push({ c: q.c, r0: q.r0, r1: q.r1, seg: q.r1 - q.r0 + 1, fins: [], stage: SR.of(q.r1), pod: true, id: 'p' + q.c + ':' + q.r0, dry: 0, fuel: 0, eng: 0, veng: 0 });
+      for (let r = q.r0; r <= q.r1; r++) stackAt[r + ',' + q.c] = i; });
+  }
+  const podOf = q => { const i = stackAt[q.r + ',' + q.c]; return i !== undefined && stacks[i].pod ? stacks[i] : null; };
+  // v0.16：同じ 段の 中で すぐ 下に 胴体の 部品が ある エンジンは もえない（おもりだけ）
+  const buried = q => RL.CFG.PHYS.BURIED_ENGINE !== 'on' && RL.ENGINES[q.k] && q.r + 1 < grid.length && RL.BODY[grid[q.r + 1][q.c]] && SR.of(q.r + 1) === SR.of(q.r);
   cells.forEach(q => {
     if (q.ctx.loose) return;            // くっついていない ブースターは ロケットに ふくめない
     n[q.k]++; q.stage = SR.of(q.r);
@@ -3733,13 +3921,17 @@ RL.analyze = function (grid) {
     const fuel = RL.ENGINES[q.k] ? P.FUEL_ENGINE : q.k === 'tank' ? P.FUEL_TANK : q.k === 'booster' ? P.BOOST_FUEL : 0, w = P.MASS[q.k] + attM + fuel;
     mx += w * (q.c - (cfg.COLS - 1) / 2); total += w;
     if (q.k === 'booster') { const s = stacks[stackAt[q.r + ',' + q.c]]; q.stackId = s.id; q.stack = s; return; }
+    const pd = podOf(q);
+    if (pd) { q.stackId = pd.id; q.stack = pd; q.pod = true; pd.dry += P.MASS[q.k] + attM; pd.fuel += fuel;   // v0.16 よこの 段
+      if (q.r === pd.r1) { if (q.k === 'engine') pd.eng++; else pd.veng++; } else if (RL.ENGINES[q.k]) q.buried = true; return; }
     if (q.k === 'fin') {
       const si = q.ctx.attC == null ? undefined : stackAt[q.r + ',' + q.ctx.attC];
       if (si !== undefined) { const s = stacks[si]; s.fins.push(q.ctx.side); s.dry += P.MASS.fin; q.stackId = s.id; q.stack = s; return; }
       const f = stages[q.stage].coreFin; if (q.ctx.side === 'left') f.L++; else if (q.ctx.side === 'right') f.R++; else f.M++;
     }
     const S = stages[q.stage]; S.dry += P.MASS[q.k] + attM; S.fuel += fuel;
-    if (q.k === 'engine') S.eng++; if (q.k === 'vengine') S.veng++;
+    if (buried(q)) q.buried = true;
+    else { if (q.k === 'engine') S.eng++; if (q.k === 'vengine') S.veng++; }
     // v0.12 つけたもの：脚（左右1組）・パラシュート は その段に のこる
     (q.ctx.att || []).forEach(x => { n[x]++; if (x === 'leg') S.legs++; if (x === 'chute') S.chutes++; });
   });
@@ -3747,7 +3939,7 @@ RL.analyze = function (grid) {
   const drag = stages.map((_, s) => {
     const cols = new Set(), noseCols = new Set();
     for (let c = 0; c < cfg.COLS; c++) {
-      let top = null; for (let r = 0; r < grid.length; r++) if (RL.BODY[grid[r][c]] && SR.of(r) >= s) { top = top || grid[r][c]; cols.add(c); }
+      let top = null; for (let r = 0; r < grid.length; r++) if (RL.BODY[grid[r][c]] && SR.of(r) >= s && !(stackAt[r + ',' + c] !== undefined && stacks[stackAt[r + ',' + c]].pod)) { top = top || grid[r][c]; cols.add(c); }
       if (top === 'nose') noseCols.add(c);
     }
     return { cols: cols.size, noseCover: cols.size ? noseCols.size / cols.size : 0 };
@@ -3887,7 +4079,14 @@ RL.Orbit = (function () {
       const o = opt.start, keep = Math.max(1, Math.min(last + 1, o.stages || 1)), s0 = last - keep + 1;
       sim.si = s0; S.forEach((x, i) => { if (i < s0) { x.sepT = 0; x.fuel = 0; } else x.fuel *= o.fuel == null ? 1 : o.fuel; }); st.forEach(x => { x.sepT = 0; x.withStage = true; x.fuel = 0; });
       S[s0].ignT = 0;
-      if (o.orbit) {        // v0.15：ap: 'moon' ＝ 月の 高さまで。ang ＝ はじめの 位置（rad）。lead（rad）＝ 月へ むかう とちゅう：
+        if (o.moon) {   // v0.17 5章：月の まわりから。{ pe, ap }＝月を まわる 軌道（▼の ところ）、{ h, vDown, vSide }＝月の 上から おちる
+          const mo = o.moon, ang = mo.ang != null ? mo.ang : Math.PI / 2;
+          let r0, vr = 0, vt;
+          if (mo.pe != null) { const rp = moon.R + mo.pe, ra = moon.R + mo.ap, sma = (rp + ra) / 2; r0 = rp; vt = Math.sqrt(moon.mu * (2 / rp - 1 / sma)); }
+          else { r0 = moon.R + mo.h; vr = -(mo.vDown || 0); vt = mo.vSide || 0; }
+          const ux = Math.cos(ang), uy = Math.sin(ang);
+          Object.assign(sim, { body: moon, x: r0 * ux, y: r0 * uy, vx: vr * ux - vt * uy, vy: vr * uy + vt * ux, landed: false, lifted: true, engineOn: false, dir: 'pro', maxAlt: 1000, inSpace: true });
+        } else if (o.orbit) {        // v0.15：ap: 'moon' ＝ 月の 高さまで。ang ＝ はじめの 位置（rad）。lead（rad）＝ 月へ むかう とちゅう：
         //   月の 高さに つく ときに 月が ちょうど そこに いる 位置から はじめる（lead だけ ずらすと 月の 前／うしろを とおる）
         //   burnIn（秒）＝ ひくい 軌道で、この 時間 あとに「ここで ふかす」ところに つく 位置から はじめる（4-1・4-2）
         const D = moon.orbitR, apH = o.orbit.ap === 'moon' ? D - earth.R : o.orbit.ap;
@@ -3911,9 +4110,10 @@ RL.Orbit = (function () {
     const alt = () => Math.hypot(sim.x, sim.y) - sim.body.R;
     const rhoAt = h => sim.body.atmo ? Math.max(0, 1 - h / sim.body.atmo) : 0;
     const coreFuel = () => sum(S.slice(sim.si), y => y.fuel);
-    const liquidLeft = () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0; };
-    const canBurnCore = () => { const c = S[sim.si]; return c.fuel > 0 && c.eng + c.veng > 0 && sim.t >= c.ignT; };
-    const boosting = () => st.some(s => s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0);
+      const podLive = s => s.pod && s.sepT === null && s.stage >= sim.si && s.fuel > 0 && s.eng + s.veng > 0;   // v0.16 よこの 段
+      const liquidLeft = () => { const c = S[sim.si]; return (c.fuel > 0 && c.eng + c.veng > 0) || st.some(podLive); };
+      const canBurnCore = () => { const c = S[sim.si]; return (c.fuel > 0 && c.eng + c.veng > 0 && sim.t >= c.ignT) || st.some(s => podLive(s) && s.ignT !== null && sim.t >= s.ignT); };
+      const boosting = () => st.some(s => !s.pod && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0);
     const inAirNow = () => !!sim.body.atmo && Math.hypot(sim.x, sim.y) - sim.body.R < sim.body.atmo;
     const LDof = b => O.LAND[b.id] || O.LAND.moon;   // v0.12：天体ごとの 着陸の きまり
     // 着陸脚（いまも のこっている 段の 脚。1こ ＝ 左右1組）・パラシュートの 数
@@ -3925,7 +4125,8 @@ RL.Orbit = (function () {
       return { r, ux, uy, vr: sim.vx * ux + sim.vy * uy, vt: sim.vx * -uy + sim.vy * ux - b.rot * r }; };
     sim.relVel = relVel;
     // v0.11：いまの 段の 液体エンジンの 全力（しぼる 前）
-    const coreFull = rho => { const c = S[sim.si], vpow = P.VAIR + (1 - P.VAIR) * (1 - rho); return c.eng * P.THRUST + c.veng * P.VTHRUST * vpow; };
+      const coreFull = rho => { const c = S[sim.si], vpow = P.VAIR + (1 - P.VAIR) * (1 - rho), on = c.fuel > 0 ? 1 : 0;
+        return (c.eng * P.THRUST + c.veng * P.VTHRUST * vpow) * on + st.filter(s => podLive(s) && s.ignT !== null && sim.t >= s.ignT).reduce((z, s) => z + s.eng * P.THRUST + s.veng * P.VTHRUST * vpow, 0); };
     sim.fuelBase = coreFuel() || 1;   // v0.11.1：燃料メーターの 100%（切りはなしの たびに その ときの のこりを 100% に）
     sim.isPowered = () => (sim.engineOn && canBurnCore()) || boosting() || (S[sim.si].ignT > sim.t);
     // ---- ピッチ（地平線からの角度）を自動で きめる ----
@@ -3959,17 +4160,25 @@ RL.Orbit = (function () {
       const burnC = sim.engineOn && on && cur.fuel > 0 && cur.eng + cur.veng > 0;
       if (burnC) {
         thrustC = (cur.eng * P.THRUST + cur.veng * P.VTHRUST * vpow) * thr;
-        cur.fuel = Math.max(0, cur.fuel - (cur.eng * P.BURN + cur.veng * P.VBURN * (rho > 0 ? 1 : (O.VAC_VBURN_K || 1))) * thr * dt);   // v0.11：宇宙用エンジンは くうきの外で 燃費が よい（うちゅうモードだけ）
+          let use = (cur.eng * P.BURN + cur.veng * P.VBURN * (rho > 0 ? 1 : (O.VAC_VBURN_K || 1))) * thr * dt;   // v0.11：宇宙用エンジンは くうきの外で 燃費が よい（うちゅうモードだけ）
+          // v0.16 クロスフィード（設定で）：よこの 段が のこって いる 間は、まんなかの エンジンも よこの 段の 燃料を つかう
+          if (O.CROSSFEED) st.filter(s => s.pod && s.sepT === null && s.stage === sim.si && s.fuel > 0).sort((p, q) => p.fuel - q.fuel).forEach(s => { const k = Math.min(use, s.fuel); s.fuel -= k; use -= k; });
+          cur.fuel = Math.max(0, cur.fuel - use);
       }
-      let thrustB = 0, boost = false;
-      st.forEach(s => {
-        if (s.sepT !== null || s.ignT === null || sim.t < s.ignT) return;
-        if (s.fuel > 0) { s.fuel = Math.max(0, s.fuel - P.BOOST_BURN * Math.pow(s.seg, P.BOOST_SEG_POW || 0) * dt); thrustB += TbOf(s.seg); boost = true; }
+        let thrustB = 0, boost = false, podOn = false;
+        st.forEach(s => {
+          if (s.sepT !== null || s.ignT === null || sim.t < s.ignT) return;
+          if (s.pod) {   // v0.16 よこの 段：エンジンを とめれば とまる。燃料が なくなったら その 列だけ はずれる
+            if (s.fuel > 0 && sim.engineOn && s.eng + s.veng > 0) { thrustC += (s.eng * P.THRUST + s.veng * P.VTHRUST * vpow) * thr;
+              s.fuel = Math.max(0, s.fuel - (s.eng * P.BURN + s.veng * P.VBURN * (rho > 0 ? 1 : (O.VAC_VBURN_K || 1))) * thr * dt); podOn = true; }
+            if (s.fuel <= 1e-9 || (s.eng + s.veng === 0 && !(O.CROSSFEED && s.fuel > 0))) { s.sepT = sim.t; emit('booster-sep', { id: s.id, pod: true }); }
+            return; }
+          if (s.fuel > 0) { s.fuel = Math.max(0, s.fuel - P.BOOST_BURN * Math.pow(s.seg, P.BOOST_SEG_POW || 0) * dt); thrustB += TbOf(s.seg); boost = true; }
         if (s.fuel <= 0) { s.sepT = sim.t; emit('booster-sep', { id: s.id }); }
       });
       // 段の切りはなし：いまの段で 燃えるものが なくなったら（エンジンを止めただけでは 切りはなさない）
-      if (sim.si < last && on && !(cur.fuel > 0 && cur.eng + cur.veng > 0) && !st.some(s => s.stage === sim.si && s.sepT === null && s.fuel > 0)) doSep(rho, false);
-      sim.burnC = burnC; sim.boost = boost;
+        if (sim.si < last && on && !(cur.fuel > 0 && cur.eng + cur.veng > 0) && !st.some(s => s.stage === sim.si && s.sepT === null && s.fuel > 0 && (!s.pod || s.eng + s.veng > 0))) doSep(rho, false);
+        sim.burnC = burnC || podOn; sim.boost = boost;
       return thrustC + thrustB;
     }
     // 段を 切りはなす（自動・v0.13 ✂️ 手で）。manual：燃料が のこっていても。月面なら その段は 月に のこる
@@ -4028,7 +4237,8 @@ RL.Orbit = (function () {
         if (full > 0) {
           thr = Math.min(1, LD.TWR * m0 * g / full);
           // v0.14.6：HOVER_VD＞0（地球）は「ういて とまる」でなく「その 速さで ゆっくり おりる」。脚が あれば その まま 着陸できる
-          const vdT = LD.HOVER_VD || 0;
+          // v0.17：HOVER_K（月）＝たかい ところでは はやく（高さ×HOVER_K、HOVER_MAX まで）、地面の ちかくで HOVER_VD まで ゆっくり（重力の むだを へらす）
+          const vdT = LD.HOVER_K ? Math.max(LD.HOVER_VD, Math.min(LD.HOVER_MAX || 30, (r - b.R) * LD.HOVER_K)) : (LD.HOVER_VD || 0);
           if (sim.dir === 'retro' && (vdT > 0 ? -vr < vdT + LD.V_HOVER && Math.abs(vtg) < LD.V_HOVER : Math.hypot(vr, vtg) < LD.V_HOVER)) {
             const ar = g - LD.HOVER_GAIN * (vr + vdT), at = -LD.HOVER_GAIN * vtg;
             thr = Math.min(thr, Math.hypot(Math.max(0, ar), at) * m0 / full); aimL = Math.atan2(Math.max(0, ar), at); sim.hover = true;
@@ -4285,9 +4495,14 @@ RL.Orbit = (function () {
       return Math.max(wMin, Math.min(base, evW));
     }
     // のこりの Δv（くうきの外。ツール・表示用）
-    function dvRest() { let dv = 0; for (let i = last; i >= sim.si; i--) { const x = S[i]; if (!(x.eng + x.veng) || x.fuel <= 0) continue;
-      const ve = (x.eng * P.THRUST + x.veng * P.VTHRUST) / (x.eng * P.BURN + x.veng * P.VBURN * (O.VAC_VBURN_K || 1)), above = S.slice(i + 1).reduce((z, y) => z + y.dry + y.fuel, 0);
-      dv += ve * Math.log((above + x.dry + x.fuel) / (above + x.dry)); } return dv; }
+      // v0.17.1：いまの 段から 上へ じゅんに（段ごとに よこの 段 → まんなか）。上の 段の よこの 段も その 段で かぞえる
+      function dvRest() { let dv = 0, m = sum(S.slice(sim.si), y => y.dry + y.fuel) + sum(st.filter(s => s.pod && attached(s)), y => y.dry + y.fuel);
+        const KV = O.VAC_VBURN_K || 1, ve = x => (x.eng * P.THRUST + x.veng * P.VTHRUST) / (x.eng * P.BURN + x.veng * P.VBURN * KV);
+        for (let i = sim.si; i <= last; i++) { const x = S[i];
+          st.filter(s => s.pod && attached(s) && s.stage === i).forEach(s => { if (s.fuel > 0 && s.eng + s.veng) dv += ve(s) * Math.log(m / (m - s.fuel)); m -= s.fuel + s.dry; });
+          if (x.eng + x.veng && x.fuel > 0) dv += ve(x) * Math.log(m / (m - x.fuel));
+          m -= x.fuel + x.dry; }
+        return dv; }
     function elements() { return sim.el || (sim.lifted ? SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t) : null); }
     // 早送りの おすすめ倍率
     //  - くうきの中で 燃えている間・発射台の上は 実時間
@@ -4308,11 +4523,16 @@ RL.Orbit = (function () {
           if (!sim.chuteW) sim.chuteW = Math.max(1, Math.min(LD.WARP_MAX, alt() / Math.max(1, -relVel().vr) / (CH.SEC || 3)));
           return sim.chuteW; }
         // v0.14.7：地球で エンジンで ゆっくり おりる（HOVER_VD）ときも さくっと
-        if (sim.hover && LD.HOVER_VD && sim.isPowered()) { if (!sim.hoverW) sim.hoverW = Math.max(1, Math.min(LD.WARP_MAX, (alt() / LD.HOVER_VD) / (LD.HOVER_SEC || 4))); return sim.hoverW; }
+        if (sim.hover && LD.HOVER_VD && sim.isPowered()) { if (!sim.hoverW) { const h = alt(), h0 = LD.HOVER_K ? LD.HOVER_VD / LD.HOVER_K : h;   // v0.17：HOVER_K の とき 地面までの 時間 ＝ log の ぶん ＋ さいごの ぶん
+              const tg = LD.HOVER_K && h > h0 ? Math.log(h / h0) / LD.HOVER_K + h0 / LD.HOVER_VD : h / LD.HOVER_VD;
+              sim.hoverW = Math.max(1, Math.min(LD.WARP_MAX, tg / (LD.HOVER_SEC || 4))); } return sim.hoverW; }
         // v0.15 noSlow（4-4 月に ぶつかる）も 同じ
         // v0.14.7：地球で おちている（エンジン なし）ときは 高さ ÷ 下むきの 速さ（くうきで よこに すべる 間も はやく）
         if (sim.noSlow && !sim.isPowered()) { if (!sim.noSlowW) sim.noSlowW = Math.max(1, Math.min(LD.WARP_MAX, tg / 4)); return sim.noSlowW; }
         if (sim.body === earth && !sim.isPowered()) return Math.max(1, Math.min(LD.WARP_MAX, alt() / Math.max(1, -relVel().vr) / LD.SLOW_SEC));
+        // v0.17：うしろむきで ブレーキ中、まにあう（とまる きょりが 高さの 7わり より みじかい）なら BRAKE_WARP まで はやく
+        if (sim.isPowered() && LD.BRAKE_WARP && sim.dir === 'retro') { const v = Math.max(0, -relVel().vr), a = sim.brakeAcc ? sim.brakeAcc() : 0;
+          if (a > 0.1 && v * v / (2 * a) < alt() * 0.7) return LD.BRAKE_WARP; }
         return Math.max(LD.WARP_MIN, Math.min(sim.isPowered() ? 1 : LD.WARP_MAX, tg / LD.SLOW_SEC));
       }
       if (sim.isPowered()) {
@@ -4566,7 +4786,8 @@ RL.MEDALS = [
   { key: 'moonRock',  icon: '\u{1FAA8}' },   // v0.13 月から かえってきた（つきの いし）
   { key: 'mis1',      icon: '\u{1F530}' },   // v0.14 ミッション 1章（うちゅうモードの きほん）
   { key: 'mis2',      icon: '\u{1F4AB}' },   // v0.14 ミッション 2章（ちきゅうを まわる）  { key: 'mis3',      icon: '\u{1F3C5}' },   // v0.14 ミッション 3章（ちきゅうに かえる）
-  { key: 'mis4',      icon: '\u{1F396}\uFE0F' }   // v0.15 ミッション 4章（つきへ）
+  { key: 'mis4',      icon: '\u{1F396}\uFE0F' },   // v0.15 ミッション 4章（つきへ）
+  { key: 'mis5',      icon: '\u{1F947}' }   // v0.17 ミッション 5章（つきに おりる）
 ];
 RL.Save = (function () {
   const C = RL.CFG.SAVE;
@@ -4919,7 +5140,7 @@ RL.Tutorial = (function () {
 })();
 ===END: js/tutorial.js===
 ===FILE: README.md===
-# Rocket Lab（ロケット ラボ） v0.15.0
+# Rocket Lab（ロケット ラボ） v0.17.1
 5さい向け。ブロックをつんでロケットを作り、とばして高さをくらべる。文字は使わず、絵と声で遊ぶ。
 ## 開き方
 index.html をブラウザで開く（サーバー不要）。GitHub Pages では `Rocket/` フォルダに置く。
@@ -5031,6 +5252,28 @@ console.log('2段・左右対称の総当たり 最大:', Math.round(r2.best.h),
 1段・左右対称の総当たり 最大: 9065 ☄️ [["fin"],["booster","booster","booster","booster","booster"],["vengine","tank","tank","tank","nose"],["booster","booster","booster","booster","booster"],["fin"]]
 2段・左右対称の総当たり 最大: 14704 🪐   土星に届く 59 / 2632 [["fin"],["booster","booster","booster","booster","booster","booster","booster","booster","booster"],["engine","tank","tank","tank","tank","ring","vengine","tank","nose"],["booster","booster","booster","booster","booster","booster","booster","booster","booster"],["fin"]]
 ===END: tools/balance_v0.7.txt===
+===FILE: tools/budget.js===
+// v0.16 月往還の 燃料（Δv）：組み立てを 低い軌道（よこ＋ちょうど止め）まで とばし、のこりの Δv（くうきの外）を はかる
+// 使い方: node tools/budget.js（OLD=1 で 埋もれた エンジンも もえる まえの きまり）
+const { RL, toGrid } = require('./lib2d.js');
+RL.CFG.ROWS = RL.CFG.ROWS_ORBIT;
+if (process.env.OLD === '1') RL.CFG.PHYS.BURIED_ENGINE = 'on';
+const T = n => Array(n).fill('tank'), B = n => Array(n).fill('booster');
+function toLEO(cols) {
+  const a = RL.analyze(toGrid(cols)), s = RL.Orbit.create(a, { profile: 'side', autoEnd: true });
+  while (!s.done && s.t < 3000) { s.advance(s.isPowered() ? 0.02 : 0.2);
+    const el = s.elements(); if (s.engineOn && s.lifted && el && el.e < 1 && el.rp > s.body.R + s.body.atmo + 20) { s.setEngine(false); return { ok: true, dv: s.dvLeftV() }; } }
+  return { ok: false, dv: 0, why: s.done ? s.done.type : 'timeout' };
+}
+module.exports = { toLEO };
+if (require.main === module) {
+  const D = {
+    '見本 3段3列（往還）': [[...B(4), 'fin'], ['engine', ...T(4), 'ring', 'vengine', ...T(2)], ['engine', ...T(4), 'ring', 'vengine', ...T(2), 'ring', 'vengine+leg', ...T(3), 'win+chute'], ['engine', ...T(4), 'ring', 'vengine', ...T(2)], [...B(4), 'fin']],
+    '4章の 見本 ORBIT': [['fin'], B(6), ['engine', ...T(4), 'ring', 'vengine+leg', ...T(3), 'win+chute', 'nose'], B(6), ['fin']],
+    '5章の 見本 MOONSHIP': [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine+leg', ...T(2), 'win', 'nose'], B(5), ['fin']] };
+  for (const k in D) { const r = toLEO(D[k]); console.log(k.padEnd(20), r.ok ? '低い軌道で のこり Δv ' + Math.round(r.dv) : 'のれない ' + r.why); }
+}
+===END: tools/budget.js===
 ===FILE: tools/capture_check.js===
 // v0.10 月を まわる 確かめ（画面と 同じ 手順）：
 //  低い軌道 → wait 秒後 前へ ふかす →「月と であう」予測で とめる → 月の重力圏で「いまだ！」の ところで うしろへ ふかす → 月を まわったら とめる
@@ -5078,12 +5321,12 @@ const { RL } = require('./lib2d.js');
 (0, eval)(require('fs').readFileSync(__dirname + '/../js/predict.js', 'utf8'));
 (0, eval)(require('fs').readFileSync(__dirname + '/../js/missions.js', 'utf8'));
 RL.CFG.ROWS = RL.CFG.ROWS_ORBIT; const M = RL.Missions;
-const act = { btnEng: s => s.setEngine(!s.engineOn), btnDir: s => s.setDir('retro') };
-for (const m of M.LIST.filter(x => x.ch === 4 && x.start)) {
+const act = { btnEng: s => s.setEngine(!s.engineOn), btnDir: s => s.setDir('retro'), btnFlag: s => { s.flagPlanted = true; }, btnDone: s => (s.surface ? s.endSurface() : s.finishNow()) };
+for (const m of M.LIST.filter(x => x.ch >= 4 && x.start)) {
   const c = M.begin(m), g = M.gridOf(m); M.onLaunch(g, 'side');
   const s = RL.Orbit.create(RL.analyze(g), { start: m.start }); if (m.dvRate) s.dvRate = m.dvRate; if (m.noSlow) s.noSlow = true;
   let warp = 1, real = 0, marks = [], burn = 0;
-  while (!s.done && real < 600) {
+  while (!s.done && !(s.surface && M.ctx.cleared) && real < 600) {
     const tg = s.autoWarp(); warp = tg > warp ? Math.min(tg, s.isPowered() ? warp * 1.02 + 0.003 : warp * 1.06 + 0.05) : tg;
     s.advance(warp / 60); real += 1 / 60; if (s.isPowered()) burn += 1 / 60;
     M.tick(s).forEach(h => { if (h.clear) { s.missionEnd(); return; } const pz = typeof h.pause === 'function' ? h.pause(s) : h.pause;
@@ -5395,7 +5638,7 @@ const M = RL.Missions, LD = RL.CFG.ORBIT.LAND.earth, T = n => Array(n).fill('tan
 const wind = s => Math.hypot(s.vx + s.bodies.earth.rot * s.y, s.vy - s.bodies.earth.rot * s.x);
 const pe = s => s.elements().rp - s.body.R, ap = s => { const e = s.elements(); return e.e < 1 ? e.ra - s.body.R : 1e9; };
 const vr = s => (s.vx * s.x + s.vy * s.y) / Math.hypot(s.x, s.y);
-const AUTO = { btnEng: s => s.setEngine(!s.engineOn), btnDir: s => s.setDir('retro') };
+const AUTO = { btnEng: s => s.setEngine(!s.engineOn), btnDir: s => s.setDir('retro'), btnFlag: s => { s.flagPlanted = true; }, btnDone: s => (s.surface ? s.endSurface() : s.finishNow()) };
 const press = (id, f) => { M.ui(id); return f && f(); };
 // 自動パイロット（ミッションごと）：毎こま よばれる。st＝その ミッションの メモ
 const P = {
@@ -5410,7 +5653,7 @@ const P = {
   '3-2': (s, c, st) => { if (!st.c && s.alt() < 100) { st.c = 1; press('btnChute', () => s.deployChute()); } },
   '3-3': (s, c, st) => deorbit(s, st, false), '3-5': (s, c, st) => deorbit(s, st, true),
   // v0.15 4章：あんないで とまったら その ボタンを おす（下の AUTO）。4-6 は ぜんぶ 自動
-  '4-6': (s, c, st) => cut(s, st),   // 打ち上げて まわるまで（そのあとは あんないの ボタンを おす）
+  '4-6': (s, c, st) => cut(s, st), '4-7': () => {}, '5-5': (s, c, st) => cut(s, st),   // 打ち上げて まわるまで（そのあとは あんないの ボタンを おす）
   '3-4': (s, c, st) => { if (!st.a) { st.a = 1; press('btnDir', () => s.setDir('retro')); }   // v0.14.6：あんないで とまった ところ（高さ 520）で つけて その まま
       if (st.a === 1 && s.alt() < 520) { st.a = 2; press('btnEng', () => s.setEngine(true)); } }
 };
@@ -5424,7 +5667,8 @@ function deorbit(s, st, sep) {
 }
 const addTop = g => { g = g.map(r => r.slice()); let top = g.length; g.forEach((r, i) => { if (r[2] && i < top) top = i; }); g[top - 1][2] = 'tank'; return g; };
 const PLAN = { '2-1': [{}, { second: true }], '3-1': [{ grid: M.ROCKETS.SMALL }, { mod: g => g.map(r => r.map(k => (k === 'win' ? 'win+chute' : k))) }], '1-1': [{ prof: 'up' }, { prof: 'side' }], '1-2': [{ prof: 'side' }, { mod: addTop }], '1-4': [{ prof: 'tilt' }, { rew: true }],
-  '3-4': [{}, { mod: g => g.map(r => r.map(k => (k === 'engine' ? 'engine+leg' : k))) }] };   // v0.14.6：脚なし → 脚を つけて
+    '4-7': [{}, { mod: g => { g = g.map(r => r.slice()); const R = g.length; [1, 3].forEach(cc => { g[R - 2][cc] = 'engine'; g[R - 3][cc] = 'tank'; g[R - 4][cc] = 'tank'; }); return g; } }],
+    '3-4': [{ }, { mod: g => g.map(r => r.map(k => (k === 'engine' ? 'engine+leg' : k))) }] };   // v0.14.6：脚なし → 脚を つけて
 const extraGrid = { '2-5': M.ROCKETS.ORBIT };
 const prof0 = {};
 const info = (g, p) => M.buildInfo(g, p);
@@ -5448,7 +5692,7 @@ for (const m of M.LIST) {
       s.advance(s.isPowered() || s.alt() < 1500 || st.fine ? 0.02 : Math.max(0.02, Math.min(s.autoWarp(), 100) * 0.05));
       if (P[m.id]) P[m.id](s, c, st);
       M.tick(s).forEach(h => { if (h.end && !s.done) s.forceEnd(h.end);
-        const pz = typeof h.pause === 'function' ? h.pause(s) : h.pause; if (m.ch === 4 && AUTO[pz]) press(pz, () => AUTO[pz](s)); if (h.clear) s.missionEnd(); else log.push('🗣' + h.say[0].slice(0, 10) + (h.hl ? '[' + h.hl + ']' : '')); });
+        const pz = typeof h.pause === 'function' ? h.pause(s) : h.pause; if (m.ch >= 4 && AUTO[pz]) press(pz, () => AUTO[pz](s)); if (h.clear) s.missionEnd(); else log.push('🗣' + h.say[0].slice(0, 10) + (h.hl ? '[' + h.hl + ']' : '')); });
       s.events.splice(0).forEach(e => M.event(e, s));
     }
     d = s.done || {};

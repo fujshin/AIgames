@@ -328,8 +328,10 @@ RL.Flight2D = (function () {
     };
     bChute.style.visibility = 'hidden'; bChute._said = false;
     let engShown = null;
-    const engUI = () => { const ok = sim.liquidLeft() && !sim.done; bEng.classList.toggle('off', !ok); if (engShown !== sim.engineOn) { engShown = sim.engineOn; bEng.innerHTML = sim.engineOn ? RL.ICON.engStop : RL.ICON.engGo; } bEng.classList.toggle('on', sim.engineOn); };
+    const watch = () => !!(RL.Missions && RL.Missions.active && RL.Missions.active.watch);   // v0.17.1：みている だけの ミッション（4-3）は エンジン・向きを つかわない
+    const engUI = () => { const ok = sim.liquidLeft() && !sim.done && !watch(); bEng.classList.toggle('off', !ok); if (engShown !== sim.engineOn) { engShown = sim.engineOn; bEng.innerHTML = sim.engineOn ? RL.ICON.engStop : RL.ICON.engGo; } bEng.classList.toggle('on', sim.engineOn); };
     bEng.onclick = () => { RL._engClick = (RL._engClick || 0) + 1; idleAt = performance.now();
+      if (watch()) { A.tone(150, 0.15, 'square', 0.08); A.say('この ミッションは、みている だけで いいよ。', null, { interrupt: true }); return; }
       if (sim.surface && !sim.liquidLeft() && sim.canSep()) { A.tone(150, 0.15, 'square', 0.08); A.say('この だんには ねんりょうが ないよ。 はさみで きりはなそう。'); bSep.classList.add('hint'); setTimeout(() => bSep.classList.remove('hint'), 3000); return; }
       if (!sim.lifted || !sim.liquidLeft() || sim.done) { A.tone(150, 0.15, 'square', 0.08); return; }
       if (sim.surface) saveCp('surface', true);   // v0.13：月面（離陸の 前）を おぼえる
@@ -337,7 +339,7 @@ RL.Flight2D = (function () {
       sim.setEngine(!sim.engineOn); engUI(); };
     // ---- v0.10 向きボタン：前へ ⇄ うしろへ（くうきの外だけ。いつも 同じ場所。つかえない ときは かくす） ----
     let dirShown = null;
-    const dirUI = () => { const ok = sim.canDir() && sim.liquidLeft() && !ended; bDir.style.visibility = ok ? 'visible' : 'hidden';
+    const dirUI = () => { const ok = sim.canDir() && sim.liquidLeft() && !ended && !watch(); bDir.style.visibility = ok ? 'visible' : 'hidden';
       const d = sim.dir === 'retro' ? 'retro' : 'pro'; if (dirShown !== d) { dirShown = d; bDir.innerHTML = d === 'retro' ? RL.ICON.dirRetro : RL.ICON.dirPro; bDir.classList.toggle('retro', d === 'retro'); } };
     bDir.onclick = () => { if (bDir.style.visibility === 'hidden') return; sim.setDir(sim.dir === 'retro' ? 'pro' : 'retro'); dirUI(); };
     bDir.style.visibility = 'hidden';
@@ -355,7 +357,7 @@ RL.Flight2D = (function () {
       if (!lastCp || ended) return;
       pause = null;
       sim.restore(lastCp.snap); trail.length = Math.min(trail.length, lastCp.trailLen); prCache = null; prKind = null;
-      rewinds++; sim.rewinds = rewinds; saidPeri = lastCp.tag !== 'soi'; saidHover = false; warnAt = 0;
+      rewinds++; sim.rewinds = rewinds; saidPeri = lastCp.tag !== 'soi' || quiet(); saidHover = false; warnAt = 0;
       syncParts(); engShown = null; dirShown = null; sepFlash = 30;
       [784, 659, 523].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'triangle'), i * 80)); A.say('もどったよ！ もういちど やってみよう。');
     };
@@ -399,10 +401,11 @@ RL.Flight2D = (function () {
         if (e.type === 'engine-off') { A.tone(400, 0.12, 'square', 0.1); setTimeout(() => A.tone(260, 0.2, 'square', 0.1), 110); }
         if (e.type === 'engine-on') { A.tone(523, 0.1, 'triangle'); setTimeout(() => A.tone(784, 0.15, 'triangle'), 90); }
         if (e.type === 'soi') {
+          // v0.17.1：ミッション（quiet）では ブレーキの おしえを ださない（4-3・4-4 で ブレーキすると 月を まわって おわらなくなる）
           if (e.body === 'moon' && sim.liquidLeft()) {   // v0.10：ブレーキの おしえ
-            saidPeri = false; saveCp('soi');
-            A.say('つきの じゅうりょくけんに はいったよ！ つきに いちばん ちかづいたら、うしろむきに ふかすと、つきを まわれるよ。', null, { interrupt: false });
-          } else A.say(e.body === 'moon' ? 'つきの じゅうりょくけんに はいったよ！' : 'ちきゅうの じゅうりょくけんに もどったよ。', null, { interrupt: false });
+            saidPeri = quiet(); saveCp('soi');
+            if (!quiet()) A.say('つきの じゅうりょくけんに はいったよ！ つきに いちばん ちかづいたら、うしろむきに ふかすと、つきを まわれるよ。', null, { interrupt: false });
+          } else if (!quiet()) A.say(e.body === 'moon' ? 'つきの じゅうりょくけんに はいったよ！' : 'ちきゅうの じゅうりょくけんに もどったよ。', null, { interrupt: false });
         }
         if (e.type === 'dir') { A.tone(e.dir === 'retro' ? 440 : 660, 0.1, 'triangle'); A.say(e.dir === 'retro' ? 'うしろむき。ブレーキ！' : 'まえむき。かそく！'); }
         // v0.11 月着陸
@@ -419,7 +422,7 @@ RL.Flight2D = (function () {
         // v0.13 月面・離陸
         if (e.type === 'surface') { idleAt = performance.now(); rocket.classList.add('legsOut', 'landedOk'); saveCp('surface', true);
           [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.22, 'triangle'), i * 120));
-          A.say('つきに ちゃくりく！ はたを たてたり、ほのおの ボタンで ちきゅうに かえったり できるよ。 おわるときは ゴールの はた。', null, { interrupt: true });
+          A.say('つきに ちゃくりく！ はたを たてたり、ほのおの ボタンで ちきゅうに かえったり できるよ。 おわるときは ひだりうえの ゴールの はた。', null, { interrupt: true });
           bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 4000); }
         if (e.type === 'moon-liftoff') { rocket.classList.remove('landedOk'); A.rumble(1.5); A.say('つきから りりく！', null, { interrupt: true }); }
         if (e.type === 'ascent-done') { [659, 880, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
@@ -588,7 +591,7 @@ RL.Flight2D = (function () {
         A.say(txt, () => { if (pause === my && my.until === 'speech') speechDone(); }, { interrupt: true });   // 光らせるのは missions.js（つぎの あんないまで ずっと）
       });
       // v0.13 月面で なにも しない とき：1回だけ さそう
-      if (sim.surface && !ended && !saidIdle && idleAt && ts - idleAt > (O.MOON_IDLE_SEC || 60) * 1000) { saidIdle = true; A.say('ほのおの ボタンで ちきゅうに かえろう。 おわるときは ゴールの はた。'); }
+      if (sim.surface && !ended && !saidIdle && idleAt && ts - idleAt > (O.MOON_IDLE_SEC || 60) * 1000) { saidIdle = true; A.say('ほのおの ボタンで ちきゅうに かえろう。 おわるときは ひだりうえの ゴールの はた。'); }
       // v0.13 くうきに 入る（🔥 の 光・声）。月から かえる ときは くうきの 手前を ⏪ に おぼえる
       let hot = 0;
       if (sim.body === E && sim.lifted && !sim.done) { const hh = Math.hypot(sim.x, sim.y) - E.R, wv = Math.hypot(sim.vx + E.rot * sim.y, sim.vy - E.rot * sim.x);
@@ -612,7 +615,7 @@ RL.Flight2D = (function () {
       //  v0.12：地球でも。パラシュートが ひらいて いる ときは いわない
       if (sim.near && !sim.done && !(sim.chute === 'open' || sim.chute === 'opening')) {
         const LD = LDb(), rr = Math.hypot(sim.x, sim.y), hh = rr - sim.body.R, gg = sim.body.mu / (rr * rr), vd = Math.max(0, -(sim.vx * sim.x + sim.vy * sim.y) / rr);
-        if (!sim.isPowered() && sim.liquidLeft() && vd * vd / (2 * (LD.TWR - 1) * gg) > hh * 0.8 && ts - warnAt > 4000) {
+        if (!sim.isPowered() && sim.liquidLeft() && !(RL.Missions && RL.Missions.active && RL.Missions.active.noSlow) && vd * vd / (2 * (LD.TWR - 1) * gg) > hh * 0.8 && ts - warnAt > 4000) {   // v0.17.1：4-4（ぶつけて よい）では いわない
           const td = RL.Predict.touchdown(sim), ok = LD.V_DOWN * (sim.legs().n ? LD.LEG_K : 1);
           if (!td || td.vDown > ok) { warnAt = ts; A.say(sim.dir === 'retro' ? 'はやすぎる！ エンジン！' : 'はやすぎる！ うしろむきで エンジン！', null, { interrupt: true });
             bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 2500); }

@@ -102,7 +102,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
           say: ['エンジンを つけっぱなし だと、どんどん はやく なって、ちきゅうから とびだしちゃうんだ。', 'みどりの せんに なったら、ほのおの ボタンで エンジンを とめよう。 みどりの ボタンで もういちど。'] },
         { at: 'build', hl: 'launch', say: ['こんどは、みどりの せんに なったら とめるよ。 はっしゃ！'] },
         { at: 'fly', when: s => ORB.includes(s.cls) && s.isPowered(), hl: 'btnEng', pause: 'btnEng', say: ['みどりに なった！ いったん ストップ。 いまだ、ひかっている ほのおの ボタンで とめよう！'] },
-        { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnDone', say: ['とまった！ もう ずっと まわりつづけるよ。', 'ゴールの はたで おわると、ロケットは えいせいに なって、ワールドに のこるよ。'] }
+        { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnDone', say: ['とまった！ もう ずっと まわりつづけるよ。', 'ひだりうえの ゴールの はたで おわると、ロケットは えいせいに なって、ワールドに のこるよ。'] }
       ], help: 'みどりの せんに なったら、すぐ とめると ねんりょうが のこるよ。' },
     { id: '2-2', ch: 2, quiet: true, icon: ['\u23E9', '\u25B2'], rocket: 'UP', start: { orbit: { pe: 500, ap: 600 } },
       goal: { tick: (s, c) => off(s) && (c.ui.btnEng || 0) >= 2 && ap(s) >= 2000 }, star3: s => s.cls === 'high',
@@ -135,7 +135,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', when: s => s.isPowered() && ap(s) - pe(s) <= 80, hl: 'btnEng', pause: 'btnEng', say: ['ストップ！ ▼ と ▲ が おなじ くらいに なった。 まんまるだ！ ほのおの ボタンで とめよう！'] }
       ], help: 'はやおくりで ▲ まで まって、そこで エンジンを つけよう。' },
     { id: '2-5', ch: 2, icon: ['\u{1F6E0}\uFE0F', '\u{1F6F0}\uFE0F'], preset: null, allow: null, hl: 'launch',
-      say: ['さいごは、じぶんで ロケットを つくって、ちきゅうを まわろう！', 'ゴールの はたで おわったら クリア だよ。'],
+      say: ['さいごは、じぶんで ロケットを つくって、ちきゅうを まわろう！', 'ひだりうえの ゴールの はたで おわったら クリア だよ。'],
       goal: { done: d => d.type === 'orbit' && onEarth(d) }, star3: (d, s) => s.fuelAll() >= 0.15,
       help: 'ブースターと、2だんの ロケットが おすすめ だよ。' },
     // ===== 3章 ちきゅうに かえる =====
@@ -222,10 +222,10 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', when: (s, c) => s.isPowered() && encNow(s, c), hl: 'btnEng', pause: 'btnEng',
           say: ['ストップ！ うすい つきが でたよ。 つきと であえる せんに なった！', 'ほのおの ボタンで とめよう。'] }
       ], help: 'ひかっている しるしで ふかして、うすい つきが でたら とめよう。' },
-    { id: '4-3', ch: 4, quiet: true, map: true, icon: ['\u2B55', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.3 } },
+    { id: '4-3', ch: 4, quiet: true, map: true, watch: true, icon: ['\u2B55', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.3 } },
       goal: { tick: (s, c) => c.inMoon && s.body === E(s) },
       steps: [
-        { at: 'fly', pause: 'speech', say: ['いま、つきへ むかって とんでいる ところ。 うすい つきの まわりの てんせんの まるを みてね。', 'あの まるの なかは、つきに ひっぱられる ところ。 じゅうりょくけん って いうんだ。'] },
+        { at: 'fly', pause: 'speech', say: ['いま、つきへ むかって とんでいる ところ。 うすい つきの まわりの てんせんの まるを みてね。', 'あの まるの なかは、つきに ひっぱられる ところ。 じゅうりょくけん って いうんだ。', 'こんどは みている だけで いいよ。 まるに はいって、また そとに でたら ミッション クリア！'] },
         { at: 'fly', when: s => s.body === s.bodies.moon, pause: 'speech',
           say: ['まるの なかに はいった！ ここからは つきに ひっぱられて、せんが まがるよ。', 'この せんは、つきの よこを とおりぬける せん。 みていてね。'] },
         { at: 'fly', when: (s, c) => c.inMoon && s.body === E(s), pause: 'speech', say: ['まるの そとに でた！ つきの よこを とおりぬけたね。'] }
@@ -311,8 +311,8 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', hl: 'btnDir', pause: 'btnDir', say: ['うしろむき に しよう。'] },
         { at: 'fly', when: s => brakeNow(s), hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'), say: ['いまだ！ ブレーキ！ つけた まま だよ。'] },
         { at: 'fly', when: s => s.surface, hl: 'btnFlag', pause: 'btnFlag', say: ['ちゃくりく！ あたらしい ボタンが でたよ。 はたの ボタンで、つきに はたを たてよう！'] },
-        { at: 'fly', when: s => s.surface && s.flagPlanted, hl: 'btnDone', pause: 'btnDone', say: ['はたが たった！ たてた はたは、ワールドの つきに ずっと のこるよ。', 'ゴールの はたで おわろう。'] }
-      ], help: 'おりたら、はたの ボタン、ゴールの はた の じゅんばんで おそう。' },
+        { at: 'fly', when: s => s.surface && s.flagPlanted, hl: 'btnDone', pause: 'btnDone', say: ['はたが たった！ たてた はたは、ワールドの つきに ずっと のこるよ。', 'ひだりうえの ゴールの はたで おわろう。'] }
+      ], help: 'おりたら、はたの ボタン、ひだりうえの ゴールの はた の じゅんばんで おそう。' },
     { id: '5-4', ch: 5, quiet: true, map: true, icon: ['\u27A1\uFE0F', '\u2B07\uFE0F'], rocket: 'LANDER', start: { moon: { pe: 2200, ap: 2400 } }, dvRate: 12,
       goal: { tick: s => s.surface }, star3: s => s.surfJ && s.surfJ.vDown <= RL.CFG.ORBIT.LAND.moon.SOFT * 2,
       steps: [
