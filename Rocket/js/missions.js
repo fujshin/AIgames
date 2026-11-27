@@ -219,7 +219,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
     //  4-1 月の 高さまで（🌓）／4-2 よこに ならべる（じぶんで 月の 高さまで とどく ロケット）／4-3 ふかす ところ・であい（うすい月）／4-4 じゅうりょくけん（点線の まる）
     //  ／4-5 月に とどけ（💥）／4-6 月を まわる（▼で うしろへ）／4-7 ぜんぶ じぶんで
     //  v0.18：よこに ならべよう を 4-7 → 4-2 に（4-1 の「月の 高さまで」の すぐ あと。さいごの 4-7 で じぶんの ロケットを つくる まえに おしえる）
-    //         img＝絵の ファイル名（番号を かえる まえの もの。img/mis/<img>.webp）
+    //         v0.20.2：絵の ファイル名を いまの 番号に そろえた（img/mis/<id>.webp。img は つかわない）
     { id: '4-1', ch: 4, quiet: true, map: true, icon: ['\u{1F313}', '\u{1F525}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 450 } }, dvRate: 25,
       goal: { tick: s => s.cls === 'toMoon' && off(s) },
       steps: [
@@ -229,7 +229,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', when: s => s.cls === 'toMoon', hl: 'btnEng', pause: s => (s.isPowered() ? 'btnEng' : null), say: ['ストップ！ せんの はしが、つきの たかさまで とどいた！ ほのおの ボタンで とめよう。'] }
       ], help: 'せんの はしが つきの まるい みちに とどいたら とめよう。' },
     // v0.16 よこに ならべよう：まんなか だけで つきの たかさを めざす → ねんりょうが たりない → よこに エンジン＋タンクを ならべる（よこの だん）→ からに なったら はずれて とどく
-    { id: '4-2', img: '4-7', ch: 4, quiet: true, map: false, icon: ['\u{1F680}', '\u2194\uFE0F'], rocket: 'POD0', allow: ['engine', 'tank'], profile: 'side', need: 'side',
+    { id: '4-2', ch: 4, quiet: true, map: false, icon: ['\u{1F680}', '\u2194\uFE0F'], rocket: 'POD0', allow: ['engine', 'tank'], profile: 'side', need: 'side',
       goal: { tick: (s, c) => s.cls === 'toMoon' && off(s) && c.podSep >= 1 }, star3: s => s.fuelRatio() >= 0.1,
       steps: [
         { at: 'build', hl: 'launch', say: ['よんの いち では、ちきゅうを まわっている ところから、つきの たかさまで ふかしたね。', 'こんどは じめんから はっしゃして、つきの たかさまで とどく せんを つくろう。 はっしゃ！'] },
@@ -247,7 +247,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnEng', pause: 'btnEng', say: ['つきの たかさまで ふかそう！ つけた まま だよ。'] },
         { at: 'fly', when: s => s.cls === 'toMoon', hl: 'btnEng', pause: s => (s.isPowered() ? 'btnEng' : null), say: ['とどいた！ ほのおの ボタンで とめよう。'] }
       ], help: 'まんなかの ロケットの よこに、エンジンと タンクを ならべよう。' },
-    { id: '4-3', img: '4-2', ch: 4, quiet: true, map: true, mark: true, icon: ['\u{1F3AF}', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 450, burnIn: 120 } }, dvRate: 25,
+    { id: '4-3', ch: 4, quiet: true, map: true, mark: true, icon: ['\u{1F3AF}', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 450, burnIn: 120 } }, dvRate: 25,
       goal: { tick: (s, c) => c.enc && off(s) },
       steps: [
         { at: 'fly', pause: 'speech', say: ['つきは うごいているから、いつ ふかしても あえる わけじゃ ないんだ。', 'ちずの ひかっている ほのおの しるしが、ふかす ところ。 ロケットが しるしに つくまで まとう。'] },
@@ -256,7 +256,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', when: (s, c) => s.isPowered() && encNow(s, c), hl: 'btnEng', pause: 'btnEng',
           say: ['ストップ！ うすい つきが でたよ。 つきと であえる せんに なった！', 'ほのおの ボタンで とめよう。'] }
       ], help: 'ひかっている しるしで ふかして、うすい つきが でたら とめよう。' },
-    { id: '4-4', img: '4-3', ch: 4, quiet: true, map: true, watch: true, coast: 2.5, icon: ['\u2B55', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.3 } },
+    { id: '4-4', ch: 4, quiet: true, map: true, watch: true, coast: 2.5, icon: ['\u2B55', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.3 } },
       goal: { tick: (s, c) => c.inMoon && s.body === E(s) },
       steps: [
         { at: 'fly', pause: 'speech', say: ['いま、つきへ むかって とんでいる ところ。 うすい つきの まわりの てんせんの まるを みてね。', 'あの まるの なかは、つきに ひっぱられる ところ。 じゅうりょくけん って いうんだ。', 'こんどは みている だけで いいよ。 まるに はいって、また そとに でたら ミッション クリア！'] },
@@ -264,7 +264,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
           say: ['まるの なかに はいった！ ここからは つきに ひっぱられて、せんが まがるよ。', 'この せんは、つきの よこを とおりぬける せん。 みていてね。'] },
         { at: 'fly', when: (s, c) => c.inMoon && s.body === E(s), pause: 'speech', say: ['まるの そとに でた！ つきの よこを とおりぬけたね。'] }
       ] },
-    { id: '4-5', img: '4-4', ch: 4, quiet: true, map: true, noSlow: true, coast: 2.5, icon: ['\u{1F4A5}', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.3 } }, dvRate: 3,
+    { id: '4-5', ch: 4, quiet: true, map: true, noSlow: true, coast: 2.5, icon: ['\u{1F4A5}', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.3 } }, dvRate: 3,
       goal: { done: d => d.body === 'moon' && ['hit', 'landed', 'crash'].includes(d.type) },
       steps: [
         { at: 'fly', pause: 'speech', say: ['こんどは つきに とどけよう！ いまの せんは、つきの よこを とおりすぎちゃう。', 'すこし とんで、とちゅうで せんを なおすよ。'] },
@@ -278,7 +278,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
           say: ['ストップ！ みて、すごい はやさで つきに むかっているよ。', 'ちきゅうから まっすぐ つきに むかうと、はやすぎて、ブレーキが まにあわずに ぶつかっちゃうんだ。 どうなるか みてみよう。'] }
       ], clearSay: 'ちきゅうから まっすぐ つきに むかうと、はやすぎて ぶつかっちゃうんだね。 つぎの ミッションで、ぶつからない ほうほうを ためそう。',
       help: 'まえむきに すこし ふかすと、つきに ちかづくよ。' },
-    { id: '4-6', img: '4-5', ch: 4, quiet: true, map: true, icon: ['\u{1F504}', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.21 } }, dvRate: 6,
+    { id: '4-6', ch: 4, quiet: true, map: true, icon: ['\u{1F504}', '\u{1F319}'], rocket: 'UP', start: { orbit: { pe: 400, ap: 'moon', lead: -0.21 } }, dvRate: 6,
       goal: { tick: s => s.body === s.bodies.moon && s.cls === 'moonOrbit' && off(s) },
       steps: [
         { at: 'fly', pause: 'speech', say: ['こんどは つきを ぐるぐる まわろう。', 'よんの ご で みたように、まっすぐ つきに むかうと、はやすぎて ぶつかっちゃう。 だから まず、つきの まわりを まわる ひつようが あるんだ。', 'いまの せんは、つきの すぐ よこを とおる せん だよ。'] },
@@ -289,7 +289,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', when: s => s.body === s.bodies.moon && s.cls === 'moonOrbit', hl: 'btnEng', pause: s => (s.isPowered() ? 'btnEng' : null),
           say: ['ストップ！ せんが つきを ぐるっと かこんだ！ ほのおの ボタンで とめよう。'] }
       ], help: 'つきに いちばん ちかい ところで、うしろむきに ふかそう。' },
-    { id: '4-7', img: '4-6', ch: 4, map: false, mark: true, icon: ['\u{1F6E0}\uFE0F', '\u{1F319}'], preset: 'ORBIT', allow: null, hl: 'launch',
+    { id: '4-7', ch: 4, map: false, mark: true, icon: ['\u{1F6E0}\uFE0F', '\u{1F319}'], preset: 'ORBIT', allow: null, hl: 'launch',
       say: ['さいごは、じぶんで つくった ロケットで、つきを まわろう！ まずは おさらい だよ。',
         'ひとつ。 ちきゅうを まわったら エンジンを とめる。 ふたつ。 ちずの ひかる しるしで、まえに ふかす。 みっつ。 うすい つきが でたら とめる。',
         'よっつ。 じゅうりょくけんに はいったら うしろむき。 いつつ。 つきに いちばん ちかい ところで ブレーキ。',
@@ -307,8 +307,8 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
     //  月の まわり（または 月の 上）から はじめる。月の 地面ちかくは メーター（みどり＝ふんわり）。うしろむきの エンジンを つけた ままなら ゆっくり おりる（LAND.moon.HOVER_VD）
     //  ブレーキの タイミングは とめて まつ（brakeNow：いまから エンジンで とまれる ぎりぎりの すこし 手前）
     //  5-1 メーターと ブレーキ／5-2 🚩 と 🏁／5-3 まわっている ところから（▼を さげる → よこの はやさを けす → ブレーキ）／5-4 ぜんぶ じぶんで
-    //  v0.18.1：まえの 5-1（▼を さげる）と 5-4（よこの はやさ）を 1つに（5-3）。img＝まえの 番号の 絵
-    { id: '5-1', img: '5-2', ch: 5, quiet: true, icon: ['\u{1F7E2}', '\u{1F525}'], rocket: 'LANDER', start: { moon: { h: 1500, vDown: 12 } },
+    //  v0.18.1：まえの 5-1（▼を さげる）と 5-4（よこの はやさ）を 1つに（5-3）
+    { id: '5-1', ch: 5, quiet: true, icon: ['\u{1F7E2}', '\u{1F525}'], rocket: 'LANDER', start: { moon: { h: 1500, vDown: 12 } },
       goal: { tick: s => s.surface },
       steps: [
         { at: 'fly', pause: 'speech', say: ['いま、つきの うえから おちていく ところ。 つきには くうきが ないから、パラシュートは つかえないよ。', 'エンジンで ブレーキを かけて おりよう。'] },
@@ -319,7 +319,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
           say: ['いまだ！ ほのおの ボタンで ブレーキ！ つけた まま だよ。 さんかくが みどりに うごくのを みてね。'] },
         { at: 'fly', when: s => s.hover, say: ['みどりに なった！ そのまま ゆっくり おりていくよ。'] }
       ], help: 'うしろむき に して、「いまだ」で エンジンを つけた まま に しよう。' },
-    { id: '5-2', img: '5-3', ch: 5, quiet: true, icon: ['\u{1F6A9}', '\u{1F3C1}'], rocket: 'LANDER', start: { moon: { h: 400, vDown: 4 } },
+    { id: '5-2', ch: 5, quiet: true, icon: ['\u{1F6A9}', '\u{1F3C1}'], rocket: 'LANDER', start: { moon: { h: 400, vDown: 4 } },
       goal: { done: (d, s) => d.type === 'landed' && d.body === 'moon' && s.flagPlanted }, star3: d => !!d.soft,
       steps: [
         { at: 'fly', pause: 'speech', say: ['つきに おりて、はたを たてよう！'] },
@@ -328,7 +328,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', when: s => s.surface, hl: 'btnFlag', pause: 'btnFlag', say: ['ちゃくりく！ あたらしい ボタンが でたよ。 はたの ボタンで、つきに はたを たてよう！'] },
         { at: 'fly', when: s => s.surface && s.flagPlanted, hl: 'btnDone', pause: 'btnDone', say: ['はたが たった！ たてた はたは、ワールドの つきに ずっと のこるよ。', 'ひだりうえの ゴールの はたで おわろう。'] }
       ], help: 'おりたら、はたの ボタン、ひだりうえの ゴールの はた の じゅんばんで おそう。' },
-    { id: '5-3', img: '5-4', ch: 5, quiet: true, map: true, icon: ['\u25BC', '\u2B07\uFE0F'], rocket: 'LANDER', start: { moon: { pe: 2500, ap: 2700 } }, dvRate: 8,
+    { id: '5-3', ch: 5, quiet: true, map: true, icon: ['\u25BC', '\u2B07\uFE0F'], rocket: 'LANDER', start: { moon: { pe: 2500, ap: 2700 } }, dvRate: 8,
       goal: { tick: s => s.surface }, star3: s => s.surfJ && s.surfJ.vDown <= RL.CFG.ORBIT.LAND.moon.SOFT * 2,
       steps: [
         { at: 'fly', pause: 'speech', say: ['こんどは、つきを まわっている ところから おりよう。 3つの じゅんばん だよ。',
@@ -345,7 +345,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'fly', when: s => s.near, pause: 'speech', say: ['メーターが でた。 みっつめ。 ごの いち と おなじ、ぎりぎりまで まって ブレーキ だよ。'] },
         { at: 'fly', when: s => brakeNow(s), hl: 'btnEng', pause: s => (s.isPowered() ? null : 'btnEng'), say: ['いまだ！ ブレーキ！ つけた まま だよ。'] }
       ], help: 'まず ▼ を さげて、じめんの ちかくで よこの はやさを けしてから、さいごに ブレーキ。' },
-    { id: '5-4', img: '5-5', ch: 5, mark: true, icon: ['\u{1F6E0}\uFE0F', '\u{1F9D1}\u200D\u{1F680}'], preset: 'MOONSHIP', allow: null, hl: 'launch',
+    { id: '5-4', ch: 5, mark: true, icon: ['\u{1F6E0}\uFE0F', '\u{1F9D1}\u200D\u{1F680}'], preset: 'MOONSHIP', allow: null, hl: 'launch',
       say: ['さいごは、じぶんの ロケットで ちきゅうから つきに おりよう！', 'つきを まわったら、ごの さん と おなじ。 うしろむき で よこの はやさを けして、さいごの ブレーキで ふんわり。'],
       goal: { tick: s => s.surface, done: d => d.type === 'landed' && d.body === 'moon' }, star3: (d, s) => !!(s.surfJ ? s.surfJ.soft : d && d.soft),
       hints: [{ t: s => ORB.includes(s.cls) && off(s) && !!M.burnAng(s), say: 'ちきゅうを まわれた！ ちずの ひかる しるしまで まとう。', hl: 'btnMap' },
