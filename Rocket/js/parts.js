@@ -1,8 +1,9 @@
 // 部品の定義と、SVGでの描き方
 // v0.12：leg（着陸脚）と chute（パラシュート）は「つける部品」。マスを つかわず、ほかの 部品に つける
 //   grid の 値は 'engine+leg' のように「部品＋つけたもの」。RL.base(k) で 部品、RL.has(k, 'leg') で つけたもの
-RL.PART_ORDER = ['engine', 'vengine', 'tank', 'ring', 'booster', 'fin', 'leg', 'chute', 'win', 'nose'];
-RL.ATTACH = { leg: ['engine', 'vengine'], chute: ['win'] };   // つける部品 → つけられる 部品
+RL.PART_ORDER = ['engine', 'vengine', 'tank', 'ring', 'booster', 'fin', 'leg', 'chute', 'valve', 'win', 'nose'];
+RL.ORBIT_ONLY = { valve: 1 };   // v0.18.2：うちゅうモード だけの 部品（よこの 段が ある のは うちゅうモード だけ）
+RL.ATTACH = { leg: ['engine', 'vengine'], chute: ['win'], valve: ['engine', 'vengine'] };   // v0.18.2 valve（せん）：よこの 段の エンジンに つけると その 段は クロスフィード しない   // つける部品 → つけられる 部品
 RL.base = k => (typeof k === 'string' ? k.split('+')[0] : k);
 RL.has = (k, a) => typeof k === 'string' && k.split('+').slice(1).includes(a);
 RL.atts = k => (typeof k === 'string' ? k.split('+').slice(1) : []);
@@ -39,6 +40,10 @@ RL.migrateLegs = function (g) {
     `<path d="M20 62 L8 62 M80 62 L92 62" stroke="${OL}" stroke-width="5" stroke-linecap="round"/>` +
     `<rect x="-30" y="88" width="30" height="10" rx="5" fill="#cfd5e2" stroke="${OL}" stroke-width="4"/><rect x="100" y="88" width="30" height="10" rx="5" fill="#cfd5e2" stroke="${OL}" stroke-width="4"/></g>` +
     `<g class="legf"><path d="M14 30 V90 M86 30 V90" stroke="${OL}" stroke-width="11" stroke-linecap="round"/><path d="M14 30 V90 M86 30 V90" stroke="#ffd54a" stroke-width="5" stroke-linecap="round"/></g>`;
+  // v0.18.2 せん：赤い まるい ハンドル（エンジンの 上の はしに つく）
+  const VALVE_ICON = `<path d="M50 30 V60" stroke="${OL}" stroke-width="8"/><circle cx="50" cy="28" r="20" fill="none" stroke="${OL}" stroke-width="12"/>` +
+    `<circle cx="50" cy="28" r="20" fill="none" stroke="#e5383b" stroke-width="7"/><path d="M30 28 H70 M50 8 V48" stroke="#e5383b" stroke-width="6"/><circle cx="50" cy="28" r="6" fill="#ffd54a" stroke="${OL}" stroke-width="3"/>`;
+  const VALVE_OV = `<g class="valveMark" transform="translate(60 -6) scale(.45)">${VALVE_ICON}</g>`;
   const CHUTE_OV = `<g class="chutePack"><rect x="30" y="-2" width="40" height="16" rx="6" fill="#ff7a1a" stroke="${OL}" stroke-width="4"/>` +
     `<path d="M38 2 V10 M50 2 V10 M62 2 V10" stroke="#fff" stroke-width="3"/></g>`;
   RL.drawPart = function (kind, ctx) {
@@ -46,7 +51,7 @@ RL.migrateLegs = function (g) {
     let s = drawBase(kind, ctx);
     const at = ctx.att || [];
     if (!s || !at.length) return s;
-    const ov = (at.includes('leg') ? LEG_OV : '') + (at.includes('chute') ? CHUTE_OV : '');
+    const ov = (at.includes('leg') ? LEG_OV : '') + (at.includes('chute') ? CHUTE_OV : '') + (at.includes('valve') ? VALVE_OV : '');
     return s.replace('<svg ', '<svg style="overflow:visible" ').replace(/<\/svg>$/, ov + '</svg>');
   };
   function drawBase(kind, ctx) {
@@ -100,6 +105,8 @@ RL.migrateLegs = function (g) {
       case 'leg':     // v0.12 パレットの 絵：着陸脚（＋＝つける部品）
         return svg(`<path d="M50 20 L14 84 M50 20 L86 84" stroke="${OL}" stroke-width="12" stroke-linecap="round"/><path d="M50 20 L14 84 M50 20 L86 84" stroke="#ffd54a" stroke-width="6" stroke-linecap="round"/>` +
           `<rect x="0" y="80" width="30" height="10" rx="5" fill="#cfd5e2" stroke="${OL}" stroke-width="4"/><rect x="70" y="80" width="30" height="10" rx="5" fill="#cfd5e2" stroke="${OL}" stroke-width="4"/>` + PLUS);
+      case 'valve':   // v0.18.2 パレットの 絵：せん（赤い ハンドル と パイプ）
+        return svg(`<rect x="6" y="56" width="88" height="20" rx="4" fill="#cfd5e2" stroke="${OL}" stroke-width="4"/>` + VALVE_ICON + PLUS);
       case 'chute':   // v0.12 パレットの 絵：パラシュート
         return svg(`<path d="M8 44 Q50 -6 92 44 Q78 36 64 44 Q50 36 36 44 Q22 36 8 44Z" fill="#ff7a1a" stroke="${OL}" stroke-width="4" stroke-linejoin="round"/>` +
           `<path d="M36 44 Q50 10 64 44" fill="#fff" opacity=".85"/><path d="M8 44 L46 84 M36 44 L48 84 M64 44 L52 84 M92 44 L54 84" stroke="${OL}" stroke-width="3"/>` +

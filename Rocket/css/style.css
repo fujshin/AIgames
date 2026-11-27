@@ -249,3 +249,6 @@ body.mission #misBadge{display:block}
 body.mission.mtalk #fly button:not(#btnAbort), body.mission.mtalk #bottom button:not(#home):not(#mute), body.mission.mtalk #palette .pal, body.mission.mtalk #resBtns button { filter: brightness(.6) saturate(.6); }
 @keyframes mwait { 0%,100% { translate: 0 0 } 25% { translate: -5px 0 } 75% { translate: 5px 0 } }
 .mwait { animation: mwait .25s 2; }
+/* v0.18.2 せん：まんなかの エンジンでは なにも しないので うすく。うちゅうモードの パレット（11こ）は せまい 画面で 6れつ */
+.cell.valveIdle .valveMark{opacity:.35}
+@media (max-width:420px){body.orbitMode .pal{flex:0 0 calc(16.66% - 5px)}}

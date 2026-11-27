@@ -6,7 +6,7 @@
 //  - くうき（ATMO_H まで、上ほどうすい）：空気のじゃま と はねの効果は くうきの中だけ
 RL.analyze = function (grid) {
   const cfg = RL.CFG, P = cfg.PHYS, cells = RL.layout(grid), SR = RL.stageRows(grid);
-  const n = { engine: 0, vengine: 0, tank: 0, fin: 0, win: 0, nose: 0, booster: 0, ring: 0, leg: 0, chute: 0 };
+  const n = { engine: 0, vengine: 0, tank: 0, fin: 0, win: 0, nose: 0, booster: 0, ring: 0, leg: 0, chute: 0, valve: 0 };
   const stages = Array.from({ length: SR.n }, (_, i) => ({ i, dry: 0, fuel: 0, eng: 0, veng: 0, legs: 0, chutes: 0, coreFin: { L: 0, R: 0, M: 0 } }));
   let mx = 0, total = 0;
   const stacks = [], stackAt = {};
@@ -53,7 +53,7 @@ RL.analyze = function (grid) {
     mx += w * (q.c - (cfg.COLS - 1) / 2); total += w;
     if (q.k === 'booster') { const s = stacks[stackAt[q.r + ',' + q.c]]; q.stackId = s.id; q.stack = s; return; }
     const pd = podOf(q);
-    if (pd) { q.stackId = pd.id; q.stack = pd; q.pod = true; pd.dry += P.MASS[q.k] + attM; pd.fuel += fuel;   // v0.16 よこの 段
+    if (pd) { q.stackId = pd.id; q.stack = pd; q.pod = true; pd.dry += P.MASS[q.k] + attM; pd.fuel += fuel; if ((q.ctx.att || []).includes('valve')) pd.noXF = true;   // v0.18.2 せん   // v0.16 よこの 段
       if (q.r === pd.r1) { if (q.k === 'engine') pd.eng++; else pd.veng++; } else if (RL.ENGINES[q.k]) q.buried = true; return; }
     if (q.k === 'fin') {
       const si = q.ctx.attC == null ? undefined : stackAt[q.r + ',' + q.ctx.attC];
@@ -64,6 +64,7 @@ RL.analyze = function (grid) {
     if (buried(q)) q.buried = true;
     else { if (q.k === 'engine') S.eng++; if (q.k === 'vengine') S.veng++; }
     // v0.12 つけたもの：脚（左右1組）・パラシュート は その段に のこる
+    if ((q.ctx.att || []).includes('valve')) q.valveIdle = true;   // v0.18.2：まんなかの エンジンの せんは なにも しない
     (q.ctx.att || []).forEach(x => { n[x]++; if (x === 'leg') S.legs++; if (x === 'chute') S.chutes++; });
   });
   // 段ごとの 空気のじゃま（のこっている段の 胴体の列の数と 先っぽ）

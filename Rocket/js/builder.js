@@ -7,16 +7,21 @@ RL.Builder = (function () {
   const empty = () => Array.from({ length: RL.CFG.ROWS }, () => Array(RL.CFG.COLS).fill(null));
   const VIS = () => Math.min(RL.CFG.ROWS, RL.CFG.VIS_ROWS || 9);
   const scrolls = () => RL.CFG.ROWS > VIS();
+  // v0.12／v0.18.2 つける部品の 声
+  const ATT_SAY = { leg: 'あしは、エンジンを おして つけてね。', chute: 'パラシュートは、まどを おして つけてね。',
+    valve: 'せん だよ。 よこの だんの エンジンに つけると、その だんの ねんりょうを まんなかに わけないよ。 エンジンを おして つけてね。' };
+  const ATT_NG = { leg: 'あしは、エンジンに つけてね。', chute: 'パラシュートは、まどに つけてね。', valve: 'せんは、よこの だんの エンジンに つけてね。' };
   function palette() {
     const p = $('palette'); p.innerHTML = '';
     RL.PART_ORDER.forEach(k => {
+      if (RL.ORBIT_ONLY && RL.ORBIT_ONLY[k] && RL.CFG.ROWS < RL.CFG.ROWS_ORBIT) return;   // v0.18.2
       const off = allowed && !allowed.includes(k);
       const b = document.createElement('div'); b.className = 'pal' + (k === sel ? ' sel' : '') + (off ? ' off' : '') + (RL.ATTACH[k] ? ' att' : ''); b.dataset.k = k;
       b.innerHTML = RL.paletteIcon(k);
       b.addEventListener('click', () => {
         if (off) { RL.Audio.tone(150, 0.15, 'square', 0.08); return; }
         sel = k; RL.Audio.tone(660, 0.08); palette(); RL.emit('select', k);
-        if (RL.ATTACH[k] && !(RL.Tutorial && RL.Tutorial.active)) RL.Audio.say(k === 'leg' ? 'あしは、エンジンを おして つけてね。' : 'パラシュートは、まどを おして つけてね。');
+        if (RL.ATTACH[k] && !(RL.Tutorial && RL.Tutorial.active)) RL.Audio.say(ATT_SAY[k]);
       });
       p.appendChild(b);
     });
@@ -28,7 +33,7 @@ RL.Builder = (function () {
     $('gridView').style.height = VIS() * cs + 'px'; $('gridView').style.width = C * cs + 'px';
     $('scrollBtns').style.display = scrolls() ? 'flex' : 'none';
     const map = {}; RL.layout(grid).forEach(q => map[q.r + ',' + q.c] = q);
-    const bur = {}; try { RL.analyze(grid).cells.forEach(q => { if (q.buried) bur[q.r + ',' + q.c] = 1; }); } catch (e) {}   // v0.16：もえない エンジン
+    const bur = {}, vIdle = {}; try { RL.analyze(grid).cells.forEach(q => { if (q.buried) bur[q.r + ',' + q.c] = 1; if (q.valveIdle) vIdle[q.r + ',' + q.c] = 1; }); } catch (e) {}   // v0.16：もえない エンジン
     const SR = RL.stageRows(grid);
     for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
       const d = document.createElement('div'); d.className = 'cell'; d.style.width = d.style.height = cs + 'px';
@@ -38,6 +43,7 @@ RL.Builder = (function () {
       const q = map[r + ',' + c]; if (q) { d.innerHTML = RL.drawPart(q.k, q.ctx);
         if (q.ctx.loose) d.classList.add('loose');
         if (bur[r + ',' + c]) d.classList.add('buried');
+        if (vIdle[r + ',' + c]) d.classList.add('valveIdle');   // v0.18.2：よこの 段 では ない エンジンの せん（うすく）
         // v0.12：つけたものは さいごの 段に ついて いないと やくに たたない（切りはなしで すてられる）ので うすく
         if (q.ctx.att && q.ctx.att.length && SR.of(r) !== SR.n - 1) d.classList.add('attLoose'); }
       d.addEventListener('click', () => tap(r, c)); g.appendChild(d);
@@ -52,7 +58,7 @@ RL.Builder = (function () {
     const k = grid[r][c], ok = RL.ATTACH[sel];
     if (!k || !ok.includes(RL.base(k))) {
       buzz(); flash(v => v && ok.includes(RL.base(v)));
-      if (!(RL.Tutorial && RL.Tutorial.active)) RL.Audio.say(sel === 'leg' ? 'あしは、エンジンに つけてね。' : 'パラシュートは、まどに つけてね。');
+      if (!(RL.Tutorial && RL.Tutorial.active)) RL.Audio.say(ATT_NG[sel]);
       RL.emit('attach-reject'); return;
     }
     const at = RL.atts(k), on = at.includes(sel);
@@ -133,7 +139,7 @@ RL.Builder = (function () {
     clear() { grid = empty(); RL.Audio.tone(250, 0.15, 'square', 0.1); render(); RL.emit('change', { action: 'clear', grid }); },
     setGrid(g) { grid = g; render(); toBottom(); },
     // v0.12：行数を かえる（たかさモード 9／うちゅうモード 14）
-    setRows(n, g) { RL.CFG.ROWS = n; grid = g && g.length === n ? g : empty(); render(); toBottom(); },
+    setRows(n, g) { RL.CFG.ROWS = n; grid = g && g.length === n ? g : empty(); if (RL.ORBIT_ONLY && RL.ORBIT_ONLY[sel] && n < RL.CFG.ROWS_ORBIT) sel = 'engine'; palette(); render(); toBottom(); },
     setAllowed(list) { allowed = list; if (allowed && !allowed.includes(sel)) sel = allowed[0]; palette(); },
     select(k) { sel = k; palette(); },
     lockGrid(b) { gridLocked = b; },

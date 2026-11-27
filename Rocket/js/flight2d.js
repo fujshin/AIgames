@@ -289,7 +289,7 @@ RL.Flight2D = (function () {
     const pre = resume || start ? 0 : 2100;
     // v0.10／v0.11 の おしえ（いちど だけ）
     let saidPeri = true, saidNear = false, saidHover = false, warnAt = 0, boomY = null;
-    let heavyAt = 0, saidHeavyPod = false;   // v0.18.1：よこの 段を すてたら、まんなか だけでは おもくて あがれない ときに 1回 いう
+    let heavyAt = 0, saidHeavyPod = false;   // v0.18.1：よこの 段を すてたら まんなか だけでは おもくて あがれない ときに 1回 いう
     // v0.11 ここからやり直し
     let lastCp = resume ? resume.cp : null, rewinds = resume ? resume.rewinds + 1 : 0;
     if (resume) { sim.restore(resume.cp.snap); resume.trail.slice(0, resume.cp.trailLen).forEach(p => trail.push(p)); }
@@ -394,7 +394,7 @@ RL.Flight2D = (function () {
       sim.events.splice(0).forEach(e => {
         if (RL.Missions && RL.Missions.active) RL.Missions.event(e, sim);   // v0.14
         if (e.type === 'booster-sep') { (e.ids || [e.id]).forEach(id => { sepReal[id] = performance.now(); }); if (e.pod && !saidHeavyPod) heavyAt = performance.now() + 1500;   // v0.18.1：左右 いっしょに はずれた よこの 段は 1つの できごと
-            sepFlash = 25; A.tone(180, 0.25, 'square', 0.15); if (e.pod) A.say('よこの だん、きりはなし！', null, { interrupt: false }); else if (!saidSep) { saidSep = true; A.say('ブースター、きりはなし！', null, { interrupt: false }); } }
+           sepFlash = 25; A.tone(180, 0.25, 'square', 0.15); if (e.pod) A.say('よこの だん、きりはなし！', null, { interrupt: false }); else if (!saidSep) { saidSep = true; A.say('ブースター、きりはなし！', null, { interrupt: false }); } }
         if (e.type === 'stage-sep' && e.surface) { sepFlash = 20; A.tone(220, 0.3, 'square', 0.18); A.say('きりはなし！ したの だんは つきに のこるよ。', null, { interrupt: true }); fuelFlash = 1; }
         else if (e.type === 'stage-sep') { stageReal[e.i] = performance.now(); sepFlash = 40; A.tone(220, 0.3, 'square', 0.18); setTimeout(() => A.tone(140, 0.4, 'square', 0.12), 140);
           A.say((STAGE_NAME[e.i] || '') + 'だん、きりはなし！', null, { interrupt: false });
@@ -595,7 +595,7 @@ RL.Flight2D = (function () {
       });
       if (heavyAt && ts > heavyAt && !ended) { heavyAt = 0;
         if (!saidHeavyPod && !quiet() && sim.body === E && sim.isPowered() && sim.rho > 0 && sim.weight > 0 && sim.thrust / sim.weight < 0.95) { saidHeavyPod = true;
-          A.say('よこの だんを すてたら、まんなかの エンジン だけでは おもすぎて、あがれない！ まんなかを かるく してみよう。', null, { interrupt: false }); } }
+          A.say('よこの だんを すてたら、まんなかの エンジン だけでは おもすぎて、あがれない！ まんなかを かるく するか、よこの エンジンに せんを つけてみよう。', null, { interrupt: false }); } }
       // v0.13 月面で なにも しない とき：1回だけ さそう
       if (sim.surface && !ended && !saidIdle && idleAt && ts - idleAt > (O.MOON_IDLE_SEC || 60) * 1000) { saidIdle = true; A.say('ほのおの ボタンで ちきゅうに かえろう。 おわるときは ひだりうえの ゴールの はた。'); }
       // v0.13 くうきに 入る（🔥 の 光・声）。月から かえる ときは くうきの 手前を ⏪ に おぼえる

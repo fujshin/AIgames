@@ -130,19 +130,18 @@ RL.Orbit = (function () {
     }
     // ---- 推力・燃料（dt 秒ぶん）。thr：液体エンジンの しぼり（0〜1、v0.11） ----
     // v0.18.1 クロスフィード（アスパラガス）：同じ 段の エンジン（まんなか＋よこの 段）は みんな、そとがわの よこの 段の 燃料から じゅんに つかう
-    //   いちばん そとの 列（tier）が からに なったら その 列が はずれ、つぎの 列へ。まんなかの 燃料は さいご（よこが ぜんぶ はずれる ときは まんなかは 満タン）
+    //   いちばん そとの 列（tier）が からに なったら その 列が はずれ、つぎの 列へ。まんなかの 燃料は さいご
     //   同じ 列（左右）は 燃料の 割合で わけて つかう ＝ 同時に はずれる
+    //   v0.18.2：せん（valve）を つけた よこの 段は クロスフィード しない（じぶんの エンジンで じぶんの 燃料だけ）
     const xf = () => O.CROSSFEED !== false;
-    const feedPods = () => st.filter(s => s.pod && s.sepT === null && s.stage === sim.si && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0);
-    // 燃料 use を とる。のこった ぶん（とれなかった ぶん）を かえす
-    function drawFuel(use) {
-      if (xf()) {
-        let pods = feedPods();
-        while (use > 1e-12 && pods.length) {
-          const tMax = Math.max(...pods.map(s => s.tier || 0)), tier = pods.filter(s => (s.tier || 0) === tMax), have = tier.reduce((z, s) => z + s.fuel, 0);
-          const k = Math.min(use, have); tier.forEach(s => { s.fuel = Math.max(0, s.fuel - k * s.fuel / have); if (s.fuel < 1e-9) s.fuel = 0; }); use -= k;
-          pods = pods.filter(s => s.fuel > 0);
-        }
+    const feeds = s => xf() && !s.noXF;
+    const feedPods = () => st.filter(s => s.pod && feeds(s) && s.sepT === null && s.stage === sim.si && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0);
+    function drawFuel(use) {   // 燃料 use を とる。とれなかった ぶんを かえす
+      let pods = feedPods();
+      while (use > 1e-12 && pods.length) {
+        const tMax = Math.max(...pods.map(s => s.tier || 0)), tier = pods.filter(s => (s.tier || 0) === tMax), have = tier.reduce((z, s) => z + s.fuel, 0);
+        const k = Math.min(use, have); tier.forEach(s => { s.fuel = Math.max(0, s.fuel - k * s.fuel / have); if (s.fuel < 1e-9) s.fuel = 0; }); use -= k;
+        pods = pods.filter(s => s.fuel > 0);
       }
       const cur = S[sim.si], k = Math.min(use, cur.fuel); cur.fuel -= k; return use - k;
     }
@@ -151,26 +150,24 @@ RL.Orbit = (function () {
       const cur = S[sim.si], on = sim.t >= cur.ignT;
       const vpow = P.VAIR + (1 - P.VAIR) * (1 - rho); sim.vpow = vpow; const VK = rho > 0 ? 1 : (O.VAC_VBURN_K || 1);
       const flow = x => (x.eng * P.BURN + x.veng * P.VBURN * VK) * thr * dt, push = x => (x.eng * P.THRUST + x.veng * P.VTHRUST * vpow) * thr;
-      let thrustC = 0, podOn = false;
-      const hasFuel = cur.fuel > 0 || (xf() && feedPods().length > 0);
+      let thrustC = 0, podOn = false, use = 0;
+      const hasFuel = cur.fuel > 0 || feedPods().length > 0;
       const burnC = sim.engineOn && on && hasFuel && cur.eng + cur.veng > 0;
-      let use = 0;
       if (burnC) { thrustC = push(cur); use += flow(cur); }
-      // よこの 段の エンジン（エンジンを とめれば とまる）
       const live = st.filter(s => s.pod && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.eng + s.veng > 0);
       if (sim.engineOn) live.forEach(s => {
-        if (xf() ? s.stage === sim.si && (s.fuel > 0 || feedPods().length) : s.fuel > 0) { thrustC += push(s); podOn = true;
-          if (xf() && s.stage === sim.si) use += flow(s); else s.fuel = Math.max(0, s.fuel - flow(s)); } });
-      if (use > 0) { const miss = drawFuel(use); if (miss > 0 && use > 0) thrustC *= 1 - miss / use; }
+        const shared = feeds(s) && s.stage === sim.si;
+        if (shared ? (s.fuel > 0 || feedPods().length) : s.fuel > 0) { thrustC += push(s); podOn = true;
+          if (shared) use += flow(s); else s.fuel = Math.max(0, s.fuel - flow(s)); } });
+      if (use > 0) { const miss = drawFuel(use); if (miss > 0) thrustC *= 1 - miss / use; }
       let thrustB = 0, boost = false; const gone = [];
       st.forEach(s => {
         if (s.sepT !== null || s.ignT === null || sim.t < s.ignT) return;
-        if (s.pod) { if (s.fuel <= 1e-9 && s.stage === sim.si) { s.sepT = sim.t; gone.push(s.id); } return; }   // からに なった よこの 段は はずれる
+        if (s.pod) { if (s.fuel <= 1e-9 && s.stage === sim.si) { s.sepT = sim.t; gone.push(s.id); } return; }
         if (s.fuel > 0) { s.fuel = Math.max(0, s.fuel - P.BOOST_BURN * Math.pow(s.seg, P.BOOST_SEG_POW || 0) * dt); thrustB += TbOf(s.seg); boost = true; }
         if (s.fuel <= 0) { s.sepT = sim.t; emit('booster-sep', { id: s.id }); }
       });
       if (gone.length) emit('booster-sep', { id: gone[0], ids: gone, pod: true, n: gone.length });   // v0.18.1：同時に はずれた よこの 段は 1つの できごと（声は 1回）
-      // 段の切りはなし：いまの段で 燃えるものが なくなったら（エンジンを止めただけでは 切りはなさない）
       if (sim.si < last && on && !(cur.fuel > 0 && cur.eng + cur.veng > 0) && !st.some(s => s.stage === sim.si && s.sepT === null && s.fuel > 0 && (!s.pod || s.eng + s.veng > 0))) doSep(rho, false);
       sim.burnC = burnC || podOn; sim.boost = boost;
       return thrustC + thrustB;
@@ -490,16 +487,16 @@ RL.Orbit = (function () {
     }
     // のこりの Δv（くうきの外。ツール・表示用）
       // v0.17.1：いまの 段から 上へ じゅんに（段ごとに よこの 段 → まんなか）。上の 段の よこの 段も その 段で かぞえる
-      // v0.18.1：クロスフィードの とき：よこの 段の 列（そとから）ごとに、のこっている エンジン ぜんぶで もやす → 列を すてる → まんなか
+      // v0.18.1：クロスフィード：よこの 段の 列（そとから）ごとに、のこっている エンジン ぜんぶで もやす → 列を すてる → まんなか。せんの ある よこの 段は じぶんだけ
       function dvRest() { let dv = 0, m = sum(S.slice(sim.si), y => y.dry + y.fuel) + sum(st.filter(s => s.pod && attached(s)), y => y.dry + y.fuel);
         const KV = O.VAC_VBURN_K || 1, Tq = x => x.eng * P.THRUST + x.veng * P.VTHRUST, Fq = x => x.eng * P.BURN + x.veng * P.VBURN * KV;
         for (let i = sim.si; i <= last; i++) { const x = S[i];
-          let pods = st.filter(s => s.pod && attached(s) && s.stage === i);
-          if (xf()) {
-            while (pods.length) { const tMax = Math.max(...pods.map(s => s.tier || 0)), grp = pods.filter(s => (s.tier || 0) === tMax), all = [x, ...pods];
-              const f = sum(grp, s => s.fuel), T = sum(all, Tq), F = sum(all, Fq);
-              if (f > 0 && F > 0) dv += T / F * Math.log(m / (m - f)); m -= f + sum(grp, s => s.dry); pods = pods.filter(s => !grp.includes(s)); }
-          } else pods.forEach(s => { if (s.fuel > 0 && Fq(s)) dv += Tq(s) / Fq(s) * Math.log(m / (m - s.fuel)); m -= s.fuel + s.dry; });
+          const pods = st.filter(s => s.pod && attached(s) && s.stage === i);
+          pods.filter(s => !feeds(s)).forEach(s => { if (s.fuel > 0 && Fq(s)) dv += Tq(s) / Fq(s) * Math.log(m / (m - s.fuel)); m -= s.fuel + s.dry; });
+          let fp = pods.filter(feeds);
+          while (fp.length) { const tMax = Math.max(...fp.map(s => s.tier || 0)), grp = fp.filter(s => (s.tier || 0) === tMax), all = [x, ...fp];
+            const f = sum(grp, s => s.fuel), T = sum(all, Tq), F = sum(all, Fq);
+            if (f > 0 && F > 0) dv += T / F * Math.log(m / (m - f)); m -= f + sum(grp, s => s.dry); fp = fp.filter(s => !grp.includes(s)); }
           if (x.eng + x.veng && x.fuel > 0) dv += Tq(x) / Fq(x) * Math.log(m / (m - x.fuel));
           m -= x.fuel + x.dry; }
         return dv; }
