@@ -205,7 +205,7 @@ RL.Flight2D = (function () {
     const XF = RL.CFG.ORBIT.CROSSFEED !== false, live = ps.filter(s => s.sepT === null && s.fuel > 0 && XF && !s.noXF && s.ignT !== null && sim.t >= s.ignT);
     const tMax = live.length ? Math.max(...live.map(s => s.tier || 0)) : -1;
     const f0 = id => (sim.a.stacks.find(y => y.id === id) || {}).fuel || 1;
-    const cols = ps.map(s => ({ c: s.c, f: Math.max(0, Math.min(1, s.fuel / f0(s.id))), gone: s.sepT !== null, valve: !!s.noXF, feed: sim.burnC && live.includes(s) && (s.tier || 0) === tMax, side: s.side || 0 }));
+    const cols = ps.map(s => ({ c: s.c, f: Math.max(0, Math.min(1, s.fuel / f0(s.id))), gone: s.sepT !== null, valve: !!s.noXF, feed: sim.burnC && live.includes(s) && (s.tier || 0) === tMax, fromCore: !!(sim.burnC && sim.coreHeld && sim.coreHeld(s)), side: s.side || 0 }));
     cols.push({ c: ps[0].c - (ps[0].side || 0) * (ps[0].tier || 0), f: sim.fuelRatio(), core: true });
     return cols.sort((x, y) => x.c - y.c);
   }
@@ -219,7 +219,7 @@ RL.Flight2D = (function () {
       if (q.gone) { g.strokeStyle = 'rgba(220,220,230,.7)'; g.lineWidth = 2; g.beginPath(); g.moveTo(x + 2, gy + gh / 2 - bw / 2); g.lineTo(x + bw - 2, gy + gh / 2 + bw / 2); g.moveTo(x + bw - 2, gy + gh / 2 - bw / 2); g.lineTo(x + 2, gy + gh / 2 + bw / 2); g.stroke(); }
       if (q.valve && !q.gone) { const cx = x + bw / 2, cy = gy + gh + 10 * u; g.fillStyle = '#e5383b'; g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, 5 * u, 0, 7); g.fill(); g.stroke();
         g.beginPath(); g.moveTo(cx - 5 * u, cy); g.lineTo(cx + 5 * u, cy); g.moveTo(cx, cy - 5 * u); g.lineTo(cx, cy + 5 * u); g.stroke(); }
-      if (q.feed) { const d = -q.side, pu = (performance.now() / 300) % 1, ax = x + bw / 2 + d * (bw / 2 + gap / 2) * (0.3 + 0.7 * pu), ay = gy + gh * 0.5;   // まんなかへ ながれる ▶
+      if (q.feed || q.fromCore) { const d = q.fromCore ? q.side : -q.side, pu = (performance.now() / 300) % 1, ax = x + bw / 2 + d * (bw / 2 + gap / 2) * (0.3 + 0.7 * pu), ay = gy + gh * 0.5;   // まんなかへ ながれる ▶
         g.fillStyle = '#ffd54a'; g.strokeStyle = '#2b3245'; g.lineWidth = 1; g.beginPath(); g.moveTo(ax + d * 6 * u, ay); g.lineTo(ax - d * 3 * u, ay - 6 * u); g.lineTo(ax - d * 3 * u, ay + 6 * u); g.closePath(); g.fill(); g.stroke(); }
     });
     g.font = `${24 * u}px sans-serif`; g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText('⛽', x0 + W2 / 2, gy - 8);
@@ -582,7 +582,7 @@ RL.Flight2D = (function () {
       const now = performance.now();
       rocket.querySelectorAll('.flame').forEach(f => {
         let on;
-        if (f.dataset.stackFlame) { const s = sim.stacks.find(x => x.id === f.dataset.stackFlame); on = !!s && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.fuel > 0 && (!s.pod || (sim.engineOn && sim.burnC)); }
+        if (f.dataset.stackFlame) { const s = sim.stacks.find(x => x.id === f.dataset.stackFlame); on = !!s && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && (s.fuel > 0 || (sim.coreHeld && sim.coreHeld(s))) && (!s.pod || (sim.engineOn && sim.burnC)); }
         else on = +f.dataset.stage === sim.si && sim.burnC;
         if (!sim.lifted && sim.t < 0.01) on = false;
         f.style.display = on ? 'block' : 'none';
