@@ -195,7 +195,7 @@
     if (MS.active && mode === 'orbit') { const ok = MS.onLaunch(B.grid, profile);
       if (ok !== true) { A.tone(150, 0.15, 'square', 0.08);
         if (ok.need) { A.say(ok.need === 'up' ? 'まずは、まっすぐ うえに うちあげて みよう。' : PROF_SAY[ok.need] + ' とぶ うちあげかたに しよう。 したの ひかっている ボタンだよ。'); MS.setHl('prof'); }
-        else { A.say(ok.say.join(' ')); MS.setHl(ok.hl); } return; } }
+        else { A.say(ok.say.join(' '), null, { lock: true }); MS.setHl(ok.hl); } return; } }
     RL.emit('launch', s);
     if (mode === 'orbit' && !saidBur && a.cells.some(q => q.buried)) { saidBur = true; A.say('エンジンの うえの エンジンは もえないよ。 リングで だんを わけよう。', null, { interrupt: false }); }   // v0.16
     if (mode === 'orbit') { lastA = a; lastProf = profile; RL.Flight2D.run(a, profile, sim => result2d(sim), aborted, null, MS.active && MS.active.start); return; }   // v0.14.6：とちゅうから の ミッション（3-4）は くみたての あとも とちゅうから
@@ -286,7 +286,7 @@
       const m = MS.active, j = MS.judge(sim, d);
       if (j.clear) {
         $('resIcon').textContent = '\u{1F389}'; $('resStars').textContent = '⭐'.repeat(j.stars) + '☆'.repeat(3 - j.stars);
-        say = 'ミッション クリア！' + (j.stars < 3 ? (j.stars < 2 && !m.rewOk ? ' くるくる もどる ボタンを つかわないと、ほしが ふえるよ。' : m.help ? ' ' + m.help : '') : ' ほし みっつ！ すごい！');
+        say = 'ミッション クリア！' + (m.clearSay ? ' ' + m.clearSay : '') + (j.stars < 3 ? (j.stars < 2 && !m.rewOk ? ' くるくる もどる ボタンを つかわないと、ほしが ふえるよ。' : m.help ? ' ' + m.help : '') : ' ほし みっつ！ すごい！');
         const wasOpen = orbitOpen();
         let rec = null; SV.update(p => { p.missions = p.missions || {}; p.missions[m.id] = Math.max(p.missions[m.id] || 0, j.stars); rec = p.missions; });
         if (!wasOpen && orbitOpen()) say += ' うちゅうモードが ひらいたよ！ タイトルの ちきゅうの ボタンで、じゆうに あそべるよ。';
@@ -301,7 +301,7 @@
         MS.retry(); MS.setHl('again');
       }
     }
-    A.say(say); $('result').style.display = 'flex';
+    A.say(say, null, { lock: !!MS.active }); $('result').style.display = 'flex';
     award(medals);
     RL.emit('result2d', sim);
   }
@@ -365,7 +365,7 @@
   // =====================================================================
   const MS = RL.Missions;
     // v0.14.6：ミッションの 絵（img/mis/1-1.webp など。Microsoft Copilot で 生成）。よめない ときは 絵文字
-    const misImg = m => `<img class="misImg" src="img/mis/${m.id}.webp" alt="" draggable="false" onerror="this.replaceWith(document.createTextNode('${m.icon.join('')}'))">`;
+    const misImg = m => `<img class="misImg" src="img/mis/${m.img || m.id}.webp" alt="" draggable="false" onerror="this.replaceWith(document.createTextNode('${m.icon.join('')}'))">`;
   function flash(el, ms) { if (!el) return; el.classList.add('mhint'); setTimeout(() => el.classList.remove('mhint'), ms || 4000); }
   // 飛行中の ボタンを おした 回数（ミッションの はんてい用）
   $('fly').addEventListener('click', e => { const b = e.target.closest('button'); if (b && MS.active) { MS.ui(b.id); RL.Flight2D.unpause(b.id); } }, true);
@@ -412,12 +412,13 @@
   function missionBuild(again) {
     if (!MS.active) return;
     const got = MS.pollAll('build', MS.buildInfo(B.grid, profile));
-    if (got.length) A.say(got.map(x => x.say.join(' ')).join(' '), null, { interrupt: true });
-    else if (again && MS.current() && MS.current().at === 'build') { A.say(MS.current().say.join(' '), null, { interrupt: true }); MS.setHl(MS.current().hl); }
+    if (got.length) A.say(got.map(x => x.say.join(' ')).join(' '), null, { interrupt: true, lock: true });   // v0.18 lock：はなし おわるまで ボタンを おせない
+    else if (again && MS.current() && MS.current().at === 'build') { A.say(MS.current().say.join(' '), null, { interrupt: true, lock: true }); MS.setHl(MS.current().hl); }
+    else MS.refreshCells();   // v0.18：タンクを 1つ おいたら 光る マスを つぎへ
   }
   RL.on('change', () => { if (MS.active) missionBuild(); });
   // バッジを おすと いまの あんないを もういちど
-  $('misBadge').addEventListener('click', () => { const c = MS.current(); if (c) { A.say(c.say.join(' '), null, { interrupt: true }); MS.setHl(c.hl); } });
+  $('misBadge').addEventListener('click', () => { const c = MS.current(); if (c) { A.say(c.say.join(' '), null, { interrupt: true, lock: true }); MS.setHl(c.hl); } });
   function missionFly(m) {
     const g = B.grid, a = RL.analyze(g); MS.onLaunch(g, 'side'); lastA = a; lastProf = 'side';
     RL.Flight2D.run(a, 'side', sim => result2d(sim), aborted, null, m.start);
@@ -437,6 +438,19 @@
         .forEach((col, c) => col.forEach((k, i) => { g[b - i][c] = k; })); }
     B.setGrid(g); RL.emit('change', { action: 'sample', grid: g });
   });
+  // v0.18：ミッションの あんないを はなしている あいだは ボタンを おせない（✋ ちゅうし・おと・もどる は いつでも）
+  //  とおす：✋（ながおし）・🔇・🏠・かくにんの 画面・ミッションの めあて（大きな 絵）・ちずの ピンチ
+  const FREE = '#btnAbort, #mute, #home, #confirm, #misGoal, #cv, #misMap, #title, #picker, #medals';
+  const guard = e => {
+    if (!MS.active || !A.locked) return;
+    const t = e.target && e.target.closest ? e.target : null; if (!t || t.closest(FREE)) return;
+    if (!t.closest('button, .pal, #grid, #ladder, #scrollBtns')) return;
+    e.stopPropagation(); e.preventDefault();
+    if (e.type === 'click') { A.tone(150, 0.08, 'square', 0.05); const b = t.closest('button, .pal'); if (b) { b.classList.remove('mwait'); void b.offsetWidth; b.classList.add('mwait'); b.addEventListener('animationend', () => b.classList.remove('mwait'), { once: true }); } }
+  };
+  ['click', 'pointerdown'].forEach(n => document.addEventListener(n, guard, true));
+  // はなしている あいだは ボタンを すこし くらく（body.mtalk）
+  setInterval(() => document.body.classList.toggle('mtalk', !!(MS.active && A.locked)), 100);
   B.init();
   // はじめ：セーブを よみこむ。こどもが いなければ えらぶ 画面
   setTimeout(() => { if (SV.cur) applyProfile(); renderWho(); if (!SV.cur) openPicker(true); }, 0);

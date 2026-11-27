@@ -22,7 +22,8 @@ RL.MEDALS = [
   { key: 'chuteLand', icon: '\u{1FA82}' },   // v0.12 パラシュートで 着陸
   { key: 'moonRock',  icon: '\u{1FAA8}' },   // v0.13 月から かえってきた（つきの いし）
   { key: 'mis1',      icon: '\u{1F530}' },   // v0.14 ミッション 1章（うちゅうモードの きほん）
-  { key: 'mis2',      icon: '\u{1F4AB}' },   // v0.14 ミッション 2章（ちきゅうを まわる）  { key: 'mis3',      icon: '\u{1F3C5}' },   // v0.14 ミッション 3章（ちきゅうに かえる）
+  { key: 'mis2',      icon: '\u{1F4AB}' },   // v0.14 ミッション 2章（ちきゅうを まわる）
+  { key: 'mis3',      icon: '\u{1F3C5}' },   // v0.14 ミッション 3章（ちきゅうに かえる）
   { key: 'mis4',      icon: '\u{1F396}\uFE0F' },   // v0.15 ミッション 4章（つきへ）
   { key: 'mis5',      icon: '\u{1F947}' }   // v0.17 ミッション 5章（つきに おりる）
 ];
@@ -30,14 +31,18 @@ RL.Save = (function () {
   const C = RL.CFG.SAVE;
   let mem = null, ok = true;
   const blank = () => ({ cur: -1, slots: Array(C.SLOTS).fill(null) });
-  const newProfile = avatar => ({ avatar, medals: {}, best: 0, last: null, grid: null, profile: 'side', world: { clock: 0, objs: [] }, flights: 0, created: Date.now() });
+  const newProfile = avatar => ({ avatar, medals: {}, best: 0, last: null, grid: null, profile: 'side', world: { clock: 0, objs: [] }, flights: 0, created: Date.now(), misV18: 1 });
   function load() {
     let s = null;
     try { s = localStorage.getItem(C.KEY); } catch (e) { ok = false; }           // ブラウザが しまわせて くれない
     try { mem = s ? JSON.parse(s) : blank(); } catch (e) { mem = blank(); }       // こわれていたら あたらしく
     if (!mem || !Array.isArray(mem.slots)) mem = blank();
     while (mem.slots.length < C.SLOTS) mem.slots.push(null);
-    mem.slots.forEach(p => { if (!p) return; p.medals = p.medals || {}; p.world = p.world || { clock: 0, objs: [] }; p.world.objs = p.world.objs || []; });
+    mem.slots.forEach(p => { if (!p) return; p.medals = p.medals || {}; p.world = p.world || { clock: 0, objs: [] }; p.world.objs = p.world.objs || [];
+      // v0.18：4章の ならびを かえた（よこに ならべよう 4-7 → 4-2、4-2〜4-6 → 4-3〜4-7）。まえの ⭐ を あたらしい 番号へ
+      if (p.missions && !p.misV18) { const m = p.missions, MAP = { '4-2': '4-3', '4-3': '4-4', '4-4': '4-5', '4-5': '4-6', '4-6': '4-7', '4-7': '4-2' }, n = {};
+        Object.keys(m).forEach(k => { n[MAP[k] || k] = m[k]; }); p.missions = n; }
+      p.misV18 = 1; });
     if (!mem.slots[mem.cur]) mem.cur = mem.slots.findIndex(Boolean);
     return mem;
   }

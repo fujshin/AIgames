@@ -269,6 +269,7 @@ RL.Flight2D = (function () {
     sim.worldStart = WD ? WD.W0 : 0;
     if (RL.Missions && RL.Missions.active && RL.Missions.active.dvRate) sim.dvRate = RL.Missions.active.dvRate;   // v0.14.6
     if (RL.Missions && RL.Missions.active && RL.Missions.active.noSlow) sim.noSlow = true;   // v0.15
+    if (RL.Missions && RL.Missions.active && RL.Missions.active.coast) sim.coastK = RL.Missions.active.coast;   // v0.18：とぶ だけの ところを はやく（4-4・4-5）
     // v0.14.6 ミッションの いちじ停止：{ until: 'speech'（声が おわるまで）／ボタンの id（おすまで）, end }
     pause = null;
     const speechDone = () => { const p = pause; pause = null; if (p && p.end && !sim.done) sim.forceEnd(p.end); };
@@ -407,7 +408,7 @@ RL.Flight2D = (function () {
             if (!quiet()) A.say('つきの じゅうりょくけんに はいったよ！ つきに いちばん ちかづいたら、うしろむきに ふかすと、つきを まわれるよ。', null, { interrupt: false });
           } else if (!quiet()) A.say(e.body === 'moon' ? 'つきの じゅうりょくけんに はいったよ！' : 'ちきゅうの じゅうりょくけんに もどったよ。', null, { interrupt: false });
         }
-        if (e.type === 'dir') { A.tone(e.dir === 'retro' ? 440 : 660, 0.1, 'triangle'); A.say(e.dir === 'retro' ? 'うしろむき。ブレーキ！' : 'まえむき。かそく！'); }
+        if (e.type === 'dir') { A.tone(e.dir === 'retro' ? 440 : 660, 0.1, 'triangle'); if (!quiet()) A.say(e.dir === 'retro' ? 'うしろむき。ブレーキ！' : 'まえむき。かそく！'); }   // v0.18：ミッションでは いわない（「ブレーキ！」で ほのおの ボタンを おしてしまう）
         // v0.11 月着陸
         if (e.type === 'near') { saveCp('near'); view = 'auto';
           if (!saidNear) { saidNear = true;
@@ -436,7 +437,7 @@ RL.Flight2D = (function () {
           if (['low', 'high'].includes(e.cls) && !wasOrbit && !saidOrbit && !quiet()) { saidOrbit = true; [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
             A.say('やった！ ちきゅうを まわる きどうに のったよ！' + (sim.isPowered() && sim.liquidLeft() ? ' エンジンを とめると、ずっと まわりつづけるよ。' : ''), null, { interrupt: false });
             if (sim.isPowered()) { bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 4000); } }
-          if (e.cls === 'toMoon' && e.old !== 'toMoon' && !saidEnc) A.say('つきの たかさまで とどくよ！ つきに であえるかな？', null, { interrupt: false });
+          if (e.cls === 'toMoon' && e.old !== 'toMoon' && !saidEnc && !quiet()) A.say('つきの たかさまで とどくよ！ つきに であえるかな？', null, { interrupt: false });
           if (e.cls === 'escape' && sim.body === E) A.say('ちきゅうから にげだせる はやさに なった！', null, { interrupt: false });
         }
       });
@@ -588,7 +589,7 @@ RL.Flight2D = (function () {
         if (h.clear) { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 100)); A.say('ミッション クリア！', null, { interrupt: true }); sim.missionEnd(); return; }
         const txt = h.say.join(' '), pz = typeof h.pause === 'function' ? h.pause(sim) : h.pause, my = { until: pz, end: h.end, at: ts + (1500 + txt.length * 190) / RL.CFG.VOICE_RATE };   // at：声が とちゅうで きれても ここで すすむ
         if (pz) { pause = my; A.tone(440, 0.08, 'triangle'); }
-        A.say(txt, () => { if (pause === my && my.until === 'speech') speechDone(); }, { interrupt: true });   // 光らせるのは missions.js（つぎの あんないまで ずっと）
+        A.say(txt, () => { if (pause === my && my.until === 'speech') speechDone(); }, { interrupt: true, lock: !!pz });   // v0.18 lock：とめて 話す ときは はなし おわるまで ボタンを おせない（とめない あんないは うごいている ので ロックしない）   // 光らせるのは missions.js（つぎの あんないまで ずっと）
       });
       // v0.13 月面で なにも しない とき：1回だけ さそう
       if (sim.surface && !ended && !saidIdle && idleAt && ts - idleAt > (O.MOON_IDLE_SEC || 60) * 1000) { saidIdle = true; A.say('ほのおの ボタンで ちきゅうに かえろう。 おわるときは ひだりうえの ゴールの はた。'); }

@@ -23,7 +23,7 @@ const P = {
   '3-2': (s, c, st) => { if (!st.c && s.alt() < 100) { st.c = 1; press('btnChute', () => s.deployChute()); } },
   '3-3': (s, c, st) => deorbit(s, st, false), '3-5': (s, c, st) => deorbit(s, st, true),
   // v0.15 4章：あんないで とまったら その ボタンを おす（下の AUTO）。4-6 は ぜんぶ 自動
-  '4-6': (s, c, st) => cut(s, st), '4-7': () => {}, '5-5': (s, c, st) => cut(s, st),   // 打ち上げて まわるまで（そのあとは あんないの ボタンを おす）
+  '4-7': (s, c, st) => cut(s, st), '4-2': () => {}, '5-5': (s, c, st) => cut(s, st),   // 打ち上げて まわるまで（そのあとは あんないの ボタンを おす）
   '3-4': (s, c, st) => { if (!st.a) { st.a = 1; press('btnDir', () => s.setDir('retro')); }   // v0.14.6：あんないで とまった ところ（高さ 520）で つけて その まま
       if (st.a === 1 && s.alt() < 520) { st.a = 2; press('btnEng', () => s.setEngine(true)); } }
 };
@@ -37,7 +37,7 @@ function deorbit(s, st, sep) {
 }
 const addTop = g => { g = g.map(r => r.slice()); let top = g.length; g.forEach((r, i) => { if (r[2] && i < top) top = i; }); g[top - 1][2] = 'tank'; return g; };
 const PLAN = { '2-1': [{}, { second: true }], '3-1': [{ grid: M.ROCKETS.SMALL }, { mod: g => g.map(r => r.map(k => (k === 'win' ? 'win+chute' : k))) }], '1-1': [{ prof: 'up' }, { prof: 'side' }], '1-2': [{ prof: 'side' }, { mod: addTop }], '1-4': [{ prof: 'tilt' }, { rew: true }],
-    '4-7': [{}, { mod: g => { g = g.map(r => r.slice()); const R = g.length; [1, 3].forEach(cc => { g[R - 2][cc] = 'engine'; g[R - 3][cc] = 'tank'; g[R - 4][cc] = 'tank'; }); return g; } }],
+    '4-2': [{}, { mod: g => { g = g.map(r => r.slice()); const R = g.length; [1, 3].forEach(cc => { g[R - 2][cc] = 'engine'; g[R - 3][cc] = 'tank'; g[R - 4][cc] = 'tank'; }); return g; } }],
     '3-4': [{ }, { mod: g => g.map(r => r.map(k => (k === 'engine' ? 'engine+leg' : k))) }] };   // v0.14.6：脚なし → 脚を つけて
 const extraGrid = { '2-5': M.ROCKETS.ORBIT };
 const prof0 = {};

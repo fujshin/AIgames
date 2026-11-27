@@ -7,7 +7,7 @@ RL.CFG.ROWS = RL.CFG.ROWS_ORBIT; const M = RL.Missions;
 const act = { btnEng: s => s.setEngine(!s.engineOn), btnDir: s => s.setDir('retro'), btnFlag: s => { s.flagPlanted = true; }, btnDone: s => (s.surface ? s.endSurface() : s.finishNow()) };
 for (const m of M.LIST.filter(x => x.ch >= 4 && x.start)) {
   const c = M.begin(m), g = M.gridOf(m); M.onLaunch(g, 'side');
-  const s = RL.Orbit.create(RL.analyze(g), { start: m.start }); if (m.dvRate) s.dvRate = m.dvRate; if (m.noSlow) s.noSlow = true;
+  const s = RL.Orbit.create(RL.analyze(g), { start: m.start }); if (m.dvRate) s.dvRate = m.dvRate; if (m.noSlow) s.noSlow = true; if (m.coast) s.coastK = m.coast;
   let warp = 1, real = 0, marks = [], burn = 0;
   while (!s.done && !(s.surface && M.ctx.cleared) && real < 600) {
     const tg = s.autoWarp(); warp = tg > warp ? Math.min(tg, s.isPowered() ? warp * 1.02 + 0.003 : warp * 1.06 + 0.05) : tg;

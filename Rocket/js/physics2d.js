@@ -522,6 +522,7 @@ RL.Orbit = (function () {
       // 月に ちかづいたら ゆっくりに（であいを 見のがさない・見せる）
       sim.body.children.forEach(c => { const cs = SP.bodyState(c, sim.t), d = Math.hypot(sim.x - cs.x, sim.y - cs.y) - c.soi, rv = Math.max(1, Math.hypot(sim.vx - cs.vx, sim.vy - cs.vy));
         if (d > 0) wmax = Math.min(wmax, Math.max(20, d / rv / 1.2)); });
+      if (sim.coastK) wmax *= sim.coastK;   // v0.18：ミッションの とぶ だけの ところ（4-4・4-5）
       return Math.max(1, Math.min(O.WARP_MAX, wmax));
     }
     return Object.assign(sim, {
