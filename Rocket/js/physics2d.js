@@ -99,7 +99,7 @@ RL.Orbit = (function () {
     const alt = () => Math.hypot(sim.x, sim.y) - sim.body.R;
     const rhoAt = h => sim.body.atmo ? Math.max(0, 1 - h / sim.body.atmo) : 0;
     const coreFuel = () => sum(S.slice(sim.si), y => y.fuel);
-      // v0.20.2：まんなかに もえる エンジンが ない 段では、さいごに のこった よこの 段は からに なっても はずれず、まんなかの 燃料で もえる（coreHeld）
+      // v0.20.3：まんなかに もえる エンジンが ない 段では、さいごに のこった よこの 段は からに なっても はずれず、まんなかの 燃料で もえる（coreHeld）
       const coreHeld = s => !!s.pod && s.sepT === null && O.CROSSFEED !== false && !s.noXF && !!S[s.stage] && !(S[s.stage].eng + S[s.stage].veng) && S[s.stage].fuel > 0
         && !st.some(o => o !== s && o.pod && o.sepT === null && o.stage === s.stage && !o.noXF && o.fuel > 0);
       sim.coreHeld = coreHeld;
@@ -537,7 +537,7 @@ RL.Orbit = (function () {
           pods.filter(s => !feeds(s)).forEach(s => { if (s.fuel > 0 && Fq(s)) dv += Tq(s) / Fq(s) * Math.log(m / (m - s.fuel)); m -= s.fuel + s.dry; });
           let fp = pods.filter(feeds), cf = x.fuel;
             while (fp.length) { const tMax = Math.max(...fp.map(s => s.tier || 0)), grp = fp.filter(s => (s.tier || 0) === tMax), all = [x, ...fp];
-              const ex = grp.length === fp.length && !(x.eng + x.veng) ? cf : 0;   // v0.20.2：まんなかに エンジンが ない ときは さいごの よこの 段が まんなかの 燃料も もやす
+              const ex = grp.length === fp.length && !(x.eng + x.veng) ? cf : 0;   // v0.20.3：まんなかに エンジンが ない ときは さいごの よこの 段が まんなかの 燃料も もやす
               const f = sum(grp, s => s.fuel) + ex, T = sum(all, Tq), F = sum(all, Fq);
               if (f > 0 && F > 0) dv += T / F * Math.log(m / (m - f)); m -= f + sum(grp, s => s.dry); cf -= ex; fp = fp.filter(s => !grp.includes(s)); }
             if (x.eng + x.veng && cf > 0) dv += Tq(x) / Fq(x) * Math.log(m / (m - cf));

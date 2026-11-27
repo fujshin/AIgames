@@ -71,10 +71,7 @@ RL.Flight2D = (function () {
     g.rotate(-an); g.font = `${24 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.fillText(icon, 0, 1);
     g.restore();
   }
-  // v0.20 ⛽ じゆうに あそぶ ときの しるし：ステーションへ いく ふかす ところ（ちきゅうを まわって エンジンを とめている とき）
-  function freeMark(sim) { if ((RL.Missions && RL.Missions.active) || sim.isPowered() || sim.docked || !['low', 'high'].includes(sim.cls) || !RL.Predict.stationBurn) return null;
-    const q = sim.stRel && sim.stRel(); if (q && q.d < (RL.CFG.ORBIT.DOCK.SHOW || 4000)) return null;
-    const b = RL.Predict.stationBurn(sim); return b ? { x: Math.cos(b.ang) * b.r, y: Math.sin(b.ang) * b.r, dt: b.dt } : null; }
+  // v0.20.4：⛽ ステーションへ いく ふかす しるし（freeMark）は けした（はやく まわりすぎて 人が おえない）。ステーションの みち・いちばん ちかづく ところは のこす
   // ---- 地図を描く（全画面 または 小窓） ----
   function drawMap(g, V, sim, pr, trail, box, small, WD) {
     const W = sim.bodies, E = W.earth, M = W.moon, ms = SP.bodyState(M, sim.t);
@@ -120,7 +117,7 @@ RL.Flight2D = (function () {
         g.fillStyle = ok ? '#5aff7a' : '#fff'; g.font = `bold ${16 * V.u}px "Courier New",monospace`; g.textAlign = 'left'; g.fillText('\u2194' + Math.round(c.d), X(c.sx) + 14 * V.u, Y(c.sy) + 16 * V.u); }
       g.restore(); }
     // v0.15 4章：ふかす しるし（ひかる ほのお）
-    const mk = (RL.Missions && RL.Missions.mark(sim)) || freeMark(sim);   // v0.19：月を まわる ときの かえる しるし（mk.moon）も。v0.20：じゆうに あそぶ ときは ⛽ へ いく しるし
+    const mk = RL.Missions && RL.Missions.mark(sim);   // v0.19：月を まわる ときの かえる しるし（mk.moon）も。v0.20：じゆうに あそぶ ときは ⛽ へ いく しるし
     if (mk) { const a = Math.atan2(mk.y, mk.x) - 0.06, rr = Math.hypot(mk.x, mk.y), mx = mk.moon ? X(mk.x) : X(Math.cos(a) * rr), my = mk.moon ? Y(mk.y) : Y(Math.sin(a) * rr), pu = 0.5 + 0.5 * Math.sin(performance.now() / 180);
       g.save(); g.strokeStyle = `rgba(90,255,122,${0.5 + 0.5 * pu})`; g.lineWidth = small ? 2 : 4; g.beginPath(); g.arc(mx, my, (small ? 6 : 14 + 6 * pu) * (small ? 1 : V.u), 0, TAU); g.stroke();
       if (!small) { g.font = `${22 * V.u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('\u{1F525}', mx, my - 30 * V.u); } g.restore(); }
