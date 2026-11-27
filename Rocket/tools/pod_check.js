@@ -12,7 +12,11 @@ const D = {
   'まんなか E+T4、よこ E+T5（せん あり）': [[], P(5, 1), CORE(4), P(5, 1), []],
   'まんなか E+T3、よこ E+T3': [[], P(3), CORE(3), P(3), []],
   '二重 そと E+T2（せん）、うち E+T4': [P(2, 1), P(4), CORE(3), P(4), P(2, 1)],
-  '4-2 POD0＋よこ E+T2': [[], P(2), ['engine', ...T(2), 'ring', 'vengine', 'tank', 'win+chute', 'nose'], P(2), []]
+  '4-2 POD0＋よこ E+T2': [[], P(2), ['engine', ...T(2), 'ring', 'vengine', 'tank', 'win+chute', 'nose'], P(2), []],
+  // v0.20.1：5れつ ぜんぶ E+T2（そとの 列の 下に はね）。そとだけ せん は うちが さきに からに なっても はずれない
+  '5れつ E+T2 せん なし': [P(2), ['engine', ...T(2)], ['engine', ...T(2), 'ring', 'vengine', ...T(3), 'win+chute', 'nose'], ['engine', ...T(2)], P(2)],
+  '5れつ E+T2 そとだけ せん': [P(2, 1), ['engine', ...T(2)], ['engine', ...T(2), 'ring', 'vengine', ...T(3), 'win+chute', 'nose'], ['engine', ...T(2)], P(2, 1)],
+  '5れつ E+T2 ぜんぶ せん': [P(2, 1), ['engine+valve', ...T(2)], ['engine', ...T(2), 'ring', 'vengine', ...T(3), 'win+chute', 'nose'], ['engine+valve', ...T(2)], P(2, 1)]
 };
 const S0 = s => Math.round(s.stages[s.si].fuel / (s.a.stages[s.si].fuel || 1) * 100) + '%';
 function run(cols) {

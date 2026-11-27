@@ -34,12 +34,15 @@ RL.analyze = function (grid) {
     for (let i = runs.length - 1; i >= 0; i--) { const q = runs[i]; if (hasRing(q)) continue;
       const parts = []; let r1 = q.r1;
       for (let r = q.r1; r >= q.r0; r--) if (r === q.r0 || SR.of(r - 1) !== SR.of(r)) { parts.push({ c: q.c, r0: r, r1 }); r1 = r - 1; }
+      // v0.20.1：上の かけらの いちばん 下が エンジンで ない ときは わけない（下の かけらに つなげる）。
+      //   まえは エンジンの ない タンクだけの かけらが 上の 段に のこり、よこの 段が はずれた あとも 横に うかんで いた
+      for (let k = parts.length - 1; k >= 1; k--) if (!RL.ENGINES[grid[parts[k].r1][q.c]]) { parts[k - 1].r0 = parts[k].r0; parts.splice(k, 1); }
       if (parts.length > 1) runs.splice(i, 1, ...parts); }
     const okRun = q => RL.ENGINES[grid[q.r1][q.c]] && !Array.from({ length: q.r1 - q.r0 + 1 }, (_, i) => base(q.r0 + i, q.c)).includes('ring');
     const touch = (q, c) => { for (let r = q.r0; r <= q.r1; r++) if (c === center ? body(r, c) : pods.some(p => p.c === c && r >= p.r0 && r <= p.r1)) return true; return false; };
     let grew = true;
     while (grew) { grew = false; runs.forEach(q => { if (q.pod || !okRun(q)) return; if (touch(q, q.c - 1) || touch(q, q.c + 1)) { q.pod = true; pods.push(q); grew = true; } }); }
-    pods.forEach(q => { const i = stacks.length; stacks.push({ c: q.c, r0: q.r0, r1: q.r1, seg: q.r1 - q.r0 + 1, fins: [], stage: SR.of(q.r1), pod: true, tier: Math.abs(q.c - center), id: 'p' + q.c + ':' + q.r0, dry: 0, fuel: 0, eng: 0, veng: 0 });
+    pods.forEach(q => { const i = stacks.length; stacks.push({ c: q.c, r0: q.r0, r1: q.r1, seg: q.r1 - q.r0 + 1, fins: [], stage: SR.of(q.r1), pod: true, tier: Math.abs(q.c - center), side: Math.sign(q.c - center), id: 'p' + q.c + ':' + q.r0, dry: 0, fuel: 0, eng: 0, veng: 0 });
       for (let r = q.r0; r <= q.r1; r++) stackAt[r + ',' + q.c] = i; });
   }
   const podOf = q => { const i = stackAt[q.r + ',' + q.c]; return i !== undefined && stacks[i].pod ? stacks[i] : null; };

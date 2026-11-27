@@ -242,7 +242,7 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
         { at: 'build', block: true, hl: 'pal:engine', cells: 'podEng', say: ['エンジンを、まんなかの ロケットの よこに おこう。 ひかっている ところ、りょうがわ だよ。'] },
         { at: 'build', block: true, when: x => podCount(x.grid, 1) >= 2, hl: 'pal:tank', cells: 'podTank', say: ['よこの エンジンの うえに、タンクを ふたつずつ のせよう。 ひかっている ところ、りょうがわ だよ。'] },
         { at: 'build', when: x => podCount(x.grid, 3) >= 2, hl: 'launch', say: ['よこに ならんだ！ よこの だんは、まんなかの ロケットと いっしょに もえるよ。', 'まんなかの エンジンも、さきに よこの だんの ねんりょうを つかうんだ。 からっぽに なったら はずれるよ。 はっしゃ！'] },
-        { at: 'fly', when: (s, c) => c.podSep >= 1, pause: 'speech', say: ['よこの だんが からっぽに なって、はずれたよ！ みて、ひだりの ねんりょうの メーターは まだ まんたん。', 'からっぽの いれものを すてて かるく なったから、まんなかの ロケットが もっと とおくへ いけるんだ。'] },
+        { at: 'fly', when: (s, c) => c.podSep >= 1, pause: 'speech', say: ['よこの だんが からっぽに なって、はずれたよ！ ひだりの ねんりょうの メーターを みて。 よこの れつは はいいろに なったけど、まんなかの メーターは まだ まんたん。', 'からっぽの いれものを すてて かるく なったから、まんなかの ロケットが もっと とおくへ いけるんだ。'] },
         { at: 'fly', when: s => ORB.includes(s.cls) && s.isPowered(), hl: 'btnEng', pause: 'btnEng', say: ['みどりの せんだ！ いったん とめよう。'] },
         { at: 'fly', when: s => ORB.includes(s.cls) && off(s), hl: 'btnEng', pause: 'btnEng', say: ['つきの たかさまで ふかそう！ つけた まま だよ。'] },
         { at: 'fly', when: s => s.cls === 'toMoon', hl: 'btnEng', pause: s => (s.isPowered() ? 'btnEng' : null), say: ['とどいた！ ほのおの ボタンで とめよう。'] }

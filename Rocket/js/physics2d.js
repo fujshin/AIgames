@@ -166,6 +166,10 @@ RL.Orbit = (function () {
       }
       const cur = S[sim.si], k = Math.min(use, cur.fuel); cur.fuel -= k; return use - k;
     }
+    // v0.20.1：そとがわに まだ よこの 段が ついている（同じ 段・同じ がわ）あいだは、うちがわの よこの 段は からでも はずれない（そとの 段を ささえている）
+    //   まえは「そとだけ せん」で うちがわが さきに からに なり、そとの 列が 宙に うかんだ まま もえていた
+    const held = s => st.some(o => o !== s && o.pod && o.sepT === null && o.stage === s.stage && (o.side || 0) === (s.side || 0) && (o.tier || 0) > (s.tier || 0));
+    sim.podHeld = held;
     function burn(dt, rho, thr) {
       if (thr == null) thr = 1;
       const cur = S[sim.si], on = sim.t >= cur.ignT;
@@ -178,13 +182,13 @@ RL.Orbit = (function () {
       const live = st.filter(s => s.pod && s.sepT === null && s.ignT !== null && sim.t >= s.ignT && s.eng + s.veng > 0);
       if (sim.engineOn) live.forEach(s => {
         const shared = feeds(s) && s.stage === sim.si;
-        if (shared ? (s.fuel > 0 || feedPods().length) : s.fuel > 0) { thrustC += push(s); podOn = true;
+        if (shared ? (s.fuel > 0 || feedPods().length || cur.fuel > 0) : s.fuel > 0) { thrustC += push(s); podOn = true;   // v0.20.1：から で のこっている（held）よこの エンジンは まんなかの 燃料で もえる
           if (shared) use += flow(s); else s.fuel = Math.max(0, s.fuel - flow(s)); } });
       if (use > 0) { const miss = drawFuel(use); if (miss > 0) thrustC *= 1 - miss / use; }
       let thrustB = 0, boost = false; const gone = [];
       st.forEach(s => {
         if (s.sepT !== null || s.ignT === null || sim.t < s.ignT) return;
-        if (s.pod) { if (s.fuel <= 1e-9 && s.stage === sim.si) { s.sepT = sim.t; gone.push(s.id); } return; }
+        if (s.pod) { if (s.fuel <= 1e-9 && s.stage === sim.si && !held(s)) { s.sepT = sim.t; gone.push(s.id); } return; }
         if (s.fuel > 0) { s.fuel = Math.max(0, s.fuel - P.BOOST_BURN * Math.pow(s.seg, P.BOOST_SEG_POW || 0) * dt); thrustB += TbOf(s.seg); boost = true; }
         if (s.fuel <= 0) { s.sepT = sim.t; emit('booster-sep', { id: s.id }); }
       });
