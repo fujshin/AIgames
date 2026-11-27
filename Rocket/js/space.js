@@ -92,5 +92,9 @@ RL.Space = (function () {
     if (!body.parent && moonR && el.ra >= moonR * 0.9) return 'toMoon';
     return el.ra < body.R * (1 + RL.CFG.ORBIT.LEO_TOP) ? 'low' : 'high';
   }
-  return { makeBodies, bodyState, toElements, stateAt, stateAtNu, nuAt, timeFromPeri, nuAtR, classify, TAU };
+  // v0.20 ⛽ ステーション（まんまるの 軌道。天体では ない ので 重力は ない）
+  function makeStation(earth) { const O = RL.CFG.ORBIT, S = O.STATION || { H: 600, PHASE: 0 }, r = earth.R + S.H;
+    return { r, w: Math.sqrt(earth.mu / (r * r * r)), ph0: O.SITE + S.PHASE }; }
+  function stationState(S, t) { const a = S.ph0 + S.w * t, v = S.w * S.r; return { x: S.r * Math.cos(a), y: S.r * Math.sin(a), vx: -v * Math.sin(a), vy: v * Math.cos(a), a }; }
+  return { makeStation, stationState, makeBodies, bodyState, toElements, stateAt, stateAtNu, nuAt, timeFromPeri, nuAtR, classify, TAU };
 })();

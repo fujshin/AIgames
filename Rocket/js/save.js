@@ -26,7 +26,8 @@ RL.MEDALS = [
   { key: 'mis3',      icon: '\u{1F3C5}' },   // v0.14 ミッション 3章（ちきゅうに かえる）
   { key: 'mis4',      icon: '\u{1F396}\uFE0F' },   // v0.15 ミッション 4章（つきへ）
   { key: 'mis5',      icon: '\u{1F947}' },   // v0.17 ミッション 5章（つきに おりる）
-    { key: 'mis6',      icon: '\u{1F3C6}' }   // v0.19 ミッション 6章（つきから かえる）
+    { key: 'mis6',      icon: '\u{1F3C6}' },   // v0.19 ミッション 6章（つきから かえる）
+    { key: 'dock',      icon: '\u26FD' }   // v0.20 ステーションで ねんりょうを いれた
 ];
 RL.Save = (function () {
   const C = RL.CFG.SAVE;

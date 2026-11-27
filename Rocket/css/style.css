@@ -189,7 +189,7 @@ body.tutorial #btnRew{display:none}
 #btnChute.hint{animation:pulse .5s infinite alternate}
 @media (max-width:420px){#palette{flex-wrap:wrap}.pal{flex:0 0 calc(20% - 5px)}#scrollBtns button{width:34px;height:48px}}
 /* v0.13 ✂️ 切りはなし（2回 おし）・🚩 旗・月面の ボタン */
-#btnSep,#btnFlag{font-size:34px;line-height:1}
+#btnSep,#btnFlag,#btnFuel{font-size:34px;line-height:1}
 #btnSep.arm{background:rgba(220,150,0,.95)!important;animation:pulse .3s infinite alternate}
 #btnFlag{background:rgba(40,120,200,.85)}
 #btnEng.hint,#btnSep.hint,#btnFlag.hint{animation:pulse .5s infinite alternate}
@@ -252,3 +252,6 @@ body.mission.mtalk #fly button:not(#btnAbort), body.mission.mtalk #bottom button
 /* v0.18.2 せん：まんなかの エンジンでは なにも しないので うすく。うちゅうモードの パレット（11こ）は せまい 画面で 6れつ */
 .cell.valveIdle .valveMark{opacity:.35}
 @media (max-width:420px){body.orbitMode .pal{flex:0 0 calc(16.66% - 5px)}}
+/* v0.20 ⛽ 補給の ボタン */
+#btnFuel{background:rgba(30,150,90,.9)}
+#btnFuel{animation:pulse .5s infinite alternate}

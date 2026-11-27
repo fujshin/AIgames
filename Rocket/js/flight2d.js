@@ -71,6 +71,10 @@ RL.Flight2D = (function () {
     g.rotate(-an); g.font = `${24 * u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.fillText(icon, 0, 1);
     g.restore();
   }
+  // v0.20 ⛽ じゆうに あそぶ ときの しるし：ステーションへ いく ふかす ところ（ちきゅうを まわって エンジンを とめている とき）
+  function freeMark(sim) { if ((RL.Missions && RL.Missions.active) || sim.isPowered() || sim.docked || !['low', 'high'].includes(sim.cls) || !RL.Predict.stationBurn) return null;
+    const q = sim.stRel && sim.stRel(); if (q && q.d < (RL.CFG.ORBIT.DOCK.SHOW || 4000)) return null;
+    const b = RL.Predict.stationBurn(sim); return b ? { x: Math.cos(b.ang) * b.r, y: Math.sin(b.ang) * b.r, dt: b.dt } : null; }
   // ---- 地図を描く（全画面 または 小窓） ----
   function drawMap(g, V, sim, pr, trail, box, small, WD) {
     const W = sim.bodies, E = W.earth, M = W.moon, ms = SP.bodyState(M, sim.t);
@@ -106,8 +110,17 @@ RL.Flight2D = (function () {
     // 発射場
     if (E.R * sc > 25) { const ph = RL.CFG.ORBIT.SITE + E.rot * sim.t; g.font = `${small ? 12 : 18}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.fillText('🏠', X(Math.cos(ph) * E.R * 1.03), Y(Math.sin(ph) * E.R * 1.03)); }
+    // v0.20 ⛽ ステーション：まわる みち（てんせん）・いまの ばしょ・いちばん ちかづく ところ（うすい ⛽ と きょり）
+    if (sim.station && (E.R * sc > 20)) { const S = sim.station, q = SP.stationState(S, sim.t);
+      g.save(); g.setLineDash([2, 6]); g.strokeStyle = 'rgba(255,213,74,.35)'; g.lineWidth = 1; g.beginPath(); g.arc(X(0), Y(0), S.r * sc, 0, TAU); g.stroke(); g.setLineDash([]);
+      g.font = `${small ? 12 : 22 * V.u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('\u26FD', X(q.x), Y(q.y));
+      const c = !small && sim.body === E && !sim.docked && sim.stRel && sim.stRel() ? (sim._stc = RL.Predict.stationClose(sim)) : null;
+      if (c && c.d < S.r * 0.5) { const ok = c.d < RL.CFG.ORBIT.DOCK.DIST * 3; g.globalAlpha = 0.45; g.fillText('\u26FD', X(c.sx), Y(c.sy)); g.globalAlpha = 1;
+        g.strokeStyle = ok ? '#5aff7a' : 'rgba(255,255,255,.6)'; g.setLineDash([3, 4]); g.beginPath(); g.moveTo(X(c.rx), Y(c.ry)); g.lineTo(X(c.sx), Y(c.sy)); g.stroke(); g.setLineDash([]);
+        g.fillStyle = ok ? '#5aff7a' : '#fff'; g.font = `bold ${16 * V.u}px "Courier New",monospace`; g.textAlign = 'left'; g.fillText('\u2194' + Math.round(c.d), X(c.sx) + 14 * V.u, Y(c.sy) + 16 * V.u); }
+      g.restore(); }
     // v0.15 4章：ふかす しるし（ひかる ほのお）
-    const mk = RL.Missions && RL.Missions.mark(sim);   // v0.19：月を まわる ときの かえる しるし（mk.moon）も
+    const mk = (RL.Missions && RL.Missions.mark(sim)) || freeMark(sim);   // v0.19：月を まわる ときの かえる しるし（mk.moon）も。v0.20：じゆうに あそぶ ときは ⛽ へ いく しるし
     if (mk) { const a = Math.atan2(mk.y, mk.x) - 0.06, rr = Math.hypot(mk.x, mk.y), mx = mk.moon ? X(mk.x) : X(Math.cos(a) * rr), my = mk.moon ? Y(mk.y) : Y(Math.sin(a) * rr), pu = 0.5 + 0.5 * Math.sin(performance.now() / 180);
       g.save(); g.strokeStyle = `rgba(90,255,122,${0.5 + 0.5 * pu})`; g.lineWidth = small ? 2 : 4; g.beginPath(); g.arc(mx, my, (small ? 6 : 14 + 6 * pu) * (small ? 1 : V.u), 0, TAU); g.stroke();
       if (!small) { g.font = `${22 * V.u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('\u{1F525}', mx, my - 30 * V.u); } g.restore(); }
@@ -206,6 +219,17 @@ RL.Flight2D = (function () {
     if (slow) { g.fillStyle = '#7fd3ff'; g.fillText('🐢×1/' + Math.max(2, Math.round(1 / warp)), bx - 8 * u, 78 * u); }   // v0.8.2：スローモーション
     g.restore();
   }
+  // ---- v0.20 ⛽ ステーションの メーター（ちかい とき）：きょり と くらべた はやさ。みどり＝キャッチ できる ----
+  function drawStationPanel(g, W, sim, u) {
+    if (!sim.stRel || sim.done) return; const q = sim.stRel(), DK = RL.CFG.ORBIT.DOCK; if (!q || (q.d > DK.SHOW && !sim.docked)) return;
+    const okD = q.d < DK.DIST, okV = q.v < DK.V_REL, bx = W / 2, by = 118 * u;
+    g.save(); g.fillStyle = 'rgba(0,0,20,.6)'; g.fillRect(bx - 150 * u, by - 26 * u, 300 * u, 52 * u);
+    g.font = `bold ${26 * u}px "Courier New",monospace`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    if (sim.docked) { g.fillStyle = '#5aff7a'; g.fillText('\u26FD \u{1F91D}', bx, by); g.restore(); return; }
+    g.fillStyle = '#fff'; g.fillText('\u26FD', bx - 120 * u, by);
+    g.fillStyle = okD ? '#5aff7a' : '#fff'; g.fillText('\u2194' + String(Math.round(q.d)).padStart(4, '0'), bx - 40 * u, by);
+    g.fillStyle = okV ? '#5aff7a' : '#ffd54a'; g.fillText('\u{1F680}' + String(Math.round(q.v)).padStart(2, '0'), bx + 80 * u, by);
+    g.restore(); }
   // ---- v0.11 着陸メーター（燃料メーターの となり）：いま エンジンを とめたら 地面に つく 速さ（▶）と、いまの 下むきの 速さ（白い 線）
   //   みどり＝着陸できる／きいろ＝あぶない／赤＝ぶつかる。着陸脚が あると みどりが ひろい
   function drawLandMeter(g, H, sim, u) {
@@ -263,7 +287,8 @@ RL.Flight2D = (function () {
     const W = innerWidth, H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
     const u = Math.max(0.5, Math.min(1, Math.min(W, H * 0.75) / 700));
     $('count').style.fontSize = (130 * u) + 'px';
-    const sim = RL.Orbit.create(a, start && !resume ? { profile, start } : { profile }), O = RL.CFG.ORBIT, E = sim.bodies.earth, LDb = () => O.LAND[sim.body.id] || O.LAND.moon;
+    const stOn = !(RL.Missions && RL.Missions.active) || !!RL.Missions.active.station;   // v0.20 ⛽ ステーションは じゆうに あそぶ とき（と station の ミッション）
+        const sim = RL.Orbit.create(a, start && !resume ? { profile, start, station: stOn } : { profile, station: stOn }), O = RL.CFG.ORBIT, E = sim.bodies.earth, LDb = () => O.LAND[sim.body.id] || O.LAND.moon;
     // v0.9 ワールド：この 飛行が はじまった ときの ワールドの 時計と、まえに のこした もの
     const pf = RL.Save && RL.Save.cur, WD = pf ? { W0: pf.world.clock, items: pf.world.objs.map(o => ({ o, pts: o.kind === 'sat' ? RL.World.orbitPts(o) : null })) } : null;
     sim.worldStart = WD ? WD.W0 : 0;
@@ -318,6 +343,11 @@ RL.Flight2D = (function () {
     bFlag.onclick = () => { if (bFlag.style.visibility === 'hidden') return; sim.flagPlanted = true; idleAt = performance.now();
       [523, 659, 784].forEach((f, i) => setTimeout(() => A.tone(f, 0.18, 'triangle'), i * 110)); A.say('はたを たてたよ！'); };
     bSep.style.visibility = 'hidden'; bFlag.style.visibility = 'hidden';
+    // ---- v0.20 ⛽ 補給の ボタン（ドッキング中で 満タンで ない とき）----
+    const bFuel = $('btnFuel'); bFuel.style.visibility = 'hidden';
+    const fuelUI = () => { bFuel.style.visibility = !ended && sim.docked && !sim.fullFuel() ? 'visible' : 'hidden'; };
+    bFuel.onclick = () => { if (bFuel.style.visibility === 'hidden') return; if (sim.refuel()) fuelFlash = 1; };
+    let saidNearSt = false;
     // ---- v0.12 🪂 パラシュート：ある ときだけ 出る（出ていない 間も 場所は とっておく） ----
     const chuteUI = () => { const has = sim.chutes() > 0 && sim.lifted && !ended; bChute.style.visibility = has ? 'visible' : 'hidden';
       bChute.classList.toggle('used', sim.chute === 'opening' || sim.chute === 'open'); bChute.classList.toggle('torn', sim.chute === 'torn'); };
@@ -380,7 +410,7 @@ RL.Flight2D = (function () {
     function pipOff() { wrap.style.transform = ''; wrap.style.clipPath = ''; bPip.style.display = 'none'; }
     bPip.onclick = () => { view = 'near'; A.tone(660, 0.06); };
     const cleanup = () => { pipOff(); cancelAnimationFrame(raf); abortCb = null; rewCb = null; bDir.style.visibility = 'hidden'; bRew.style.visibility = 'hidden'; bChute.style.visibility = 'hidden'; bSep.style.visibility = 'hidden'; bFlag.style.visibility = 'hidden';
-      lastRun = { cp: lastCp, trail: trail.slice(), rewinds }; Z.on = false; zctl.style.display = 'none'; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
+      bFuel.style.visibility = 'hidden'; lastRun = { cp: lastCp, trail: trail.slice(), rewinds }; Z.on = false; zctl.style.display = 'none'; fly.style.display = 'none'; fly.classList.remove('orbit'); document.body.classList.remove('flying'); rocket.style.display = ''; };
     abortCb = () => { if (ended) return; ended = 'abort'; cleanup(); A.stop(); A.tone(300, 0.15, 'square', 0.1); onAbort && onAbort(sim); };
     if (start && !resume) { lastCp = { snap: sim.snapshot(), trailLen: 0, tag: 'start' }; }   // v0.14：はじめの ところに ⏪ で もどれる
     else if (!resume) {
@@ -430,6 +460,11 @@ RL.Flight2D = (function () {
         if (e.type === 'moon-liftoff') { rocket.classList.remove('landedOk'); A.rumble(1.5); A.say('つきから りりく！', null, { interrupt: true }); }
         if (e.type === 'ascent-done') { [659, 880, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
           if (!quiet()) A.say('つきを まわったよ！ まえむきで エンジンを つけて、みどりの せんが でたら とめよう。 ちきゅうに かえれるよ。', null, { interrupt: true }); }
+        // v0.20 ⛽ ドッキング・補給・はなれる
+        if (e.type === 'dock') { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110)); sepFlash = 20;
+          if (!quiet()) A.say('アームで キャッチ！ ドッキング した！ ねんりょうの ボタンで、まんたんに しよう。', null, { interrupt: true }); }
+        if (e.type === 'refuel') { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => A.tone(f, 0.15, 'sine'), i * 140)); if (!quiet()) A.say('まんたん！ ほのおの ボタンで はなれて、しゅっぱつ しよう。', null, { interrupt: true }); }
+        if (e.type === 'undock') { A.tone(330, 0.15, 'triangle'); if (!quiet()) A.say('ステーションから はなれたよ！', null, { interrupt: false }); saidNearSt = true; }
         if (e.type === 'legs') { rocket.classList.add('legsOut'); [330, 440].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'square', 0.08), i * 120)); }
         if (e.type === 'stage-sep') { fuelFlash = 1; }
         if (e.type === 'class' && e.cls === 'moonOrbit' && e.old !== 'moonOrbit' && !sim.moonLanded) { [659, 880, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
@@ -584,7 +619,11 @@ RL.Flight2D = (function () {
         if (warp < 0.9 && !saidSlow) { saidSlow = true; [700, 520].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'sine', 0.1), i * 120)); }   // はじめて 🐢 に なった
         sim.advance(dtR * warp);
       }
-      events(); engUI(); dirUI(); chuteUI(); sepUI();
+      events(); engUI(); dirUI(); chuteUI(); sepUI(); fuelUI();
+      // v0.20 ⛽ ステーションに ちかづいた（いちばん ちかい ところ）：うしろむきの 🔥 で あわせる
+      if (!saidNearSt && !ended && !quiet() && sim.stRel && !sim.docked && !sim.isPowered() && sim.body === E) { const q = sim.stRel();
+        if (q.d < 1500 || (q.d < RL.CFG.ORBIT.DOCK.SHOW && sim._stc && Math.abs(sim._stc.t - sim.t) < 3)) { saidNearSt = true; bDir.classList.add('hint'); bEng.classList.add('hint'); setTimeout(() => { bDir.classList.remove('hint'); bEng.classList.remove('hint'); }, 4000);
+          A.say('ステーションに ちかづいたよ！ うしろむきに して、ほのおの ボタンを つけた ままに すると、ステーションに あわせて ちかづくよ。', null, { interrupt: true }); } }
       // v0.14 ミッション：ヒント（声・ボタンの 点滅）と とちゅうで クリア
       //  v0.14.6：pause の ある あんないは とめて 話す（声が おわるまで／ボタンを おすまで）。とめている 間は つぎの あんないを しらべない
       if (RL.Missions && RL.Missions.active && !ended && el >= pre && !pause) RL.Missions.tick(sim).forEach(h => {
@@ -692,6 +731,7 @@ RL.Flight2D = (function () {
       if (pause && !ended) { g.save(); g.globalAlpha = 0.7 + 0.3 * Math.sin(ts / 200); g.fillStyle = 'rgba(0,0,30,.6)'; g.beginPath(); g.arc(W / 2, 64 * u, 40 * u, 0, TAU); g.fill();
         g.fillStyle = '#fff'; g.fillRect(W / 2 - 16 * u, 46 * u, 11 * u, 36 * u); g.fillRect(W / 2 + 5 * u, 46 * u, 11 * u, 36 * u); g.restore(); }   // v0.14.6 いちじ停止の しるし
       drawSpeed(g, W, H, sim, u);
+      drawStationPanel(g, W, sim, u);
       if (a.fuel > 0) { drawFuel(g, H, sim, u);
         if (fuelFlash > 0) { g.fillStyle = `rgba(255,255,255,${fuelFlash * 0.7})`; g.fillRect(14 * u, H * 0.42, 30 * u, 130 * u); fuelFlash = Math.max(0, fuelFlash - dtR * 1.5); } }   // v0.11.1：満タンに もどる ぴかっ
       if (sim.near && !sim.done) drawLandMeter(g, H, sim, u);

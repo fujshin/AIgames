@@ -145,5 +145,28 @@ RL.Predict = (function () {
     const ms = SP.bodyState(M, tr.end.t), s = tr.end.st, el = SP.toElements(s.x + ms.x, s.y + ms.y, s.vx + ms.vx, s.vy + ms.vy, E.mu, tr.end.t);
     return homeEl(el, E);
   }
-  return { fromSim, trace, moonNear, touchdown, homeFrom };
+  // v0.20 ⛽ このまま とぶと ステーションに いちばん ちかづく ところ（1周 ぶん）。{ t, d（きょり）, v（くらべた はやさ）, sx, sy（その ときの ステーション）, rx, ry }
+  function stationClose(sim) {
+    if (!sim || !sim.lifted || sim.docked || sim.body !== sim.bodies.earth || !sim.station) return null;
+    const el = SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t); if (!el.good || el.e >= 1) return null;
+    const S = sim.station, E = sim.bodies.earth, T = Math.min(el.T, 2 * Math.PI / S.w) * 1.05, N = 180;
+    const at = t => { const p = SP.stateAt(el, t), q = SP.stationState(S, t); return { p, q, d: Math.hypot(p.x - q.x, p.y - q.y) }; };
+    let best = null;
+    for (let i = 0; i <= N; i++) { const t = sim.t + T * i / N, z = at(t); if (Math.hypot(z.p.x, z.p.y) < E.R + E.atmo) break; if (!best || z.d < best.d) best = { t, d: z.d }; }
+    if (!best) return null;
+    let lo = best.t - T / N, hi = best.t + T / N;   // 三分探索で こまかく
+    for (let k = 0; k < 40; k++) { const m1 = lo + (hi - lo) / 3, m2 = hi - (hi - lo) / 3; if (at(m1).d < at(m2).d) hi = m2; else lo = m1; }
+    const z = at((lo + hi) / 2);
+    return { t: (lo + hi) / 2, d: z.d, v: Math.hypot(z.p.vx - z.q.vx, z.p.vy - z.q.vy), sx: z.q.x, sy: z.q.y, rx: z.p.x, ry: z.p.y };
+  }
+  // v0.20 ⛽ ふかす ところ：ここで まえに ふかして ▲ を ステーションの 高さに すると、▲ で ステーションに あう（4章の ふかす しるしと おなじ かんがえ）
+  function stationBurn(sim) {
+    if (!sim || !sim.lifted || sim.docked || sim.body !== sim.bodies.earth || !sim.station) return null;
+    const el = SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t); if (el.e >= 0.3) return null;
+    const S = sim.station, mu = sim.body.mu, r = Math.hypot(sim.x, sim.y), R = S.r; if (r > R - 30 || el.ra > R - 30) return null;
+    const th = Math.PI * Math.sqrt(Math.pow((r + R) / 2, 3) / mu), n = Math.sqrt(mu / (r * r * r)), a0 = Math.atan2(sim.y, sim.x), phS = SP.stationState(S, sim.t).a;
+    const d = ((phS + S.w * th - Math.PI - a0) % TAU + TAU) % TAU, tb = d / (n - S.w);
+    return { ang: a0 + n * tb, dt: tb, r };
+  }
+  return { fromSim, trace, moonNear, touchdown, homeFrom, stationClose, stationBurn };
 })();

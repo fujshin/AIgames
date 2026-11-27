@@ -272,6 +272,7 @@
     $('resRew').style.display = canRew ? 'flex' : 'none';
     if (canRew) say += ' ⏪ を おすと、さっきの ところから やりなおせるよ。';
     if (RL.World.counts(SV.cur).sats >= SC.FLEET) medals.push('fleet');
+    if (sim.refueled) medals.push('dock');   // v0.20 ⛽
     if (d.type !== 'heavy') info.push(`<span>🚀${Math.round(d.maxV || 0)}</span>`);
     $('resIcon').textContent = icon; $('resStars').textContent = stars ? '⭐'.repeat(stars) : '💨';
     $('resInfo').innerHTML = [...new Set(info)].join('');
