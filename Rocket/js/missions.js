@@ -23,7 +23,11 @@ RL.Missions = (function () {
     // v0.17 5章：月着陸の 1段（宇宙用＋脚）、地上から 月に おりる 見本（landing_check の 見本）
     LANDER: [[], [], ['vengine+leg', ...T(3), 'win', 'nose'], [], []],
     MOONSHIP: [['fin'], B(5), ['engine', ...T(3), 'ring', 'vengine+leg', ...T(2), 'win', 'nose'], B(5), ['fin']],
-    POD0: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine', 'tank', 'win+chute', 'nose'], ['fin'], []]
+    POD0: [[], ['fin'], ['engine', ...T(2), 'ring', 'vengine', 'tank', 'win+chute', 'nose'], ['fin'], []],
+      // v0.19 6章：月に おりる 段（脚）＋ かえる 段（まど🪂）／かえる とちゅうの 段＋カプセル／月往還の 見本（3段3列。tools/return_check.js）
+      ASC: [[], [], ['vengine+leg', ...T(2), 'ring', 'vengine', 'tank', 'win+chute'], [], []],
+      RET: [[], [], ['vengine', 'tank', 'ring', 'win+chute', 'nose'], [], []],
+      TRIP: [[...B(4), 'fin'], ['engine', ...T(4), 'ring', 'vengine', ...T(2)], ['engine', ...T(4), 'ring', 'vengine', ...T(2), 'ring', 'vengine+leg', ...T(3), 'win+chute'], ['engine', ...T(4), 'ring', 'vengine', ...T(2)], [...B(4), 'fin']]
   };
   const ORB = ['low', 'high'];  const E = s => s.bodies.earth, TAU = Math.PI * 2;
 const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; };
@@ -35,6 +39,9 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
   const LEAD = 0.06;   // ふかす しるしの すこし 手前で とめる（ふかす 間に すすむ ぶん）
   const encNow = (s, c) => { c.encK = (c.encK || 0) + 1; if (c.encK % 6) return !!c.encLast; const e = M.encInfo(s); c.encLast = e.enc && !e.hit; if (c.encLast) c.enc = true; return c.encLast; };
   const hitNow = s => M.encInfo(s).hit;
+    // v0.19 6章：かえれる せん（予測の 🏠）。予測は おもい ので 6こまに 1回
+    const homeNow = (s, c) => { c.homeK = (c.homeK || 0) + 1; if (c.homeK % 6 && c.homeLast != null) return c.homeLast; const p = RL.Predict.fromSim(s); return (c.homeLast = !!(p && p.home)); };
+    const wind = s => Math.hypot(s.vx + E(s).rot * s.y, s.vy - E(s).rot * s.x);
   // v0.17：いまから エンジンで とまれる ぎりぎりの すこし 手前（月の 地面ちかく）
   const brakeNow = s => { if (!s.near || s.surface) return false; const v = Math.max(0, -s.relVel().vr), a = Math.max(0.1, s.brakeAcc()); return v > 1 && v * v / (2 * a) > s.alt() * 0.85; };
   // v0.16：よこの 段の 数（seg＝たての ながさ 以上）
@@ -349,10 +356,68 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
               { t: s => s.body === s.bodies.moon && s.cls === 'moonOrbit', pause: 'speech', say: 'つきを まわる せんに なった。 このまま つけて、よこの はやさを けすよ。' },
               { t: s => s.body === s.bodies.moon && s.isPowered() && Math.abs(s.relVel().vt) < 2, pause: 'btnEng', hl: 'btnEng', say: 'よこの はやさが なくなった！ とめよう。' },
               { t: s => s.near && off(s) && brakeNow(s), pause: 'btnEng', hl: 'btnEng', say: 'いまだ！ さいごの ブレーキ！ つけた まま だよ。' }],
-      help: 'しるしで ふかして、うすい つきが でたら とめる。 つきに ちかづいたら うしろむきで ブレーキ。 よこの はやさを けしてから、さいごの ブレーキ。' }
+      help: 'しるしで ふかして、うすい つきが でたら とめる。 つきに ちかづいたら うしろむきで ブレーキ。 よこの はやさを けしてから、さいごの ブレーキ。' },
+    // ===== 6章 つきから かえる（v0.19）=====
+    //  6-1 つきから りりく（✂️ で したの だんを おいていく → 🔥）／6-2 かえる せん（ひかる しるしで まえへ → 🏠 の せんで とめる）
+    //  ／6-3 あつい！（月から かえる はやさで くうきに はいる → ✂️ → 🪂）／6-4 だいぼうけん（じめんから 月に おりて かえる）
+    //  かえる しるし（homeMark）：つきを まわる きどうで、ここで まえに ふかすと ちきゅうに かえる せんに なる ところ（M.homeAng）
+    { id: '6-1', ch: 6, quiet: true, icon: ['\u2702\uFE0F', '\u{1F680}'], rocket: 'ASC', start: { stages: 2, fuels: [0, 1], moon: { surface: true } },
+      goal: { tick: (s, c) => c.manualSep >= 1 && s.body === s.bodies.moon && !s.surface && s.cls === 'moonOrbit' && off(s) }, star3: s => !!s.flagPlanted,
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['つきに ついたね！ こんどは ちきゅうに かえる ばん だよ。', 'したの だんは、つきに おりる ための だん。 ねんりょうは もう からっぽ。 おもい だけ だね。',
+          'はたを たててから でも いいよ。 たてると ほし みっつ！'] },
+        { at: 'fly', hl: 'btnSep', say: ['はさみを 2かい おして、したの だんを つきに おいていこう。'] },
+        { at: 'fly', when: (s, c) => c.manualSep >= 1, pause: 'speech', say: ['おいていった だんは、つきに ずっと のこるよ。 かるく なったね！'] },
+        { at: 'fly', hl: 'btnEng', pause: 'btnEng', say: ['ほのおの ボタンを おすと、つきを まわる ところまで、じどうで とんでいくよ。 おしてみて！'] },
+        { at: 'fly', when: s => !s.surface && s.body === s.bodies.moon && s.cls === 'moonOrbit' && off(s), pause: 'speech',
+          say: ['つきを まわる きどうに のったよ！ これで ちきゅうに かえる じゅんびが できた。'] }
+      ], help: 'まず はさみを 2かい。 それから ほのおの ボタン だよ。' },
+    { id: '6-2', ch: 6, quiet: true, map: true, homeMark: true, icon: ['\u{1F3E0}', '\u{1F319}'], rocket: 'ASC', start: { stages: 1, moon: { pe: 100, ap: 300, ang: 1.57, been: true } }, dvRate: 8,   // ang：しるしまで 実時間 約9秒
+      goal: { tick: (s, c) => off(s) && (c.ui.btnEng || 0) >= 2 && homeNow(s, c) }, star3: s => s.fuelRatio() >= 0.8,
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['いま、つきを まわっている ところ。 ちきゅうに かえるには、つきから はなれて、ちきゅうに もどる せんを つくるよ。',
+          'ちずの ひかっている ほのおの しるしが、ふかす ところ。 よんの さん と おなじ だね。 しるしに つくまで まとう。'] },
+        { at: 'fly', when: s => { const h = M.homeAng(s); return !!h && h.dt < 3; }, hl: 'btnEng', pause: 'btnEng',
+          say: ['しるしに ついた！ いったん ストップ。 まえむきに ふかすよ。 ほのおの ボタンを おして、つけた まま だよ。'] },
+        { at: 'fly', when: (s, c) => s.isPowered() && homeNow(s, c), hl: 'btnEng', pause: 'btnEng',
+          say: ['ストップ！ いえの しるしが でた。 ちきゅうに かえれる せんだ！ ほのおの ボタンで とめよう。'] }
+      ], clearSay: 'このまま まつと、ちきゅうに かえって くるよ。',
+      help: 'ひかる しるしで ふかして、いえの しるしが でたら とめよう。' },
+    { id: '6-3', ch: 6, quiet: true, icon: ['\u{1F525}', '\u{1FA82}'], rocket: 'RET', start: { stages: 2, fuels: [0.3, 1], orbit: { pe: 100, ap: 'moon', nu: -1.5, ang: 2.2 } },
+      goal: { done: d => d.type === 'landed' && onEarth(d) && d.chute }, star3: (d, s, c) => c.sepAlt > 300,
+      steps: [
+        { at: 'fly', pause: 'speech', say: ['ちきゅうに かえって きたよ！ つきから おちてきたから、ものすごい はやさ だよ。',
+          'くうきに はいる まえに、いらない だんを すてて、まどの だん だけに しよう。'] },
+        { at: 'fly', hl: 'btnSep', say: ['はさみを 2かい おしてね。'] },
+        { at: 'fly', when: s => s.alt() < 300 && wind(s) > 150, pause: 'speech',
+          say: ['あつい！ すごい はやさで くうきに ぶつかって、まわりが まっかに なっているね。', 'くうきが ブレーキに なって、ゆっくりに してくれるんだ。 パラシュートは まだ だよ。 いま ひらくと やぶれちゃう。 ゆっくりに なるのを まとう。'] },
+        { at: 'fly', when: s => s.alt() < 300 && s.chutes() && !s.chute && wind(s) < 76, hl: 'btnChute', pause: 'btnChute', say: ['ゆっくりに なった！ いまだ、パラシュート！'] }
+      ], help: 'くうきの まえで はさみ。 あつく なっても まって、ゆっくりに なったら パラシュート。' },
+    { id: '6-4', ch: 6, mark: true, homeMark: true, icon: ['\u{1F30D}', '\u{1FAA8}'], preset: 'TRIP', allow: null, hl: 'launch',
+      say: ['さいごは だいぼうけん！ じめんから つきに おりて、ちきゅうに かえって こよう。',
+        'つきまでは ごの よん と おなじ。 つきに ついたら はたを たてて、ほのおの ボタンで りりく。',
+        'つきを まわったら、ひかる しるしで まえむきに ふかして、いえの しるしで とめる。 さいごは パラシュート！',
+        'わからなく なったら、ミッションの ちずで もどってね。 おりかたは ごの さん、かえりかたは ろくの に だよ。'],
+      goal: { done: d => d.type === 'landed' && onEarth(d) && d.returned }, star3: (d, s) => !!s.flagPlanted,
+      hints: [{ t: s => ORB.includes(s.cls) && off(s) && !!M.burnAng(s), say: 'ちきゅうを まわれた！ ちずの ひかる しるしまで まとう。', hl: 'btnMap' },
+              { t: s => { const b = M.burnAng(s); return off(s) && !!b && b.dt * Math.sqrt(E(s).mu / Math.pow(b.r, 3)) < LEAD; }, pause: 'btnEng', hl: 'btnEng', say: 'しるしに ついた！ ほのおの ボタンで ふかそう。' },
+              { t: (s, c) => s.isPowered() && encNow(s, c), pause: 'btnEng', hl: 'btnEng', say: 'うすい つきが でた！ とめよう。' },
+              { t: s => s.body === s.bodies.moon, pause: 'btnDir', hl: 'btnDir', say: 'じゅうりょくけんに はいった！ うしろむき に しよう。' },
+              { t: s => s.body === s.bodies.moon && vr(s) >= 0, pause: 'btnEng', hl: 'btnEng', say: 'いまだ！ ブレーキ！ つけた まま だよ。' },
+              { t: s => s.body === s.bodies.moon && s.cls === 'moonOrbit', pause: 'speech', say: 'つきを まわる せんに なった。 このまま つけて、よこの はやさを けすよ。' },
+              { t: s => s.body === s.bodies.moon && s.isPowered() && Math.abs(s.relVel().vt) < 2, pause: 'btnEng', hl: 'btnEng', say: 'よこの はやさが なくなった！ とめよう。' },
+              { t: s => s.near && off(s) && brakeNow(s), pause: 'btnEng', hl: 'btnEng', say: 'いまだ！ さいごの ブレーキ！ つけた まま だよ。' },
+              { t: s => s.surface, pause: 'btnFlag', hl: 'btnFlag', say: 'ちゃくりく！ まず、はたを たてよう。' },
+              { t: s => s.surface && s.flagPlanted, pause: 'btnEng', hl: 'btnEng', say: 'ほのおの ボタンで りりく！ つきを まわる ところまで じどうで とぶよ。' },
+              { t: s => !s.surface && s.body === s.bodies.moon && s.cls === 'moonOrbit' && off(s) && s.moonLanded, say: 'つきを まわった！ ひかる しるしまで まとう。', hl: 'btnMap' },
+              { t: s => { const h = M.homeAng(s); return off(s) && !!h && h.dt < 3; }, pause: 'btnEng', hl: 'btnEng', say: 'しるしに ついた！ まえむきで ほのおの ボタン！' },
+              { t: (s, c) => s.isPowered() && homeNow(s, c), pause: 'btnEng', hl: 'btnEng', say: 'いえの しるしが でた！ とめよう。' },
+              { t: s => s.body === E(s) && s.alt() < 1500 && s.canSep() && s.chutes() === 0, hl: 'btnSep', say: 'くうきに はいる まえに、まど いがいの だんを はさみで すてよう。' },
+              { t: s => s.alt() < 300 && s.chutes() && !s.chute && wind(s) < 76, pause: 'btnChute', hl: 'btnChute', say: 'ゆっくりに なった！ パラシュート！' }],
+      help: 'つきでは はたを たててから りりく。 かえりは ひかる しるしで ふかして、いえの しるしで とめよう。' }
   ];
   const CHAPTERS = [
-    { ch: 1, icon: '\u{1F680}', medal: 'mis1' }, { ch: 2, icon: '\u{1F6F0}\uFE0F', medal: 'mis2' }, { ch: 3, icon: '\u{1FA82}', medal: 'mis3' }, { ch: 4, icon: '\u{1F319}', medal: 'mis4' }, { ch: 5, icon: '\u{1F9D1}\u200D\u{1F680}', medal: 'mis5' }
+    { ch: 1, icon: '\u{1F680}', medal: 'mis1' }, { ch: 2, icon: '\u{1F6F0}\uFE0F', medal: 'mis2' }, { ch: 3, icon: '\u{1FA82}', medal: 'mis3' }, { ch: 4, icon: '\u{1F319}', medal: 'mis4' }, { ch: 5, icon: '\u{1F9D1}\u200D\u{1F680}', medal: 'mis5' }, { ch: 6, icon: '\u{1FAA8}', medal: 'mis6' }
   ];
   const byId = id => LIST.find(m => m.id === id);
   const toGrid = cols => { const R = RL.CFG.ROWS_ORBIT, C = RL.CFG.COLS, g = Array.from({ length: R }, () => Array(C).fill(null)); (cols || []).forEach((s, c) => s.slice(0, R).forEach((k, i) => { g[R - 1 - i][c] = k; })); return g; };
@@ -415,14 +480,14 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
   // いま もとめている 打ち上げかた（さいごに すすんだ あんないの need）
   M.need = () => { const m = M.active, c = M.ctx; if (!m) return null; for (let i = c.si - 1; i >= 0; i--) if (m.steps[i].need) return m.steps[i].need; return m.need || null; };
   // 発射の とき：true か、だめな わけ（{ say, hl }）
-  M.onLaunch = (grid, profile) => {
+  M.onLaunch = (grid, profile) => {   // v0.19：homeLast も もどす
     const m = M.active, c = M.ctx; if (!m) return true;
     const need = M.need(), cur = c.cur;
     if (cur && cur.block && cur.at === 'build') return { say: cur.say, hl: cur.hl };
     if (need && profile !== need) return { need };
     c.prof = profile; c.profs.add(profile);
     c.topRow = 99; grid.forEach((row, r) => { if (row.some(Boolean)) c.topRow = Math.min(c.topRow, r); });
-    c.ui = {}; c.podSep = 0; c.enc = false; c.encLast = false; c.inMoon = false; c.aborts = 0; c.dirs = new Set(['pro']); c.cleared = null; c.manualSep = 0; c.sepAlt = 0; c.mapT0 = 0; c.cutFuel = 0; c.siLaunch = c.si;
+    c.ui = {}; c.homeK = 0; c.homeLast = null; c.podSep = 0; c.enc = false; c.encLast = false; c.inMoon = false; c.aborts = 0; c.dirs = new Set(['pro']); c.cleared = null; c.manualSep = 0; c.sepAlt = 0; c.mapT0 = 0; c.cutFuel = 0; c.siLaunch = c.si;
     return true;
   };
   M.buildInfo = (grid, profile) => ({ grid, profile, tanks: countTanks(grid) });
@@ -467,7 +532,22 @@ const pe = s => { const el = s.elements(); return el ? el.rp - s.body.R : -1e9; 
     return { ang: phi, dt: tb, r };
   };
   //  地図の しるし（ここで ふかす）：ちきゅうの まわりで、エンジンが とまっている ときだけ
-  M.mark = s => { const m = M.active; if (!m || !m.mark || s.isPowered() || !ORB.includes(s.cls)) return null;
+  // v0.19 6章：かえる ところ（月を まわる 軌道で ここで まえに ふかすと ちきゅうに かえる せん）。
+    //   月から みて ちきゅうと 反対がわ より HOME_OFF だけ 手前（tools/ch6_check.js の OFF しらべ：-1.2〜0 で どれも かえれた）
+    const HOME_OFF = -0.6, wrapA = a => Math.atan2(Math.sin(a), Math.cos(a));
+    M.homeAng = s => {
+      if (!s || s.body !== s.bodies.moon || s.surface || !s.lifted) return null;
+      const el = s.elements(); if (!el || el.e >= 1 || el.ra > s.body.soi) return null;
+      const SP = RL.Space, Mo = s.bodies.moon, f = t => { const p = SP.stateAt(el, t), m = SP.bodyState(Mo, t); return wrapA(Math.atan2(p.y, p.x) - (Math.atan2(m.y, m.x) + Math.PI + HOME_OFF)); };
+      let prev = f(s.t); if (Math.abs(prev) < 0.03) return { dt: 0, p: s };
+      const N = 240, h = el.T / N;
+      for (let i = 1; i <= N; i++) { const v = f(s.t + i * h); if (prev < 0 && v >= 0 && v - prev < Math.PI) return { dt: i * h, p: SP.stateAt(el, s.t + i * h) }; prev = v; }
+      return null;
+    };
+    M.mark = s => { const m = M.active; if (!m) return null;
+      if (m.homeMark && s.body === s.bodies.moon) { if (s.isPowered() || s.cls !== 'moonOrbit') return null; const h = M.homeAng(s); if (!h) return null;
+        const ms = RL.Space.bodyState(s.bodies.moon, s.t); return { x: ms.x + h.p.x, y: ms.y + h.p.y, dt: h.dt, moon: true }; }
+      if (!m.mark || s.isPowered() || !ORB.includes(s.cls)) return null;
     const b = M.burnAng(s); return b ? { x: Math.cos(b.ang) * b.r, y: Math.sin(b.ang) * b.r, dt: b.dt } : null; };
   //  月との であい（予測）：{ enc, close（月の 地面からの いちばん ちかい 高さ）, hit }
   M.encInfo = s => {

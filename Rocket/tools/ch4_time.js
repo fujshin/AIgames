@@ -1,11 +1,11 @@
 // v0.15 4章の 実時間（flight2d と 同じ 早送り。とまって 話す 時間は ふくまない。とまったら すぐ ボタン）
-// 使い方: node tools/ch4_time.js
+// 使い方: node tools/ch4_time.js（4・5章。6章は tools/ch6_check.js）
 const { RL } = require('./lib2d.js');
 (0, eval)(require('fs').readFileSync(__dirname + '/../js/predict.js', 'utf8'));
 (0, eval)(require('fs').readFileSync(__dirname + '/../js/missions.js', 'utf8'));
 RL.CFG.ROWS = RL.CFG.ROWS_ORBIT; const M = RL.Missions;
 const act = { btnEng: s => s.setEngine(!s.engineOn), btnDir: s => s.setDir('retro'), btnFlag: s => { s.flagPlanted = true; }, btnDone: s => (s.surface ? s.endSurface() : s.finishNow()) };
-for (const m of M.LIST.filter(x => x.ch >= 4 && x.start)) {
+for (const m of M.LIST.filter(x => x.ch >= 4 && x.ch <= 5 && x.start)) {
   const c = M.begin(m), g = M.gridOf(m); M.onLaunch(g, 'side');
   const s = RL.Orbit.create(RL.analyze(g), { start: m.start }); if (m.dvRate) s.dvRate = m.dvRate; if (m.noSlow) s.noSlow = true; if (m.coast) s.coastK = m.coast;
   let warp = 1, real = 0, marks = [], burn = 0;

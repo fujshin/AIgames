@@ -8,7 +8,7 @@ const M = RL.Missions, LD = RL.CFG.ORBIT.LAND.earth, T = n => Array(n).fill('tan
 const wind = s => Math.hypot(s.vx + s.bodies.earth.rot * s.y, s.vy - s.bodies.earth.rot * s.x);
 const pe = s => s.elements().rp - s.body.R, ap = s => { const e = s.elements(); return e.e < 1 ? e.ra - s.body.R : 1e9; };
 const vr = s => (s.vx * s.x + s.vy * s.y) / Math.hypot(s.x, s.y);
-const AUTO = { btnEng: s => s.setEngine(!s.engineOn), btnDir: s => s.setDir('retro'), btnFlag: s => { s.flagPlanted = true; }, btnDone: s => (s.surface ? s.endSurface() : s.finishNow()) };
+const AUTO = { btnChute: s => s.deployChute(), btnEng: s => s.setEngine(!s.engineOn), btnDir: s => s.setDir('retro'), btnFlag: s => { s.flagPlanted = true; }, btnDone: s => (s.surface ? s.endSurface() : s.finishNow()) };
 const press = (id, f) => { M.ui(id); return f && f(); };
 // 自動パイロット（ミッションごと）：毎こま よばれる。st＝その ミッションの メモ
 const P = {
@@ -24,6 +24,9 @@ const P = {
   '3-3': (s, c, st) => deorbit(s, st, false), '3-5': (s, c, st) => deorbit(s, st, true),
   // v0.15 4章：あんないで とまったら その ボタンを おす（下の AUTO）。4-6 は ぜんぶ 自動
   '4-7': (s, c, st) => cut(s, st), '4-2': () => {}, '5-4': (s, c, st) => cut(s, st),   // 打ち上げて まわるまで（そのあとは あんないの ボタンを おす）
+  // v0.19 6章：光った はさみを 2かい（6-1 は 月面で すぐ、6-3 は はじめに）。6-4 は tools/ch6_check.js
+  '6-1': (s, c, st) => { if (!st.a && s.canSep()) { st.a = 1; press('btnSep'); press('btnSep', () => s.separate()); } },
+  '6-3': (s, c, st) => { if (!st.a && s.canSep()) { st.a = 1; press('btnSep'); press('btnSep', () => s.separate()); } },
   '3-4': (s, c, st) => { if (!st.a) { st.a = 1; press('btnDir', () => s.setDir('retro')); }   // v0.14.6：あんないで とまった ところ（高さ 520）で つけて その まま
       if (st.a === 1 && s.alt() < 520) { st.a = 2; press('btnEng', () => s.setEngine(true)); } }
 };
@@ -44,6 +47,7 @@ const prof0 = {};
 const info = (g, p) => M.buildInfo(g, p);
 let ok = 0;
 for (const m of M.LIST) {
+  if (m.id === '6-4') { console.log('6-4 （tools/ch6_check.js で しらべる）'); ok++; continue; }
   const c = M.begin(m); let grid = toGrid(extraGrid[m.id] || M.ROCKETS[m.rocket || m.preset] || []), pf = prof0[m.id] || m.profile || 'side';
   c.tanks0 = M.countTanks(grid);
   const log = []; M.pollAll('build', info(grid, pf)).forEach(x => log.push('🗣' + x.say[0].slice(0, 12)));

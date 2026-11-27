@@ -54,32 +54,42 @@ RL.Orbit = (function () {
     //   v0.14：{ orbit: { pe, ap, at: 'pe'|'ap' }, stages, fuel }：地球を まわる 軌道の 上から（ミッション用）。stages＝上から いくつの 段を のこすか
     if (opt.start) {
       const o = opt.start, keep = Math.max(1, Math.min(last + 1, o.stages || 1)), s0 = last - keep + 1;
-      sim.si = s0; S.forEach((x, i) => { if (i < s0) { x.sepT = 0; x.fuel = 0; } else x.fuel *= o.fuel == null ? 1 : o.fuel; }); st.forEach(x => { x.sepT = 0; x.withStage = true; x.fuel = 0; });
+      sim.si = s0; S.forEach((x, i) => { if (i < s0) { x.sepT = 0; x.fuel = 0; } else x.fuel *= o.fuels ? (o.fuels[i - s0] == null ? 1 : o.fuels[i - s0]) : o.fuel == null ? 1 : o.fuel; });   // v0.19 fuels：段ごとの 燃料（下から） st.forEach(x => { x.sepT = 0; x.withStage = true; x.fuel = 0; });
       S[s0].ignT = 0;
         if (o.moon) {   // v0.17 5章：月の まわりから。{ pe, ap }＝月を まわる 軌道（▼の ところ）、{ h, vDown, vSide }＝月の 上から おちる
           const mo = o.moon, ang = mo.ang != null ? mo.ang : Math.PI / 2;
           let r0, vr = 0, vt;
           if (mo.pe != null) { const rp = moon.R + mo.pe, ra = moon.R + mo.ap, sma = (rp + ra) / 2; r0 = rp; vt = Math.sqrt(moon.mu * (2 / rp - 1 / sma)); }
-          else { r0 = moon.R + mo.h; vr = -(mo.vDown || 0); vt = mo.vSide || 0; }
+          else { r0 = moon.R + (mo.h || 0); vr = -(mo.vDown || 0); vt = mo.vSide || 0; }
           const ux = Math.cos(ang), uy = Math.sin(ang);
           Object.assign(sim, { body: moon, x: r0 * ux, y: r0 * uy, vx: vr * ux - vt * uy, vy: vr * uy + vt * ux, landed: false, lifted: true, engineOn: false, dir: 'pro', maxAlt: 1000, inSpace: true });
+          // v0.19 6章：月面から（surface）。月に 着陸した あとの ように（月面で まつ）。been＝月に 着陸した ことに する（かえれる 線・往還）
+          if (mo.surface) { Object.assign(sim, { landed: true, surface: true, near: true, legsOut: true, vx: 0, vy: 0 });
+            sim.surfJ = { vDown: 0, vSide: 0, tilt: 0, legs: 1, k: 1, type: 'landed', hard: false, soft: true }; sim.surfAng = ang; sim.onMoon = { ang }; }
+          if (mo.surface || mo.been) sim.moonLanded = true;
         } else if (o.orbit) {        // v0.15：ap: 'moon' ＝ 月の 高さまで。ang ＝ はじめの 位置（rad）。lead（rad）＝ 月へ むかう とちゅう：
         //   月の 高さに つく ときに 月が ちょうど そこに いる 位置から はじめる（lead だけ ずらすと 月の 前／うしろを とおる）
         //   burnIn（秒）＝ ひくい 軌道で、この 時間 あとに「ここで ふかす」ところに つく 位置から はじめる（4-1・4-2）
         const D = moon.orbitR, apH = o.orbit.ap === 'moon' ? D - earth.R : o.orbit.ap;
-        const rp = earth.R + o.orbit.pe, ra = earth.R + apH, sma = (rp + ra) / 2, r0 = o.orbit.at === 'ap' ? ra : rp, v = Math.sqrt(earth.mu * (2 / r0 - 1 / sma));
+        const rp = earth.R + o.orbit.pe, ra = earth.R + apH, sma = (rp + ra) / 2; let r0 = o.orbit.at === 'ap' ? ra : rp, v = Math.sqrt(earth.mu * (2 / r0 - 1 / sma));
         let ang = o.orbit.ang != null ? o.orbit.ang : site;
         if (o.orbit.lead != null) ang = moon.ph0 + moon.w * Math.PI * Math.sqrt(sma * sma * sma / earth.mu) - Math.PI + o.orbit.lead;
         if (o.orbit.burnIn != null) { const th = Math.PI * Math.sqrt(Math.pow((rp + D) / 2, 3) / earth.mu), n = Math.sqrt(earth.mu / (rp * rp * rp));
           ang = moon.ph0 + moon.w * (o.orbit.burnIn + th) - Math.PI - n * o.orbit.burnIn; }
         const ux = Math.cos(ang), uy = Math.sin(ang);
         Object.assign(sim, { x: r0 * ux, y: r0 * uy, vx: -v * uy, vy: v * ux, landed: false, lifted: true, engineOn: false, dir: 'pro', maxAlt: r0 - earth.R, inSpace: true });
+        // v0.19 6章：nu（rad）＝ 軌道の 上の 位置（近い ところから の 角度。マイナス＝近い ところの 手前＝おりてくる とちゅう）。ang は その 位置の 向き
+        if (o.orbit.nu != null) { const e = (ra - rp) / (ra + rp), p = sma * (1 - e * e), nu = o.orbit.nu, k = Math.sqrt(earth.mu / p);
+          r0 = p / (1 + e * Math.cos(nu)); const vr = k * e * Math.sin(nu), vt = k * (1 + e * Math.cos(nu));
+          Object.assign(sim, { x: r0 * ux, y: r0 * uy, vx: vr * ux - vt * uy, vy: vr * uy + vt * ux, maxAlt: Math.max(1000, r0 - earth.R) }); }
+        if (o.been || o.orbit.been) sim.moonLanded = true;
       } else {
         const r0 = earth.R + o.h, ux = Math.cos(site), uy = Math.sin(site);
         const vt = earth.rot * r0 + (o.vSide || 0), vr = -(o.vDown || 0);
         Object.assign(sim, { x: r0 * ux, y: r0 * uy, vx: vr * ux - vt * uy, vy: vr * uy + vt * ux, landed: false, lifted: true, engineOn: false, dir: 'pro', maxAlt: o.h, inSpace: o.h > earth.atmo });
       }
       sim.dev = 0; sim.point = Math.PI / 2; sim.pitch = 90; sim.fuelBase = coreFuel0();
+        if (sim.lifted && !sim.surface) sim.cls = clsOf(SP.toElements(sim.x, sim.y, sim.vx, sim.vy, sim.body.mu, sim.t));   // v0.19：はじめから 軌道の 種類（とめて 話す 間も 地図の しるしが でる）
     }
     const hasProp = S.some(s => s.eng + s.veng > 0) || st.length || (opt.start && opt.noPropOk);
     if (!hasProp) sim.done = { type: 'noEngine' };

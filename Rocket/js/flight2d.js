@@ -107,8 +107,8 @@ RL.Flight2D = (function () {
     if (E.R * sc > 25) { const ph = RL.CFG.ORBIT.SITE + E.rot * sim.t; g.font = `${small ? 12 : 18}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.fillText('🏠', X(Math.cos(ph) * E.R * 1.03), Y(Math.sin(ph) * E.R * 1.03)); }
     // v0.15 4章：ふかす しるし（ひかる ほのお）
-    const mk = sim.body === E && RL.Missions && RL.Missions.mark(sim);
-    if (mk) { const a = Math.atan2(mk.y, mk.x) - 0.06, rr = Math.hypot(mk.x, mk.y), mx = X(Math.cos(a) * rr), my = Y(Math.sin(a) * rr), pu = 0.5 + 0.5 * Math.sin(performance.now() / 180);
+    const mk = RL.Missions && RL.Missions.mark(sim);   // v0.19：月を まわる ときの かえる しるし（mk.moon）も
+    if (mk) { const a = Math.atan2(mk.y, mk.x) - 0.06, rr = Math.hypot(mk.x, mk.y), mx = mk.moon ? X(mk.x) : X(Math.cos(a) * rr), my = mk.moon ? Y(mk.y) : Y(Math.sin(a) * rr), pu = 0.5 + 0.5 * Math.sin(performance.now() / 180);
       g.save(); g.strokeStyle = `rgba(90,255,122,${0.5 + 0.5 * pu})`; g.lineWidth = small ? 2 : 4; g.beginPath(); g.arc(mx, my, (small ? 6 : 14 + 6 * pu) * (small ? 1 : V.u), 0, TAU); g.stroke();
       if (!small) { g.font = `${22 * V.u}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('\u{1F525}', mx, my - 30 * V.u); } g.restore(); }
     // とんできた あと
@@ -425,11 +425,11 @@ RL.Flight2D = (function () {
         // v0.13 月面・離陸
         if (e.type === 'surface') { idleAt = performance.now(); rocket.classList.add('legsOut', 'landedOk'); saveCp('surface', true);
           [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.22, 'triangle'), i * 120));
-          A.say('つきに ちゃくりく！ はたを たてたり、ほのおの ボタンで ちきゅうに かえったり できるよ。 おわるときは ひだりうえの ゴールの はた。', null, { interrupt: true });
+          if (!quiet()) A.say('つきに ちゃくりく！ はたを たてたり、ほのおの ボタンで ちきゅうに かえったり できるよ。 おわるときは ひだりうえの ゴールの はた。', null, { interrupt: true });   // v0.19：ミッション（quiet）では あんないに まかせる
           bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 4000); }
         if (e.type === 'moon-liftoff') { rocket.classList.remove('landedOk'); A.rumble(1.5); A.say('つきから りりく！', null, { interrupt: true }); }
         if (e.type === 'ascent-done') { [659, 880, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
-          A.say('つきを まわったよ！ まえむきで エンジンを つけて、みどりの せんが でたら とめよう。 ちきゅうに かえれるよ。', null, { interrupt: true }); }
+          if (!quiet()) A.say('つきを まわったよ！ まえむきで エンジンを つけて、みどりの せんが でたら とめよう。 ちきゅうに かえれるよ。', null, { interrupt: true }); }
         if (e.type === 'legs') { rocket.classList.add('legsOut'); [330, 440].forEach((f, i) => setTimeout(() => A.tone(f, 0.12, 'square', 0.08), i * 120)); }
         if (e.type === 'stage-sep') { fuelFlash = 1; }
         if (e.type === 'class' && e.cls === 'moonOrbit' && e.old !== 'moonOrbit' && !sim.moonLanded) { [659, 880, 1047, 1319].forEach((f, i) => setTimeout(() => A.tone(f, 0.2, 'triangle'), i * 110));
@@ -641,7 +641,7 @@ RL.Flight2D = (function () {
         prKind = pr.kind;
       }
       // v0.13 ちきゅうに かえれる 線
-      if (pr && pr.home && sim.body !== E && sim.isPowered() && !homeSaid) { homeSaid = true; [523, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.18, 'triangle'), i * 100)); A.say('ちきゅうに かえれる せんだ！ とめよう！', null, { interrupt: true }); bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 3000); }
+      if (pr && pr.home && sim.body !== E && sim.isPowered() && !homeSaid && !quiet()) { homeSaid = true; [523, 784, 1047].forEach((f, i) => setTimeout(() => A.tone(f, 0.18, 'triangle'), i * 100)); A.say('ちきゅうに かえれる せんだ！ とめよう！', null, { interrupt: true }); bEng.classList.add('hint'); setTimeout(() => bEng.classList.remove('hint'), 3000); }
       if (pr && !pr.home) homeSaid = false;
       updateView(pr, dtR);
       const h = Math.hypot(sim.x, sim.y) - sim.body.R, useMap = view === 'map' || (view === 'auto' && autoMap());
@@ -711,6 +711,7 @@ RL.Flight2D = (function () {
     }
     cur = sim;
     if (resume) syncParts();
+    if (sim.surface && !resume) { rocket.classList.add('legsOut', 'landedOk'); idleAt = performance.now(); }   // v0.19 6-1：月面から はじまる
     raf = requestAnimationFrame(frame);
     return sim;
   }
